@@ -42,3 +42,21 @@ export const loginUser = async (data: {
 
   return result;
 };
+
+export const getCurrentUser = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch("http://localhost:4000/api/auth/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Failed to fetch user");
+  }
+
+  return data;
+};

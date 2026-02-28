@@ -1,8 +1,17 @@
 import "../index.css";
 import logo from "../assets/logo.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { isAuthenticated, logout } from "../utils/auth";
 
 export default function Home() {
+  const navigate = useNavigate();
+  const loggedIn = isAuthenticated();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <>
       {/* NAVBAR */}
@@ -11,12 +20,27 @@ export default function Home() {
           <img src={logo} alt="Taskara" className="logo" />
 
           <div className="nav-actions">
-            <Link to="/login" className="btn-outline">
-              Login
-            </Link>
-            <Link to="/register" className="btn-primary">
-              Sign Up
-            </Link>
+            {loggedIn ? (
+              <>
+                <Link to="/dashboard" className="btn-outline">
+                  Dashboard
+                </Link>
+
+                <button className="btn-primary" onClick={handleLogout}>
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="btn-outline">
+                  Login
+                </Link>
+
+                <Link to="/register" className="btn-primary">
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

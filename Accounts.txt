@@ -1,0 +1,8 @@
+Email: admin@taskara.com
+Password: admin123
+Role: admin
+
+Email: user@taskara.com
+Password: user123
+Role: user
+

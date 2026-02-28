@@ -263,3 +263,248 @@ body {
   height: 48px;
   cursor: pointer;
 }
+
+/* ================= DASHBOARD LAYOUT ================= */
+
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background: #fafafa;
+}
+
+/* Sidebar */
+.dashboard-sidebar {
+  width: 240px;
+  background: white;
+  border-right: 1px solid #eee;
+  padding: 25px 20px;
+}
+
+.sidebar-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.sidebar-logo img {
+  height: 42px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sidebar-link {
+  text-decoration: none;
+  color: #333;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.sidebar-link:hover {
+  background: #fff1f2;
+  color: #e11d48;
+}
+
+/* Main Area */
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+.dashboard-topbar {
+  height: 70px;
+  background: white;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+}
+
+.topbar-search input {
+  width: 320px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.topbar-search input:focus {
+  outline: none;
+  border-color: #e11d48;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* Content */
+.dashboard-content {
+  padding: 40px;
+}
+
+/* ================= MARKETPLACE ================= */
+
+.marketplace-container {
+  padding: 40px;
+}
+
+.marketplace-title {
+  font-size: 26px;
+  margin-bottom: 25px;
+}
+
+/* Grid */
+.marketplace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+/* Card */
+.service-market-card {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  transition: 0.2s ease;
+  cursor: pointer;
+}
+
+.service-market-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Image placeholder */
+.service-image-placeholder {
+  height: 160px;
+  background: #fff1f2;
+}
+
+/* Info */
+.service-info {
+  padding: 16px;
+}
+
+.service-category {
+  font-size: 12px;
+  color: #e11d48;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.service-seller {
+  font-size: 13px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.service-footer {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ================= SERVICE DETAILS ================= */
+
+.service-details-container {
+  padding: 40px;
+}
+
+.service-details-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 40px;
+}
+
+.service-main h1 {
+  margin-bottom: 10px;
+}
+
+.seller-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.rating {
+  color: #e11d48;
+}
+
+/* Gallery */
+.service-gallery {
+  height: 320px;
+  background: #fff1f2;
+  border-radius: 10px;
+  margin-bottom: 30px;
+}
+
+/* Sections */
+.service-section {
+  margin-bottom: 30px;
+}
+
+.feature-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.feature-list li {
+  margin-bottom: 8px;
+}
+
+/* Sidebar */
+.service-sidebar {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 25px;
+  height: fit-content;
+  position: sticky;
+  top: 90px;
+}
+
+.price {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 15px 0;
+}
+
+.delivery {
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.package-features {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 20px;
+}
+
+.package-features li {
+  margin-bottom: 8px;
+}
+
+.order-btn {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.contact-btn {
+  width: 100%;
+}
+
+.faq-item {
+  margin-bottom: 15px;
+}

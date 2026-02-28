@@ -4,7 +4,14 @@ import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create roles
+  console.log("🌱 Seeding database...");
+
+  /*
+   =============================
+   ROLES
+   =============================
+  */
+
   const adminRole = await prisma.role.upsert({
     where: { name: "admin" },
     update: {},
@@ -17,23 +24,61 @@ async function main() {
     create: { name: "user" },
   });
 
-  // Create admin user
+  console.log("✅ Roles ensured");
+
+  /*
+   =============================
+   ADMIN USER (YOU)
+   =============================
+  */
+
   const passwordHash = await bcrypt.hash("admin123", 10);
 
   await prisma.user.upsert({
     where: { email: "admin@taskara.com" },
     update: {},
     create: {
-      name: "Admin",
+      name: "Taskara Admin",
       email: "admin@taskara.com",
       passwordHash,
       roleId: adminRole.id,
+      isActive: true,
     },
   });
 
-  console.log("Admin user created");
+  console.log("✅ Admin user ready");
+
+  /*
+   =============================
+   OPTIONAL: SAMPLE NORMAL USER
+   (useful for testing marketplace)
+   =============================
+  */
+
+  const userPassword = await bcrypt.hash("user123", 10);
+
+  await prisma.user.upsert({
+    where: { email: "user@taskara.com" },
+    update: {},
+    create: {
+      name: "Demo User",
+      email: "user@taskara.com",
+      passwordHash: userPassword,
+      roleId: userRole.id,
+      isActive: true,
+    },
+  });
+
+  console.log("✅ Demo user ready");
+
+  console.log("🌱 Seeding completed successfully");
 }
 
 main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .catch((e) => {
+    console.error("❌ Seed failed:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
