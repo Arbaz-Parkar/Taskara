@@ -24,6 +24,45 @@ export const getMyServices = async (req: AuthRequest, res: Response) => {
   res.json(services);
 };
 
+export const updateMyService = async (req: AuthRequest, res: Response) => {
+  const id = Number(req.params.id);
+  const data = await service.updateServiceBySeller(req.user!.userId, id, req.body);
+
+  if (!data) {
+    return res.status(404).json({ message: "Service not found" });
+  }
+
+  return res.json(data);
+};
+
+export const updateMyServiceStatus = async (req: AuthRequest, res: Response) => {
+  const id = Number(req.params.id);
+  const { isActive } = req.body as { isActive?: boolean };
+
+  if (typeof isActive !== "boolean") {
+    return res.status(400).json({ message: "isActive must be a boolean" });
+  }
+
+  const data = await service.setServiceStatusBySeller(req.user!.userId, id, isActive);
+
+  if (!data) {
+    return res.status(404).json({ message: "Service not found" });
+  }
+
+  return res.json(data);
+};
+
+export const deleteMyService = async (req: AuthRequest, res: Response) => {
+  const id = Number(req.params.id);
+  const deleted = await service.deleteServiceBySeller(req.user!.userId, id);
+
+  if (!deleted) {
+    return res.status(404).json({ message: "Service not found" });
+  }
+
+  return res.json({ message: "Service deleted successfully" });
+};
+
 export const getService = async (req: any, res: Response) => {
   const id = Number(req.params.id);
   const data = await service.getServiceById(id);

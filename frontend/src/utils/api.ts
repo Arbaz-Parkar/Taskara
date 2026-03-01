@@ -82,6 +82,63 @@ export const fetchMyServices = async () => {
   return res.json();
 };
 
+export const updateMyService = async (
+  id: number,
+  data: {
+    title?: string;
+    description?: string;
+    category?: string;
+    price?: number;
+  }
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/services/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to update service");
+  return result;
+};
+
+export const updateMyServiceStatus = async (id: number, isActive: boolean) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/services/${id}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ isActive }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to update status");
+  return result;
+};
+
+export const deleteMyService = async (id: number) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/services/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to delete service");
+  return result;
+};
+
 export const fetchServiceById = async (id: string) => {
   const res = await fetch(`${API}/services/${id}`);
   if (!res.ok) throw new Error("Service not found");

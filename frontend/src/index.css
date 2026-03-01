@@ -633,6 +633,134 @@ select {
   padding: 20px;
 }
 
+.manage-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.manage-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.manage-search {
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+  border: 1px solid #ebc0cb;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.manage-search:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px rgba(223, 31, 79, 0.14);
+}
+
+.manage-filter-group {
+  display: flex;
+  gap: 8px;
+}
+
+.manage-filter-btn {
+  border: 1px solid #efbeca;
+  border-radius: 999px;
+  background: #fff;
+  color: #7c4455;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.manage-filter-btn.active {
+  background: #ffe9ef;
+  color: #922547;
+  border-color: #e9aebe;
+}
+
+.manage-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+}
+
+.manage-service-card {
+  border: 1px solid #f4c9d4;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.manage-service-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.manage-status-chip,
+.manage-date-chip {
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-weight: 600;
+}
+
+.manage-status-chip.active {
+  color: #0f7a3f;
+  background: #def7e8;
+  border: 1px solid #bdebcf;
+}
+
+.manage-status-chip.paused {
+  color: #7a4a00;
+  background: #fff2d7;
+  border: 1px solid #f5ddad;
+}
+
+.manage-date-chip {
+  color: #84535f;
+  background: #fff2f6;
+  border: 1px solid #f6d0da;
+}
+
+.manage-actions-row {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.manage-delete-btn {
+  border: 1px solid #efb2bf;
+  background: #fff1f4;
+  color: #b7153f;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.manage-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.manage-edit-grid {
+  display: grid;
+  gap: 10px;
+}
+
 .overview-market-head {
   margin-bottom: 12px;
 }
@@ -1060,6 +1188,11 @@ select {
 
   .overview-panels {
     grid-template-columns: 1fr;
+  }
+
+  .manage-head-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .service-grid {

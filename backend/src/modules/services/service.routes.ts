@@ -5,11 +5,17 @@ import {
   getServices,
   getService,
   getMyServices,
+  updateMyService,
+  updateMyServiceStatus,
+  deleteMyService,
 } from "./service.controller";
 
 const router = Router();
 
 router.get("/mine", authenticate, getMyServices);
+router.put("/:id", authenticate, updateMyService);
+router.patch("/:id/status", authenticate, updateMyServiceStatus);
+router.delete("/:id", authenticate, deleteMyService);
 
 /* Public routes */
 router.get("/", getServices);

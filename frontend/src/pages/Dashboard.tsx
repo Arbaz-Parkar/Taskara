@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchMyServices, getCurrentUser } from "../utils/api";
+import {
+  deleteMyService,
+  fetchMyServices,
+  getCurrentUser,
+  updateMyService,
+  updateMyServiceStatus,
+} from "../utils/api";
 import { logout } from "../utils/auth";
 import logo from "../assets/logo.png";
 
@@ -16,8 +22,11 @@ type User = {
 type Service = {
   id: number;
   title: string;
+  description: string;
   category: string;
   price: number;
+  isActive: boolean;
+  createdAt: string;
   seller: {
     name: string;
   };
@@ -34,6 +43,13 @@ type View =
 type NavItem = {
   key: View;
   label: string;
+};
+
+type ServiceEditForm = {
+  title: string;
+  category: string;
+  price: string;
+  description: string;
 };
 
 const navItems: NavItem[] = [
@@ -111,17 +127,143 @@ const SidebarIcon = ({ view }: { view: View }) => {
   );
 };
 
-const MyListingsPanel = ({
+const formatDate = (isoDate: string) => {
+  const date = new Date(isoDate);
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const MyServicesManagement = ({
   loading,
   services,
   error,
   onCreate,
+  onUpdate,
+  onDelete,
+  onToggleStatus,
 }: {
   loading: boolean;
   services: Service[];
   error: string;
   onCreate: () => void;
+  onUpdate: (serviceId: number, payload: ServiceEditForm) => Promise<void>;
+  onDelete: (serviceId: number) => Promise<void>;
+  onToggleStatus: (serviceId: number, isActive: boolean) => Promise<void>;
 }) => {
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
+  const [editingServiceId, setEditingServiceId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<ServiceEditForm>({
+    title: "",
+    category: "",
+    price: "",
+    description: "",
+  });
+  const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
+  const [busyServiceId, setBusyServiceId] = useState<number | null>(null);
+
+  const filteredServices = useMemo(() => {
+    const search = query.trim().toLowerCase();
+
+    return services.filter((service) => {
+      const matchesFilter =
+        statusFilter === "all" ||
+        (statusFilter === "active" && service.isActive) ||
+        (statusFilter === "paused" && !service.isActive);
+
+      const matchesSearch =
+        search.length === 0 ||
+        service.title.toLowerCase().includes(search) ||
+        service.category.toLowerCase().includes(search);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [query, services, statusFilter]);
+
+  const startEdit = (service: Service) => {
+    setEditingServiceId(service.id);
+    setActionError("");
+    setActionSuccess("");
+    setEditForm({
+      title: service.title,
+      category: service.category,
+      price: String(service.price),
+      description: service.description,
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingServiceId(null);
+    setActionError("");
+  };
+
+  const submitEdit = async (serviceId: number) => {
+    try {
+      setBusyServiceId(serviceId);
+      setActionError("");
+      setActionSuccess("");
+      await onUpdate(serviceId, editForm);
+      setActionSuccess("Service updated.");
+      setEditingServiceId(null);
+    } catch (err) {
+      if (err instanceof Error) {
+        setActionError(err.message);
+      } else {
+        setActionError("Failed to update service");
+      }
+    } finally {
+      setBusyServiceId(null);
+    }
+  };
+
+  const handleToggleStatus = async (serviceId: number, currentStatus: boolean) => {
+    try {
+      setBusyServiceId(serviceId);
+      setActionError("");
+      setActionSuccess("");
+      await onToggleStatus(serviceId, !currentStatus);
+      setActionSuccess(currentStatus ? "Service paused." : "Service reactivated.");
+    } catch (err) {
+      if (err instanceof Error) {
+        setActionError(err.message);
+      } else {
+        setActionError("Failed to update service status");
+      }
+    } finally {
+      setBusyServiceId(null);
+    }
+  };
+
+  const handleDelete = async (serviceId: number, title: string) => {
+    const confirmed = window.confirm(`Delete "${title}" permanently?`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setBusyServiceId(serviceId);
+      setActionError("");
+      setActionSuccess("");
+      await onDelete(serviceId);
+      setActionSuccess("Service deleted.");
+      if (editingServiceId === serviceId) {
+        setEditingServiceId(null);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setActionError(err.message);
+      } else {
+        setActionError("Failed to delete service");
+      }
+    } finally {
+      setBusyServiceId(null);
+    }
+  };
+
   if (loading) {
     return <div className="dashboard-placeholder">Loading your listings...</div>;
   }
@@ -135,43 +277,180 @@ const MyListingsPanel = ({
     );
   }
 
-  if (services.length === 0) {
-    return (
-      <div className="dashboard-placeholder">
-        <h2>No listings yet</h2>
-        <p>Create your first service to appear in the marketplace.</p>
-        <button type="button" className="btn-primary" onClick={onCreate}>
-          Create Service
-        </button>
-      </div>
-    );
-  }
-
   return (
     <section className="overview-market-section">
-      <div className="overview-market-head">
-        <h3>Your Live Listings ({services.length})</h3>
-        <p>These listings are visible to other users in the marketplace.</p>
+      <div className="manage-head-row">
+        <div className="overview-market-head">
+          <h3>My Services Management</h3>
+          <p>Edit, pause, reactivate, and delete your listings.</p>
+        </div>
+
+        <button type="button" className="btn-primary" onClick={onCreate}>
+          + Create Service
+        </button>
       </div>
 
-      <div className="marketplace-grid">
-        {services.map((service) => (
-          <article key={service.id} className="service-market-card">
-            <div className="service-image-placeholder" />
-            <div className="service-info">
-              <p className="service-category">{service.category}</p>
-              <h3>{service.title}</h3>
-              <p className="service-seller">
-                by <strong>{service.seller.name}</strong>
-              </p>
-              <div className="service-footer">
-                <span>Starting at</span>
-                <strong>?{service.price}</strong>
-              </div>
-            </div>
-          </article>
-        ))}
+      <div className="manage-toolbar">
+        <input
+          className="manage-search"
+          placeholder="Search by title or category"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+
+        <div className="manage-filter-group" role="tablist" aria-label="Service status filter">
+          <button
+            type="button"
+            className={`manage-filter-btn ${statusFilter === "all" ? "active" : ""}`}
+            onClick={() => setStatusFilter("all")}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            className={`manage-filter-btn ${statusFilter === "active" ? "active" : ""}`}
+            onClick={() => setStatusFilter("active")}
+          >
+            Active
+          </button>
+          <button
+            type="button"
+            className={`manage-filter-btn ${statusFilter === "paused" ? "active" : ""}`}
+            onClick={() => setStatusFilter("paused")}
+          >
+            Paused
+          </button>
+        </div>
       </div>
+
+      {actionError && <p className="form-status form-status-error">{actionError}</p>}
+      {actionSuccess && <p className="form-status form-status-success">{actionSuccess}</p>}
+
+      {filteredServices.length === 0 ? (
+        <div className="dashboard-placeholder">
+          <h2>No matching listings</h2>
+          <p>Try adjusting your search/filter or create a new service.</p>
+        </div>
+      ) : (
+        <div className="manage-list-grid">
+          {filteredServices.map((service) => {
+            const isEditing = editingServiceId === service.id;
+            const isBusy = busyServiceId === service.id;
+
+            return (
+              <article key={service.id} className="manage-service-card">
+                <div className="manage-service-header">
+                  <span className={`manage-status-chip ${service.isActive ? "active" : "paused"}`}>
+                    {service.isActive ? "Active" : "Paused"}
+                  </span>
+                  <span className="manage-date-chip">Created {formatDate(service.createdAt)}</span>
+                </div>
+
+                {isEditing ? (
+                  <div className="manage-edit-grid">
+                    <label className="create-field">
+                      <span>Title</span>
+                      <input
+                        value={editForm.title}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, title: event.target.value }))
+                        }
+                      />
+                    </label>
+
+                    <label className="create-field">
+                      <span>Category</span>
+                      <input
+                        value={editForm.category}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, category: event.target.value }))
+                        }
+                      />
+                    </label>
+
+                    <label className="create-field create-price-field">
+                      <span>Price</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editForm.price}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, price: event.target.value }))
+                        }
+                      />
+                    </label>
+
+                    <label className="create-field">
+                      <span>Description</span>
+                      <textarea
+                        rows={4}
+                        value={editForm.description}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, description: event.target.value }))
+                        }
+                      />
+                    </label>
+
+                    <div className="manage-actions-row">
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        disabled={isBusy}
+                        onClick={() => submitEdit(service.id)}
+                      >
+                        {isBusy ? "Saving..." : "Save"}
+                      </button>
+                      <button type="button" className="btn-outline" onClick={cancelEdit}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="service-category">{service.category}</p>
+                    <h3>{service.title}</h3>
+                    <p className="service-seller">{service.description}</p>
+
+                    <div className="service-footer">
+                      <span>Starting at</span>
+                      <strong>{"\u20B9"}{service.price}</strong>
+                    </div>
+
+                    <div className="manage-actions-row">
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        disabled={isBusy}
+                        onClick={() => startEdit(service)}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        disabled={isBusy}
+                        onClick={() => handleToggleStatus(service.id, service.isActive)}
+                      >
+                        {service.isActive ? "Pause" : "Activate"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="manage-delete-btn"
+                        disabled={isBusy}
+                        onClick={() => handleDelete(service.id, service.title)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 };
@@ -181,21 +460,26 @@ const OverviewPanel = ({
   services,
   error,
   onCreate,
+  onUpdate,
+  onDelete,
+  onToggleStatus,
 }: {
   loading: boolean;
   services: Service[];
   error: string;
   onCreate: () => void;
+  onUpdate: (serviceId: number, payload: ServiceEditForm) => Promise<void>;
+  onDelete: (serviceId: number) => Promise<void>;
+  onToggleStatus: (serviceId: number, isActive: boolean) => Promise<void>;
 }) => {
   return (
     <div className="overview-shell">
       <section className="overview-hero-card">
         <div>
           <p className="overview-kicker">Seller Command Center</p>
-          <h2>Build services, publish them, and get discovered by buyers.</h2>
+          <h2>Build services, publish them, and manage them in one place.</h2>
           <p>
-            Everything below is real-time data from your listings and live
-            marketplace services.
+            Listings are real. Updates here directly control what buyers can see.
           </p>
         </div>
 
@@ -206,11 +490,14 @@ const OverviewPanel = ({
         </div>
       </section>
 
-      <MyListingsPanel
+      <MyServicesManagement
         loading={loading}
         services={services}
         error={error}
         onCreate={onCreate}
+        onUpdate={onUpdate}
+        onDelete={onDelete}
+        onToggleStatus={onToggleStatus}
       />
 
       <section className="overview-market-section">
@@ -247,26 +534,52 @@ const Dashboard = () => {
     fetchUser();
   }, [navigate]);
 
-  useEffect(() => {
-    const loadMyServices = async () => {
-      try {
-        setLoadingMyServices(true);
-        setMyServicesError("");
-        const data = await fetchMyServices();
-        setMyServices(data);
-      } catch (err) {
-        if (err instanceof Error) {
-          setMyServicesError(err.message);
-        } else {
-          setMyServicesError("Failed to load your listings");
-        }
-      } finally {
-        setLoadingMyServices(false);
+  const loadMyServices = async () => {
+    try {
+      setLoadingMyServices(true);
+      setMyServicesError("");
+      const data = await fetchMyServices();
+      setMyServices(data);
+    } catch (err) {
+      if (err instanceof Error) {
+        setMyServicesError(err.message);
+      } else {
+        setMyServicesError("Failed to load your listings");
       }
-    };
+    } finally {
+      setLoadingMyServices(false);
+    }
+  };
 
+  useEffect(() => {
     loadMyServices();
   }, []);
+
+  const handleUpdateService = async (serviceId: number, payload: ServiceEditForm) => {
+    const updated = await updateMyService(serviceId, {
+      title: payload.title,
+      description: payload.description,
+      category: payload.category,
+      price: Number(payload.price),
+    });
+
+    setMyServices((current) =>
+      current.map((service) => (service.id === serviceId ? updated : service))
+    );
+  };
+
+  const handleDeleteService = async (serviceId: number) => {
+    await deleteMyService(serviceId);
+    setMyServices((current) => current.filter((service) => service.id !== serviceId));
+  };
+
+  const handleToggleServiceStatus = async (serviceId: number, isActive: boolean) => {
+    const updated = await updateMyServiceStatus(serviceId, isActive);
+
+    setMyServices((current) =>
+      current.map((service) => (service.id === serviceId ? updated : service))
+    );
+  };
 
   const handleLogout = () => {
     logout();
@@ -289,15 +602,21 @@ const Dashboard = () => {
             services={myServices}
             error={myServicesError}
             onCreate={() => handleViewChange("create")}
+            onUpdate={handleUpdateService}
+            onDelete={handleDeleteService}
+            onToggleStatus={handleToggleServiceStatus}
           />
         );
       case "services":
         return (
-          <MyListingsPanel
+          <MyServicesManagement
             loading={loadingMyServices}
             services={myServices}
             error={myServicesError}
             onCreate={() => handleViewChange("create")}
+            onUpdate={handleUpdateService}
+            onDelete={handleDeleteService}
+            onToggleStatus={handleToggleServiceStatus}
           />
         );
       default:
