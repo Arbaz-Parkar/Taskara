@@ -19,6 +19,11 @@ export const getServices = async (_: any, res: Response) => {
   res.json(services);
 };
 
+export const getMyServices = async (req: AuthRequest, res: Response) => {
+  const services = await service.getServicesBySeller(req.user!.userId);
+  res.json(services);
+};
+
 export const getService = async (req: any, res: Response) => {
   const id = Number(req.params.id);
   const data = await service.getServiceById(id);

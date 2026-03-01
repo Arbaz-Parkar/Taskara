@@ -31,6 +31,23 @@ export const getAllServices = async () => {
   });
 };
 
+export const getServicesBySeller = async (userId: number) => {
+  return prisma.service.findMany({
+    where: {
+      sellerId: userId,
+      isActive: true,
+    },
+    include: {
+      seller: {
+        select: {
+          name: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 export const getServiceById = async (id: number) => {
   return prisma.service.findUnique({
     where: { id },

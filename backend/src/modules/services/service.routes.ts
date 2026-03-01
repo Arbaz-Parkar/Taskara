@@ -4,9 +4,12 @@ import {
   createService,
   getServices,
   getService,
+  getMyServices,
 } from "./service.controller";
 
 const router = Router();
+
+router.get("/mine", authenticate, getMyServices);
 
 /* Public routes */
 router.get("/", getServices);

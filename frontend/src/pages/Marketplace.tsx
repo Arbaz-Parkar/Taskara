@@ -1,68 +1,48 @@
 import "../index.css";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { fetchServices } from "../utils/api";
 
 type Service = {
   id: number;
   title: string;
-  seller: string;
-  price: number;
   category: string;
+  price: number;
+  seller: {
+    name: string;
+  };
 };
-
-const mockServices: Service[] = [
-  {
-    id: 1,
-    title: "I will build a modern React website",
-    seller: "ArjunDesigns",
-    price: 2500,
-    category: "Web Development",
-  },
-  {
-    id: 2,
-    title: "Professional logo design for your brand",
-    seller: "PixelStudio",
-    price: 1200,
-    category: "Graphic Design",
-  },
-  {
-    id: 3,
-    title: "SEO optimization for your business",
-    seller: "GrowthExpert",
-    price: 1800,
-    category: "Marketing",
-  },
-  {
-    id: 4,
-    title: "Mobile app development (Android & iOS)",
-    seller: "CodeCraft",
-    price: 6000,
-    category: "App Development",
-  },
-  {
-    id: 5,
-    title: "High-quality video editing",
-    seller: "EditPro",
-    price: 1500,
-    category: "Video Editing",
-  },
-  {
-    id: 6,
-    title: "Content writing for blogs & websites",
-    seller: "WriteFlow",
-    price: 900,
-    category: "Writing",
-  },
-];
 
 const Marketplace = () => {
   const navigate = useNavigate();
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const data = await fetchServices();
+        setServices(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadServices();
+  }, []);
+
+  if (loading) {
+    return <div className="dashboard-content">Loading services...</div>;
+  }
 
   return (
     <div className="marketplace-container">
       <h2 className="marketplace-title">Explore Services</h2>
 
       <div className="marketplace-grid">
-        {mockServices.map((service) => (
+        {services.map((service) => (
           <div
             key={service.id}
             className="service-market-card"
@@ -76,7 +56,7 @@ const Marketplace = () => {
               <h3>{service.title}</h3>
 
               <p className="service-seller">
-                by <strong>{service.seller}</strong>
+                by <strong>{service.seller.name}</strong>
               </p>
 
               <div className="service-footer">

@@ -60,3 +60,56 @@ export const getCurrentUser = async () => {
 
   return data;
 };
+
+const API = "http://localhost:4000/api";
+
+export const fetchServices = async () => {
+  const res = await fetch(`${API}/services`);
+  if (!res.ok) throw new Error("Failed to fetch services");
+  return res.json();
+};
+
+export const fetchMyServices = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/services/mine`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch your services");
+  return res.json();
+};
+
+export const fetchServiceById = async (id: string) => {
+  const res = await fetch(`${API}/services/${id}`);
+  if (!res.ok) throw new Error("Service not found");
+  return res.json();
+};
+
+export const createService = async (data: {
+  title: string;
+  description: string;
+  category: string;
+  price: number;
+}) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/services`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to create service");
+  }
+
+  return result;
+};
