@@ -555,6 +555,77 @@ select {
   height: 100%;
 }
 
+.login-shell {
+  width: 100%;
+  max-width: 1080px;
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.login-showcase {
+  background: linear-gradient(155deg, #fff0f5, #ffe0ea);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow-soft);
+  padding: 28px;
+}
+
+.login-logo {
+  justify-content: flex-start;
+  margin-bottom: 14px;
+}
+
+.login-kicker {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #b43b5f;
+  margin-bottom: 10px;
+}
+
+.login-showcase h2 {
+  font-size: clamp(1.4rem, 2.8vw, 2rem);
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+
+.login-showcase p {
+  color: #734f58;
+}
+
+.login-benefits {
+  list-style: none;
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.login-benefits li {
+  background: #fff;
+  border: 1px solid #f3c7d4;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.login-benefits strong {
+  color: #8e1f45;
+}
+
+.login-benefits span {
+  color: #735660;
+  font-size: 14px;
+}
+
+.login-auth-box {
+  max-width: 100%;
+  height: 100%;
+}
+
 /* ================= DASHBOARD LAYOUT ================= */
 
 .dashboard-container {
@@ -1391,6 +1462,11 @@ select {
     max-width: 520px;
   }
 
+  .login-shell {
+    grid-template-columns: 1fr;
+    max-width: 520px;
+  }
+
   .home-hero {
     grid-template-columns: 1fr;
   }
@@ -1477,6 +1553,10 @@ select {
 
 @media (max-width: 600px) {
   .register-showcase {
+    padding: 20px;
+  }
+
+  .login-showcase {
     padding: 20px;
   }
 
