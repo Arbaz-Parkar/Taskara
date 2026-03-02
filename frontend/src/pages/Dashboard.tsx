@@ -897,6 +897,229 @@ const OrdersManagement = ({
   );
 };
 
+const MessagesWorkspace = ({
+  orders,
+  currentUserId,
+}: {
+  orders: OrderRecord[];
+  currentUserId: number;
+}) => {
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(
+    orders[0]?.id ?? null
+  );
+  const [messagesByOrder, setMessagesByOrder] = useState<Record<number, OrderMessage[]>>({});
+  const [loadingMessagesOrderId, setLoadingMessagesOrderId] = useState<number | null>(null);
+  const [sending, setSending] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [query, setQuery] = useState("");
+  const [error, setError] = useState("");
+
+  const filteredOrders = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+
+    if (normalized.length === 0) {
+      return orders;
+    }
+
+    return orders.filter((order) => {
+      const counterpartyName =
+        order.buyer.id === currentUserId ? order.seller.name : order.buyer.name;
+
+      return (
+        String(order.id).includes(normalized) ||
+        order.service.title.toLowerCase().includes(normalized) ||
+        counterpartyName.toLowerCase().includes(normalized)
+      );
+    });
+  }, [orders, query, currentUserId]);
+
+  const selectedOrder =
+    filteredOrders.find((order) => order.id === selectedOrderId) ??
+    filteredOrders[0] ??
+    null;
+
+  useEffect(() => {
+    if (!selectedOrder && filteredOrders.length > 0) {
+      setSelectedOrderId(filteredOrders[0].id);
+    }
+  }, [filteredOrders, selectedOrder]);
+
+  useEffect(() => {
+    if (!selectedOrder) {
+      return;
+    }
+
+    if (messagesByOrder[selectedOrder.id]) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const load = async () => {
+      try {
+        setLoadingMessagesOrderId(selectedOrder.id);
+        setError("");
+        const data = await fetchOrderMessages(selectedOrder.id);
+        if (!isCancelled) {
+          setMessagesByOrder((current) => ({ ...current, [selectedOrder.id]: data }));
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          if (err instanceof Error) {
+            setError(err.message);
+          } else {
+            setError("Failed to load messages");
+          }
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoadingMessagesOrderId(null);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedOrder, messagesByOrder]);
+
+  const handleSelectOrder = (orderId: number) => {
+    setSelectedOrderId(orderId);
+  };
+
+  const handleSend = async () => {
+    if (!selectedOrder) {
+      return;
+    }
+
+    const content = draft.trim();
+    if (!content) {
+      return;
+    }
+
+    try {
+      setSending(true);
+      setError("");
+      const message = await sendOrderMessage(selectedOrder.id, content);
+      setMessagesByOrder((current) => ({
+        ...current,
+        [selectedOrder.id]: [...(current[selectedOrder.id] ?? []), message],
+      }));
+      setDraft("");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to send message");
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (orders.length === 0) {
+    return (
+      <div className="dashboard-placeholder">
+        <h2>No conversations yet</h2>
+        <p>Chats unlock automatically once you place or receive an order.</p>
+      </div>
+    );
+  }
+
+  return (
+    <section className="messages-shell">
+      <aside className="messages-list-panel">
+        <h3>Order Conversations</h3>
+        <input
+          className="manage-search"
+          placeholder="Search by order, service, or name"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+
+        <div className="messages-list">
+          {filteredOrders.map((order) => {
+            const counterpartyName =
+              order.buyer.id === currentUserId ? order.seller.name : order.buyer.name;
+
+            return (
+              <button
+                key={order.id}
+                type="button"
+                className={`message-thread-btn ${
+                  selectedOrder?.id === order.id ? "active" : ""
+                }`}
+                onClick={() => handleSelectOrder(order.id)}
+              >
+                <strong>{counterpartyName}</strong>
+                <span>{order.service.title}</span>
+                <small>Order #{order.id}</small>
+              </button>
+            );
+          })}
+        </div>
+      </aside>
+
+      <div className="messages-chat-panel">
+        {selectedOrder && (
+          <>
+            <div className="messages-chat-head">
+              <h3>{selectedOrder.service.title}</h3>
+              <p>
+                Order #{selectedOrder.id} · Status: {statusLabel(selectedOrder.status)}
+              </p>
+            </div>
+
+            {error && <p className="form-status form-status-error">{error}</p>}
+
+            <div className="messages-chat-list">
+              {loadingMessagesOrderId === selectedOrder.id ? (
+                <p className="service-seller">Loading messages...</p>
+              ) : (messagesByOrder[selectedOrder.id] ?? []).length === 0 ? (
+                <p className="service-seller">No messages yet. Start the discussion.</p>
+              ) : (
+                (messagesByOrder[selectedOrder.id] ?? []).map((message) => (
+                  <div
+                    key={message.id}
+                    className={`order-chat-item ${
+                      message.senderId === currentUserId ? "outgoing" : "incoming"
+                    }`}
+                  >
+                    <strong>{message.sender.name}</strong>
+                    <p>{message.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="order-chat-compose">
+              <input
+                placeholder="Type your message..."
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+              />
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleSend}
+                disabled={sending}
+              >
+                {sending ? "Sending..." : "Send"}
+              </button>
+            </div>
+
+            <div className="messages-upnext-note">
+              File delivery and attachments will be added in the next phase.
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  );
+};
+
 const OverviewPanel = ({
   loading,
   services,
@@ -965,6 +1188,16 @@ const Dashboard = () => {
   const [sellerOrders, setSellerOrders] = useState<OrderRecord[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [ordersError, setOrdersError] = useState("");
+
+  const mergedOrders = useMemo(() => {
+    const map = new Map<number, OrderRecord>();
+    [...buyerOrders, ...sellerOrders].forEach((order) => {
+      map.set(order.id, order);
+    });
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [buyerOrders, sellerOrders]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -1123,6 +1356,8 @@ const Dashboard = () => {
             currentUserId={user?.userId ?? 0}
           />
         );
+      case "messages":
+        return <MessagesWorkspace orders={mergedOrders} currentUserId={user?.userId ?? 0} />;
       default:
         return (
           <div className="dashboard-placeholder">
