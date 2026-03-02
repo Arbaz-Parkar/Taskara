@@ -63,6 +63,14 @@ export const getCurrentUser = async () => {
 
 const API = "http://localhost:4000/api";
 
+export type OrderStatus =
+  | "PENDING"
+  | "ACCEPTED"
+  | "IN_PROGRESS"
+  | "DELIVERED"
+  | "COMPLETED"
+  | "CANCELLED";
+
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
@@ -136,6 +144,71 @@ export const deleteMyService = async (id: number) => {
 
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || "Failed to delete service");
+  return result;
+};
+
+export const createOrder = async (data: {
+  serviceId: number;
+  requirements?: string;
+}) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/orders`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to create order");
+  return result;
+};
+
+export const fetchBuyerOrders = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/orders/buyer`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to fetch buyer orders");
+  return result;
+};
+
+export const fetchSellerOrders = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/orders/seller`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to fetch seller orders");
+  return result;
+};
+
+export const updateOrderStatus = async (orderId: number, status: OrderStatus) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/orders/${orderId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to update order");
   return result;
 };
 

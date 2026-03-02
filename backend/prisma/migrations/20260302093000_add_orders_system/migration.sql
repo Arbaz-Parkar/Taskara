@@ -1,0 +1,29 @@
+-- CreateEnum
+CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'ACCEPTED', 'IN_PROGRESS', 'DELIVERED', 'COMPLETED', 'CANCELLED');
+
+-- CreateTable
+CREATE TABLE "Order" (
+  "id" SERIAL NOT NULL,
+  "serviceId" INTEGER NOT NULL,
+  "buyerId" INTEGER NOT NULL,
+  "sellerId" INTEGER NOT NULL,
+  "amount" DOUBLE PRECISION NOT NULL,
+  "requirements" TEXT,
+  "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "Order_pkey" PRIMARY KEY ("id")
+);
+
+-- AddForeignKey
+ALTER TABLE "Order" ADD CONSTRAINT "Order_serviceId_fkey"
+FOREIGN KEY ("serviceId") REFERENCES "Service"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Order" ADD CONSTRAINT "Order_buyerId_fkey"
+FOREIGN KEY ("buyerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Order" ADD CONSTRAINT "Order_sellerId_fkey"
+FOREIGN KEY ("sellerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

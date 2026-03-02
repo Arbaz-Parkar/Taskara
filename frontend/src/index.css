@@ -1179,6 +1179,74 @@ select {
   gap: 10px;
 }
 
+.orders-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.order-card {
+  border: 1px solid #f4c9d4;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.order-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.order-status-chip {
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+}
+
+.order-status-chip.pending {
+  color: #8a5700;
+  background: #fff4df;
+  border-color: #f4dcad;
+}
+
+.order-status-chip.accepted,
+.order-status-chip.in_progress {
+  color: #0f4f8f;
+  background: #e8f2ff;
+  border-color: #c5dbfb;
+}
+
+.order-status-chip.delivered {
+  color: #7b2c8e;
+  background: #f7ebff;
+  border-color: #e3c7f5;
+}
+
+.order-status-chip.completed {
+  color: #0f7a3f;
+  background: #def7e8;
+  border-color: #bdebcf;
+}
+
+.order-status-chip.cancelled {
+  color: #a51945;
+  background: #ffe8ef;
+  border-color: #f7c4d4;
+}
+
+.order-requirements {
+  margin-top: 8px;
+  color: #6f5159;
+  font-size: 14px;
+}
+
 .overview-market-head {
   margin-bottom: 12px;
 }
@@ -1510,6 +1578,10 @@ select {
 .order-btn,
 .contact-btn {
   width: 100%;
+  margin-bottom: 12px;
+}
+
+.order-requirements-field {
   margin-bottom: 12px;
 }
 

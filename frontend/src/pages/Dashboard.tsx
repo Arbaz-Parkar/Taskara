@@ -2,11 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   deleteMyService,
+  fetchBuyerOrders,
   fetchMyServices,
+  fetchSellerOrders,
   getCurrentUser,
   updateMyService,
   updateMyServiceStatus,
+  updateOrderStatus as updateOrderStatusApi,
 } from "../utils/api";
+import type { OrderStatus } from "../utils/api";
 import { logout } from "../utils/auth";
 import logo from "../assets/logo.png";
 
@@ -15,7 +19,7 @@ import CreateService from "./CreateService.tsx";
 
 type User = {
   userId: number;
-  name: string;
+  name?: string;
   email: string;
 };
 
@@ -28,6 +32,27 @@ type Service = {
   isActive: boolean;
   createdAt: string;
   seller: {
+    name: string;
+  };
+};
+
+type OrderRecord = {
+  id: number;
+  status: OrderStatus;
+  amount: number;
+  requirements?: string;
+  createdAt: string;
+  service: {
+    id: number;
+    title: string;
+    category: string;
+  };
+  buyer: {
+    id: number;
+    name: string;
+  };
+  seller: {
+    id: number;
     name: string;
   };
 };
@@ -135,6 +160,8 @@ const formatDate = (isoDate: string) => {
     year: "numeric",
   });
 };
+
+const formatPrice = (amount: number) => `\u20B9${amount}`;
 
 const MyServicesManagement = ({
   loading,
@@ -413,7 +440,7 @@ const MyServicesManagement = ({
 
                     <div className="service-footer">
                       <span>Starting at</span>
-                      <strong>{"\u20B9"}{service.price}</strong>
+                      <strong>{formatPrice(service.price)}</strong>
                     </div>
 
                     <div className="manage-actions-row">
@@ -455,6 +482,192 @@ const MyServicesManagement = ({
   );
 };
 
+const OrdersManagement = ({
+  loading,
+  error,
+  buyerOrders,
+  sellerOrders,
+  onStatusChange,
+}: {
+  loading: boolean;
+  error: string;
+  buyerOrders: OrderRecord[];
+  sellerOrders: OrderRecord[];
+  onStatusChange: (orderId: number, status: OrderStatus) => Promise<void>;
+}) => {
+  const [activeTab, setActiveTab] = useState<"buyer" | "seller">("buyer");
+  const [busyOrderId, setBusyOrderId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
+
+  const visibleOrders = activeTab === "buyer" ? buyerOrders : sellerOrders;
+
+  const getSellerActions = (status: OrderStatus) => {
+    if (status === "PENDING") {
+      return [
+        { label: "Accept", nextStatus: "ACCEPTED" as OrderStatus },
+        { label: "Reject", nextStatus: "CANCELLED" as OrderStatus },
+      ];
+    }
+
+    if (status === "ACCEPTED") {
+      return [
+        { label: "Start Work", nextStatus: "IN_PROGRESS" as OrderStatus },
+        { label: "Cancel", nextStatus: "CANCELLED" as OrderStatus },
+      ];
+    }
+
+    if (status === "IN_PROGRESS") {
+      return [
+        { label: "Mark Delivered", nextStatus: "DELIVERED" as OrderStatus },
+        { label: "Cancel", nextStatus: "CANCELLED" as OrderStatus },
+      ];
+    }
+
+    return [];
+  };
+
+  const getBuyerActions = (status: OrderStatus) => {
+    if (status === "DELIVERED") {
+      return [{ label: "Mark Completed", nextStatus: "COMPLETED" as OrderStatus }];
+    }
+
+    if (status === "PENDING" || status === "ACCEPTED" || status === "IN_PROGRESS") {
+      return [{ label: "Cancel", nextStatus: "CANCELLED" as OrderStatus }];
+    }
+
+    return [];
+  };
+
+  const handleAction = async (orderId: number, nextStatus: OrderStatus) => {
+    try {
+      setBusyOrderId(orderId);
+      setActionError("");
+      setActionSuccess("");
+      await onStatusChange(orderId, nextStatus);
+      setActionSuccess(`Order moved to ${nextStatus}.`);
+    } catch (err) {
+      if (err instanceof Error) {
+        setActionError(err.message);
+      } else {
+        setActionError("Failed to update order status");
+      }
+    } finally {
+      setBusyOrderId(null);
+    }
+  };
+
+  if (loading) {
+    return <div className="dashboard-placeholder">Loading orders...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-placeholder">
+        <h2>Could not load orders</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <section className="overview-market-section">
+      <div className="manage-head-row">
+        <div className="overview-market-head">
+          <h3>Orders Management</h3>
+          <p>Track incoming and outgoing orders with real lifecycle states.</p>
+        </div>
+      </div>
+
+      <div className="manage-filter-group" role="tablist" aria-label="Orders tabs">
+        <button
+          type="button"
+          className={`manage-filter-btn ${activeTab === "buyer" ? "active" : ""}`}
+          onClick={() => setActiveTab("buyer")}
+        >
+          My Orders ({buyerOrders.length})
+        </button>
+        <button
+          type="button"
+          className={`manage-filter-btn ${activeTab === "seller" ? "active" : ""}`}
+          onClick={() => setActiveTab("seller")}
+        >
+          Incoming Orders ({sellerOrders.length})
+        </button>
+      </div>
+
+      {actionError && <p className="form-status form-status-error">{actionError}</p>}
+      {actionSuccess && <p className="form-status form-status-success">{actionSuccess}</p>}
+
+      {visibleOrders.length === 0 ? (
+        <div className="dashboard-placeholder">
+          <h2>No orders yet</h2>
+          <p>
+            {activeTab === "buyer"
+              ? "Place an order from any service page to see it here."
+              : "Incoming buyer orders for your services will appear here."}
+          </p>
+        </div>
+      ) : (
+        <div className="orders-grid">
+          {visibleOrders.map((order) => {
+            const actions =
+              activeTab === "seller"
+                ? getSellerActions(order.status)
+                : getBuyerActions(order.status);
+
+            return (
+              <article key={order.id} className="order-card">
+                <div className="order-card-head">
+                  <span className={`order-status-chip ${order.status.toLowerCase()}`}>
+                    {order.status}
+                  </span>
+                  <span className="manage-date-chip">{formatDate(order.createdAt)}</span>
+                </div>
+
+                <h3>{order.service.title}</h3>
+                <p className="service-category">{order.service.category}</p>
+
+                <p className="service-seller">
+                  Buyer: <strong>{order.buyer.name}</strong>
+                </p>
+                <p className="service-seller">
+                  Seller: <strong>{order.seller.name}</strong>
+                </p>
+
+                {order.requirements && (
+                  <p className="order-requirements">Requirements: {order.requirements}</p>
+                )}
+
+                <div className="service-footer">
+                  <span>Order Amount</span>
+                  <strong>{formatPrice(order.amount)}</strong>
+                </div>
+
+                {actions.length > 0 && (
+                  <div className="manage-actions-row">
+                    {actions.map((action) => (
+                      <button
+                        key={action.label}
+                        type="button"
+                        className="btn-outline"
+                        disabled={busyOrderId === order.id}
+                        onClick={() => handleAction(order.id, action.nextStatus)}
+                      >
+                        {busyOrderId === order.id ? "Updating..." : action.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+};
+
 const OverviewPanel = ({
   loading,
   services,
@@ -478,9 +691,7 @@ const OverviewPanel = ({
         <div>
           <p className="overview-kicker">Seller Command Center</p>
           <h2>Build services, publish them, and manage them in one place.</h2>
-          <p>
-            Listings are real. Updates here directly control what buyers can see.
-          </p>
+          <p>Listings are real. Updates here directly control what buyers can see.</p>
         </div>
 
         <div className="overview-actions">
@@ -520,6 +731,11 @@ const Dashboard = () => {
   const [loadingMyServices, setLoadingMyServices] = useState(true);
   const [myServicesError, setMyServicesError] = useState("");
 
+  const [buyerOrders, setBuyerOrders] = useState<OrderRecord[]>([]);
+  const [sellerOrders, setSellerOrders] = useState<OrderRecord[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [ordersError, setOrdersError] = useState("");
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -551,8 +767,32 @@ const Dashboard = () => {
     }
   };
 
+  const loadOrders = async () => {
+    try {
+      setLoadingOrders(true);
+      setOrdersError("");
+
+      const [buyerData, sellerData] = await Promise.all([
+        fetchBuyerOrders(),
+        fetchSellerOrders(),
+      ]);
+
+      setBuyerOrders(buyerData);
+      setSellerOrders(sellerData);
+    } catch (err) {
+      if (err instanceof Error) {
+        setOrdersError(err.message);
+      } else {
+        setOrdersError("Failed to load orders");
+      }
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
   useEffect(() => {
     loadMyServices();
+    loadOrders();
   }, []);
 
   const handleUpdateService = async (serviceId: number, payload: ServiceEditForm) => {
@@ -578,6 +818,17 @@ const Dashboard = () => {
 
     setMyServices((current) =>
       current.map((service) => (service.id === serviceId ? updated : service))
+    );
+  };
+
+  const handleUpdateOrderStatus = async (orderId: number, status: OrderStatus) => {
+    const updated = await updateOrderStatusApi(orderId, status);
+
+    setBuyerOrders((current) =>
+      current.map((order) => (order.id === orderId ? updated : order))
+    );
+    setSellerOrders((current) =>
+      current.map((order) => (order.id === orderId ? updated : order))
     );
   };
 
@@ -617,6 +868,16 @@ const Dashboard = () => {
             onUpdate={handleUpdateService}
             onDelete={handleDeleteService}
             onToggleStatus={handleToggleServiceStatus}
+          />
+        );
+      case "orders":
+        return (
+          <OrdersManagement
+            loading={loadingOrders}
+            error={ordersError}
+            buyerOrders={buyerOrders}
+            sellerOrders={sellerOrders}
+            onStatusChange={handleUpdateOrderStatus}
           />
         );
       default:
@@ -681,7 +942,7 @@ const Dashboard = () => {
           </div>
 
           <div className="topbar-actions">
-            <span className="topbar-welcome">Welcome, {user?.name}</span>
+            <span className="topbar-welcome">Welcome, {user?.name ?? user?.email}</span>
             <button className="btn-outline" onClick={handleLogout}>
               Logout
             </button>
