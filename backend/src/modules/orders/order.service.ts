@@ -8,6 +8,28 @@ export type OrderStatusValue =
   | "COMPLETED"
   | "CANCELLED";
 
+const orderInclude = {
+  service: {
+    select: {
+      id: true,
+      title: true,
+      category: true,
+    },
+  },
+  buyer: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  seller: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+};
+
 export const createOrder = async (
   buyerId: number,
   data: {
@@ -36,54 +58,14 @@ export const createOrder = async (
       requirements: data.requirements,
       status: "PENDING",
     },
-    include: {
-      service: {
-        select: {
-          id: true,
-          title: true,
-          category: true,
-        },
-      },
-      buyer: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      seller: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
+    include: orderInclude,
   });
 };
 
 export const getBuyerOrders = async (buyerId: number) => {
   return prisma.order.findMany({
     where: { buyerId },
-    include: {
-      service: {
-        select: {
-          id: true,
-          title: true,
-          category: true,
-        },
-      },
-      buyer: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      seller: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
+    include: orderInclude,
     orderBy: { createdAt: "desc" },
   });
 };
@@ -91,27 +73,7 @@ export const getBuyerOrders = async (buyerId: number) => {
 export const getSellerOrders = async (sellerId: number) => {
   return prisma.order.findMany({
     where: { sellerId },
-    include: {
-      service: {
-        select: {
-          id: true,
-          title: true,
-          category: true,
-        },
-      },
-      buyer: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      seller: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
+    include: orderInclude,
     orderBy: { createdAt: "desc" },
   });
 };
@@ -166,21 +128,60 @@ export const updateOrderStatus = async (
     data: {
       status: nextStatus,
     },
+    include: orderInclude,
+  });
+};
+
+const getOrderForUser = async (orderId: number, userId: number) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+  });
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (order.buyerId !== userId && order.sellerId !== userId) {
+    throw new Error("You are not allowed to access this order");
+  }
+
+  return order;
+};
+
+export const getOrderMessages = async (orderId: number, userId: number) => {
+  await getOrderForUser(orderId, userId);
+
+  return prisma.orderMessage.findMany({
+    where: { orderId },
     include: {
-      service: {
-        select: {
-          id: true,
-          title: true,
-          category: true,
-        },
-      },
-      buyer: {
+      sender: {
         select: {
           id: true,
           name: true,
         },
       },
-      seller: {
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+};
+
+export const createOrderMessage = async (
+  orderId: number,
+  userId: number,
+  content: string
+) => {
+  await getOrderForUser(orderId, userId);
+
+  return prisma.orderMessage.create({
+    data: {
+      orderId,
+      senderId: userId,
+      content,
+    },
+    include: {
+      sender: {
         select: {
           id: true,
           name: true,

@@ -43,3 +43,45 @@ export const changeOrderStatus = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({ message });
   }
 };
+
+export const getMessagesForOrder = async (req: AuthRequest, res: Response) => {
+  try {
+    const orderId = Number(req.params.id);
+    const messages = await orderService.getOrderMessages(orderId, req.user!.userId);
+    return res.json(messages);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load messages";
+
+    if (message === "Order not found") {
+      return res.status(404).json({ message });
+    }
+
+    return res.status(403).json({ message });
+  }
+};
+
+export const sendMessageForOrder = async (req: AuthRequest, res: Response) => {
+  try {
+    const orderId = Number(req.params.id);
+    const { content } = req.body as { content?: string };
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ message: "content is required" });
+    }
+
+    const message = await orderService.createOrderMessage(
+      orderId,
+      req.user!.userId,
+      content.trim()
+    );
+    return res.status(201).json(message);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to send message";
+
+    if (message === "Order not found") {
+      return res.status(404).json({ message });
+    }
+
+    return res.status(403).json({ message });
+  }
+};

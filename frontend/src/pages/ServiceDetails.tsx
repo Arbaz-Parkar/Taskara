@@ -55,8 +55,8 @@ const ServiceDetails = () => {
         requirements: requirements.trim() || undefined,
       });
 
-      setOrderMessage("Order placed successfully. You can track it in Dashboard > Orders.");
-      setRequirements("");
+      setOrderMessage("Order placed successfully. Redirecting to Orders...");
+      navigate("/dashboard?tab=orders", { replace: true });
     } catch (err) {
       if (err instanceof Error) {
         setOrderError(err.message);

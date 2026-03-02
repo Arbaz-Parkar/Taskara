@@ -32,6 +32,7 @@ model User {
   services        Service[]
   buyerOrders     Order[]   @relation("BuyerOrders")
   sellerOrders    Order[]   @relation("SellerOrders")
+  orderMessages   OrderMessage[]
 }
 
 model ProviderProfile {
@@ -90,4 +91,17 @@ model Order {
   service      Service     @relation(fields: [serviceId], references: [id])
   buyer        User        @relation("BuyerOrders", fields: [buyerId], references: [id])
   seller       User        @relation("SellerOrders", fields: [sellerId], references: [id])
+  messages     OrderMessage[]
+}
+
+model OrderMessage {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  senderId  Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order     Order    @relation(fields: [orderId], references: [id])
+  sender    User     @relation(fields: [senderId], references: [id])
 }

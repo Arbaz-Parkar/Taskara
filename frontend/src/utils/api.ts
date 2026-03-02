@@ -71,6 +71,18 @@ export type OrderStatus =
   | "COMPLETED"
   | "CANCELLED";
 
+export type OrderMessage = {
+  id: number;
+  orderId: number;
+  senderId: number;
+  content: string;
+  createdAt: string;
+  sender: {
+    id: number;
+    name: string;
+  };
+};
+
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
@@ -210,6 +222,37 @@ export const updateOrderStatus = async (orderId: number, status: OrderStatus) =>
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || "Failed to update order");
   return result;
+};
+
+export const fetchOrderMessages = async (orderId: number) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/orders/${orderId}/messages`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to load messages");
+  return result as OrderMessage[];
+};
+
+export const sendOrderMessage = async (orderId: number, content: string) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/orders/${orderId}/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ content }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to send message");
+  return result as OrderMessage;
 };
 
 export const fetchServiceById = async (id: string) => {
