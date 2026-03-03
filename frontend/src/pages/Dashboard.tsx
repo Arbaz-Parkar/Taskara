@@ -1323,6 +1323,11 @@ const Dashboard = () => {
       return;
     }
 
+    if (view === "messages") {
+      navigate("/dashboard/messages");
+      return;
+    }
+
     setActiveView(view);
     setSidebarOpen(false);
 

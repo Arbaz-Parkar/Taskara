@@ -11,6 +11,8 @@ import ServiceEditDashboardPage from "./pages/ServiceEditDashboardPage";
 import OrdersPage from "./pages/OrdersPage";
 import BuyerOrdersPage from "./pages/BuyerOrdersPage";
 import SellerOrdersPage from "./pages/SellerOrdersPage";
+import MessagesPage from "./pages/MessagesPage";
+import MessageThreadPage from "./pages/MessageThreadPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -43,7 +45,8 @@ export default function App() {
             <Route path="orders" element={<OrdersPage />} />
             <Route path="orders/buyer" element={<BuyerOrdersPage />} />
             <Route path="orders/seller" element={<SellerOrdersPage />} />
-            <Route path="messages" element={<Navigate to="/dashboard?tab=messages" replace />} />
+            <Route path="messages" element={<MessagesPage />} />
+            <Route path="messages/:orderId" element={<MessageThreadPage />} />
             <Route path="settings" element={<Navigate to="/dashboard?tab=settings" replace />} />
           </Route>
         </Routes>

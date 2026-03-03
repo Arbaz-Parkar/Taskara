@@ -299,6 +299,14 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
           >
             {isExpanded ? "Hide Messages" : "Messages"}
           </button>
+
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => navigate(`/dashboard/messages/${order.id}`)}
+          >
+            Open Chat Page
+          </button>
         </div>
 
         {isExpanded && (
