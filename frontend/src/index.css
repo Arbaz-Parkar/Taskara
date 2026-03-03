@@ -1432,6 +1432,8 @@ select {
   cursor: pointer;
   display: grid;
   gap: 2px;
+  text-decoration: none;
+  color: inherit;
 }
 
 .message-thread-btn span,
@@ -1467,6 +1469,56 @@ select {
   margin-top: 8px;
   font-size: 13px;
   color: #8a6570;
+}
+
+.message-content-pre {
+  white-space: pre-line;
+}
+
+.message-attach-btn {
+  border: 1px solid #e8b8c6;
+  background: #fff;
+  color: #8e3451;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  min-height: 42px;
+}
+
+.message-attach-btn input {
+  display: none;
+}
+
+.message-attachment-list {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.message-attachment-chip {
+  border: 1px solid #f0bfcc;
+  background: #fff8fa;
+  border-radius: 999px;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6e4854;
+}
+
+.message-attachment-chip button {
+  border: 0;
+  background: transparent;
+  color: #b02951;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
 }
 
 .overview-market-head {

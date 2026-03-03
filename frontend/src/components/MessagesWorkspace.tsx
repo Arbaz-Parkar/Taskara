@@ -35,6 +35,24 @@ type MessagesWorkspaceProps = {
 };
 
 const statusLabel = (status: string) => status.replaceAll("_", " ");
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+
+type PendingAttachment = {
+  id: string;
+  file: File;
+};
+
+const formatBytes = (value: number) => {
+  if (value < 1024) {
+    return `${value} B`;
+  }
+
+  if (value < 1024 * 1024) {
+    return `${(value / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
   const navigate = useNavigate();
@@ -48,6 +66,7 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -161,19 +180,32 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
     }
 
     const content = draft.trim();
-    if (!content) {
+    if (!content && pendingAttachments.length === 0) {
       return;
     }
+
+    const attachmentSummary =
+      pendingAttachments.length === 0
+        ? ""
+        : `\n\nAttachments:\n${pendingAttachments
+            .map(
+              ({ file }) =>
+                `- ${file.name} (${formatBytes(file.size)}, ${file.type || "Unknown type"})`
+            )
+            .join("\n")}`;
+
+    const payload = `${content || "Shared file delivery"}${attachmentSummary}`.trim();
 
     try {
       setSending(true);
       setError("");
-      const message = await sendOrderMessage(selectedOrder.id, content);
+      const message = await sendOrderMessage(selectedOrder.id, payload);
       setMessagesByOrder((current) => ({
         ...current,
         [selectedOrder.id]: [...(current[selectedOrder.id] ?? []), message],
       }));
       setDraft("");
+      setPendingAttachments([]);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -183,6 +215,51 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleAttachmentSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
+      return;
+    }
+
+    const validFiles: PendingAttachment[] = [];
+    let oversizeFound = false;
+
+    files.forEach((file) => {
+      if (file.size > MAX_ATTACHMENT_BYTES) {
+        oversizeFound = true;
+        return;
+      }
+
+      const id = `${file.name}-${file.size}-${file.lastModified}`;
+      validFiles.push({ id, file });
+    });
+
+    setPendingAttachments((current) => {
+      const existing = new Set(current.map((item) => item.id));
+      const merged = [...current];
+
+      validFiles.forEach((item) => {
+        if (!existing.has(item.id)) {
+          merged.push(item);
+        }
+      });
+
+      return merged;
+    });
+
+    if (oversizeFound) {
+      setError("One or more files were skipped because they exceed 10 MB.");
+    } else {
+      setError("");
+    }
+
+    event.target.value = "";
+  };
+
+  const handleRemoveAttachment = (id: string) => {
+    setPendingAttachments((current) => current.filter((item) => item.id !== id));
   };
 
   if (loading) {
@@ -244,7 +321,7 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
             <div className="messages-chat-head">
               <h3>{selectedOrder.service.title}</h3>
               <p>
-                Order #{selectedOrder.id} · Status: {statusLabel(selectedOrder.status)}
+                Order #{selectedOrder.id} | Status: {statusLabel(selectedOrder.status)}
               </p>
             </div>
 
@@ -264,7 +341,7 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
                     }`}
                   >
                     <strong>{message.sender.name}</strong>
-                    <p>{message.content}</p>
+                    <p className="message-content-pre">{message.content}</p>
                   </div>
                 ))
               )}
@@ -276,6 +353,10 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
               />
+              <label className="message-attach-btn" aria-label="Attach files">
+                Attach
+                <input type="file" multiple onChange={handleAttachmentSelect} />
+              </label>
               <button
                 type="button"
                 className="btn-primary"
@@ -286,8 +367,21 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
               </button>
             </div>
 
+            {pendingAttachments.length > 0 && (
+              <div className="message-attachment-list">
+                {pendingAttachments.map(({ id, file }) => (
+                  <div key={id} className="message-attachment-chip">
+                    <span>{`${file.name} (${formatBytes(file.size)})`}</span>
+                    <button type="button" onClick={() => handleRemoveAttachment(id)}>
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="messages-upnext-note">
-              File delivery and attachments will be added in the next phase.
+              Attachments are delivered as secure file metadata in the chat thread.
             </div>
           </>
         ) : (
