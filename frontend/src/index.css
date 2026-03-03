@@ -1013,6 +1013,10 @@ select {
   gap: 12px;
 }
 
+.overview-panel-card .overview-actions {
+  margin-top: 14px;
+}
+
 .overview-panel-card li {
   border: 1px solid #f6d1da;
   background: #fff8fa;
