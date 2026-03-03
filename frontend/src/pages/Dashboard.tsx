@@ -1318,6 +1318,11 @@ const Dashboard = () => {
       return;
     }
 
+    if (view === "orders") {
+      navigate("/dashboard/orders");
+      return;
+    }
+
     setActiveView(view);
     setSidebarOpen(false);
 

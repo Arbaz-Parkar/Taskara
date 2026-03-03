@@ -8,6 +8,9 @@ import ServicesManagementPage from "./pages/ServicesManagementPage";
 import CreateServiceDashboardPage from "./pages/CreateServiceDashboardPage";
 import ServiceDetailsDashboardPage from "./pages/ServiceDetailsDashboardPage";
 import ServiceEditDashboardPage from "./pages/ServiceEditDashboardPage";
+import OrdersPage from "./pages/OrdersPage";
+import BuyerOrdersPage from "./pages/BuyerOrdersPage";
+import SellerOrdersPage from "./pages/SellerOrdersPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -37,9 +40,9 @@ export default function App() {
             <Route path="services" element={<ServicesManagementPage />} />
             <Route path="services/:serviceId" element={<ServiceDetailsDashboardPage />} />
             <Route path="services/:serviceId/edit" element={<ServiceEditDashboardPage />} />
-            <Route path="orders" element={<Navigate to="/dashboard?tab=orders" replace />} />
-            <Route path="orders/buyer" element={<Navigate to="/dashboard?tab=orders" replace />} />
-            <Route path="orders/seller" element={<Navigate to="/dashboard?tab=orders" replace />} />
+            <Route path="orders" element={<OrdersPage />} />
+            <Route path="orders/buyer" element={<BuyerOrdersPage />} />
+            <Route path="orders/seller" element={<SellerOrdersPage />} />
             <Route path="messages" element={<Navigate to="/dashboard?tab=messages" replace />} />
             <Route path="settings" element={<Navigate to="/dashboard?tab=settings" replace />} />
           </Route>
