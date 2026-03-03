@@ -1521,6 +1521,32 @@ select {
   padding: 0;
 }
 
+.sent-attachment-grid {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.sent-attachment-card {
+  border: 1px solid #efc3cf;
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+  text-decoration: none;
+  color: #5f3f48;
+}
+
+.sent-attachment-card strong {
+  font-size: 13px;
+}
+
+.sent-attachment-card span {
+  font-size: 12px;
+  color: #8a6570;
+}
+
 .overview-market-head {
   margin-bottom: 12px;
 }

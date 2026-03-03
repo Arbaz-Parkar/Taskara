@@ -1,4 +1,7 @@
 import prisma from "../../utils/prisma";
+import fs from "fs/promises";
+import path from "path";
+import crypto from "crypto";
 
 export type OrderStatusValue =
   | "PENDING"
@@ -28,6 +31,28 @@ const orderInclude = {
       name: true,
     },
   },
+};
+
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+const MAX_ATTACHMENTS_PER_MESSAGE = 5;
+const uploadsRoot = path.resolve(process.cwd(), "uploads", "order-messages");
+
+type MessageAttachmentInput = {
+  fileName: string;
+  mimeType?: string;
+  dataBase64: string;
+};
+
+const sanitizeFileName = (fileName: string) =>
+  fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+const buildAttachmentUrl = (filePath: string) => {
+  const relativePath = path
+    .relative(path.resolve(process.cwd(), "uploads"), filePath)
+    .split(path.sep)
+    .join("/");
+
+  return `/uploads/${relativePath}`;
 };
 
 export const createOrder = async (
@@ -160,6 +185,15 @@ export const getOrderMessages = async (orderId: number, userId: number) => {
           name: true,
         },
       },
+      attachments: {
+        select: {
+          id: true,
+          fileName: true,
+          fileUrl: true,
+          mimeType: true,
+          size: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "asc",
@@ -170,11 +204,16 @@ export const getOrderMessages = async (orderId: number, userId: number) => {
 export const createOrderMessage = async (
   orderId: number,
   userId: number,
-  content: string
+  content: string,
+  attachments: MessageAttachmentInput[] = []
 ) => {
   await getOrderForUser(orderId, userId);
 
-  return prisma.orderMessage.create({
+  if (attachments.length > MAX_ATTACHMENTS_PER_MESSAGE) {
+    throw new Error(`You can upload up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message`);
+  }
+
+  const message = await prisma.orderMessage.create({
     data: {
       orderId,
       senderId: userId,
@@ -189,4 +228,69 @@ export const createOrderMessage = async (
       },
     },
   });
+
+  if (attachments.length === 0) {
+    return { ...message, attachments: [] };
+  }
+
+  const messageDir = path.join(uploadsRoot, String(orderId), String(message.id));
+  await fs.mkdir(messageDir, { recursive: true });
+
+  const attachmentRows = await Promise.all(
+    attachments.map(async (attachment) => {
+      const decoded = Buffer.from(attachment.dataBase64, "base64");
+
+      if (!decoded.length) {
+        throw new Error("Attachment payload is empty");
+      }
+
+      if (decoded.length > MAX_ATTACHMENT_BYTES) {
+        throw new Error("One or more attachments exceed 10 MB");
+      }
+
+      const safeName = sanitizeFileName(attachment.fileName || "attachment");
+      const uniqueName = `${Date.now()}-${crypto.randomUUID()}-${safeName}`;
+      const outputPath = path.join(messageDir, uniqueName);
+      await fs.writeFile(outputPath, decoded);
+
+      return {
+        messageId: message.id,
+        fileName: attachment.fileName,
+        fileUrl: buildAttachmentUrl(outputPath),
+        mimeType: attachment.mimeType || "application/octet-stream",
+        size: decoded.length,
+      };
+    })
+  );
+
+  await prisma.orderMessageAttachment.createMany({
+    data: attachmentRows,
+  });
+
+  const savedMessage = await prisma.orderMessage.findUnique({
+    where: { id: message.id },
+    include: {
+      sender: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      attachments: {
+        select: {
+          id: true,
+          fileName: true,
+          fileUrl: true,
+          mimeType: true,
+          size: true,
+        },
+      },
+    },
+  });
+
+  if (!savedMessage) {
+    throw new Error("Failed to create message");
+  }
+
+  return savedMessage;
 };

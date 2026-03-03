@@ -36,6 +36,7 @@ type MessagesWorkspaceProps = {
 
 const statusLabel = (status: string) => status.replaceAll("_", " ");
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+const API_BASE = "http://localhost:4000";
 
 type PendingAttachment = {
   id: string;
@@ -52,6 +53,30 @@ const formatBytes = (value: number) => {
   }
 
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const fileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      if (!base64) {
+        reject(new Error("Failed to encode attachment"));
+        return;
+      }
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("Failed to read attachment"));
+    reader.readAsDataURL(file);
+  });
+
+const resolveAttachmentUrl = (fileUrl: string) => {
+  if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
+    return fileUrl;
+  }
+
+  return `${API_BASE}${fileUrl}`;
 };
 
 const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
@@ -184,22 +209,21 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
       return;
     }
 
-    const attachmentSummary =
-      pendingAttachments.length === 0
-        ? ""
-        : `\n\nAttachments:\n${pendingAttachments
-            .map(
-              ({ file }) =>
-                `- ${file.name} (${formatBytes(file.size)}, ${file.type || "Unknown type"})`
-            )
-            .join("\n")}`;
-
-    const payload = `${content || "Shared file delivery"}${attachmentSummary}`.trim();
-
     try {
       setSending(true);
       setError("");
-      const message = await sendOrderMessage(selectedOrder.id, payload);
+      const attachmentPayload = await Promise.all(
+        pendingAttachments.map(async ({ file }) => ({
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          dataBase64: await fileToBase64(file),
+        }))
+      );
+
+      const message = await sendOrderMessage(selectedOrder.id, {
+        content,
+        attachments: attachmentPayload,
+      });
       setMessagesByOrder((current) => ({
         ...current,
         [selectedOrder.id]: [...(current[selectedOrder.id] ?? []), message],
@@ -341,7 +365,24 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
                     }`}
                   >
                     <strong>{message.sender.name}</strong>
-                    <p className="message-content-pre">{message.content}</p>
+                    {message.content && <p className="message-content-pre">{message.content}</p>}
+
+                    {(message.attachments ?? []).length > 0 && (
+                      <div className="sent-attachment-grid">
+                        {(message.attachments ?? []).map((attachment) => (
+                          <a
+                            key={attachment.id}
+                            href={resolveAttachmentUrl(attachment.fileUrl)}
+                            className="sent-attachment-card"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <strong>{attachment.fileName}</strong>
+                            <span>{formatBytes(attachment.size)}</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -381,7 +422,7 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
             )}
 
             <div className="messages-upnext-note">
-              Attachments are delivered as secure file metadata in the chat thread.
+              Uploaded files are attached to this message and can be downloaded by both parties.
             </div>
           </>
         ) : (

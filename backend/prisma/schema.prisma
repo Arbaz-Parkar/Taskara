@@ -102,6 +102,20 @@ model OrderMessage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  order     Order    @relation(fields: [orderId], references: [id])
-  sender    User     @relation(fields: [senderId], references: [id])
+  order        Order                     @relation(fields: [orderId], references: [id])
+  sender       User                      @relation(fields: [senderId], references: [id])
+  attachments  OrderMessageAttachment[]
+}
+
+model OrderMessageAttachment {
+  id         Int      @id @default(autoincrement())
+  messageId  Int
+  fileName   String
+  fileUrl    String
+  mimeType   String
+  size       Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  message    OrderMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
 }

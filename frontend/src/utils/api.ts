@@ -81,6 +81,13 @@ export type OrderMessage = {
     id: number;
     name: string;
   };
+  attachments?: {
+    id: number;
+    fileName: string;
+    fileUrl: string;
+    mimeType: string;
+    size: number;
+  }[];
 };
 
 export const fetchServices = async () => {
@@ -238,7 +245,13 @@ export const fetchOrderMessages = async (orderId: number) => {
   return result as OrderMessage[];
 };
 
-export const sendOrderMessage = async (orderId: number, content: string) => {
+export const sendOrderMessage = async (
+  orderId: number,
+  payload: {
+    content?: string;
+    attachments?: { fileName: string; mimeType?: string; dataBase64: string }[];
+  }
+) => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(`${API}/orders/${orderId}/messages`, {
@@ -247,7 +260,7 @@ export const sendOrderMessage = async (orderId: number, content: string) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify(payload),
   });
 
   const result = await res.json();

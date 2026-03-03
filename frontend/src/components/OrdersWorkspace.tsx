@@ -229,7 +229,7 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
     try {
       setSendingMessageOrderId(orderId);
       setActionError("");
-      const message = await sendOrderMessage(orderId, draft);
+      const message = await sendOrderMessage(orderId, { content: draft });
       setMessagesByOrder((current) => ({
         ...current,
         [orderId]: [...(current[orderId] ?? []), message],

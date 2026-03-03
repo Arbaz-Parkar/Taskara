@@ -56,23 +56,30 @@ export const getMessagesForOrder = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message });
     }
 
-    return res.status(403).json({ message });
+    return res.status(400).json({ message });
   }
 };
 
 export const sendMessageForOrder = async (req: AuthRequest, res: Response) => {
   try {
     const orderId = Number(req.params.id);
-    const { content } = req.body as { content?: string };
+    const { content, attachments } = req.body as {
+      content?: string;
+      attachments?: { fileName: string; mimeType?: string; dataBase64: string }[];
+    };
 
-    if (!content || !content.trim()) {
-      return res.status(400).json({ message: "content is required" });
+    const hasText = Boolean(content && content.trim());
+    const hasAttachments = Boolean(attachments && attachments.length > 0);
+
+    if (!hasText && !hasAttachments) {
+      return res.status(400).json({ message: "content or attachments are required" });
     }
 
     const message = await orderService.createOrderMessage(
       orderId,
       req.user!.userId,
-      content.trim()
+      content?.trim() ?? "",
+      attachments ?? []
     );
     return res.status(201).json(message);
   } catch (error) {
@@ -80,6 +87,10 @@ export const sendMessageForOrder = async (req: AuthRequest, res: Response) => {
 
     if (message === "Order not found") {
       return res.status(404).json({ message });
+    }
+
+    if (message === "You are not allowed to access this order") {
+      return res.status(403).json({ message });
     }
 
     return res.status(403).json({ message });
