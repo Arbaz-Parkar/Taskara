@@ -1308,6 +1308,16 @@ const Dashboard = () => {
   };
 
   const handleViewChange = (view: View) => {
+    if (view === "create") {
+      navigate("/dashboard/services/new");
+      return;
+    }
+
+    if (view === "services") {
+      navigate("/dashboard/services");
+      return;
+    }
+
     setActiveView(view);
     setSidebarOpen(false);
 
