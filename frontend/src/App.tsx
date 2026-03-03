@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -13,6 +13,7 @@ import BuyerOrdersPage from "./pages/BuyerOrdersPage";
 import SellerOrdersPage from "./pages/SellerOrdersPage";
 import MessagesPage from "./pages/MessagesPage";
 import MessageThreadPage from "./pages/MessageThreadPage";
+import SettingsPage from "./pages/SettingsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -47,7 +48,7 @@ export default function App() {
             <Route path="orders/seller" element={<SellerOrdersPage />} />
             <Route path="messages" element={<MessagesPage />} />
             <Route path="messages/:orderId" element={<MessageThreadPage />} />
-            <Route path="settings" element={<Navigate to="/dashboard?tab=settings" replace />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
       </main>
