@@ -1,12 +1,7 @@
-import DashboardShell from "../components/DashboardShell";
 import CreateService from "./CreateService";
 
 const CreateServiceDashboardPage = () => {
-  return (
-    <DashboardShell>
-      <CreateService />
-    </DashboardShell>
-  );
+  return <CreateService />;
 };
 
 export default CreateServiceDashboardPage;

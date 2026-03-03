@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchMyServices, updateMyServiceStatus } from "../utils/api";
-import DashboardShell from "../components/DashboardShell";
 
 type Service = {
   id: number;
@@ -80,7 +79,7 @@ const ServiceDetailsDashboardPage = () => {
   };
 
   return (
-    <DashboardShell>
+    <>
       {loading ? (
         <div className="dashboard-placeholder">Loading service...</div>
       ) : error ? (
@@ -114,7 +113,7 @@ const ServiceDetailsDashboardPage = () => {
           </div>
         </section>
       ) : null}
-    </DashboardShell>
+    </>
   );
 };
 

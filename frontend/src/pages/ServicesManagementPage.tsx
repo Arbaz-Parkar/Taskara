@@ -5,7 +5,6 @@ import {
   fetchMyServices,
   updateMyServiceStatus,
 } from "../utils/api";
-import DashboardShell from "../components/DashboardShell";
 
 type Service = {
   id: number;
@@ -125,140 +124,138 @@ const ServicesManagementPage = () => {
   };
 
   return (
-    <DashboardShell>
-      <section className="overview-market-section">
-        <div className="manage-head-row">
-          <div className="overview-market-head">
-            <h3>My Services Management</h3>
-            <p>Open, edit, pause, reactivate, and delete your listings.</p>
-          </div>
-
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => navigate("/dashboard/services/new")}
-          >
-            + Create Service
-          </button>
+    <section className="overview-market-section">
+      <div className="manage-head-row">
+        <div className="overview-market-head">
+          <h3>My Services Management</h3>
+          <p>Open, edit, pause, reactivate, and delete your listings.</p>
         </div>
 
-        {loading ? (
-          <div className="dashboard-placeholder">Loading your listings...</div>
-        ) : error ? (
-          <div className="dashboard-placeholder">
-            <h2>Could not load your listings</h2>
-            <p>{error}</p>
-          </div>
-        ) : (
-          <>
-            <div className="manage-toolbar">
-              <input
-                className="manage-search"
-                placeholder="Search by title or category"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => navigate("/dashboard/services/new")}
+        >
+          + Create Service
+        </button>
+      </div>
 
-              <div className="manage-filter-group" role="tablist" aria-label="Service status filter">
-                <button
-                  type="button"
-                  className={`manage-filter-btn ${statusFilter === "all" ? "active" : ""}`}
-                  onClick={() => setStatusFilter("all")}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  className={`manage-filter-btn ${statusFilter === "active" ? "active" : ""}`}
-                  onClick={() => setStatusFilter("active")}
-                >
-                  Active
-                </button>
-                <button
-                  type="button"
-                  className={`manage-filter-btn ${statusFilter === "paused" ? "active" : ""}`}
-                  onClick={() => setStatusFilter("paused")}
-                >
-                  Paused
-                </button>
-              </div>
+      {loading ? (
+        <div className="dashboard-placeholder">Loading your listings...</div>
+      ) : error ? (
+        <div className="dashboard-placeholder">
+          <h2>Could not load your listings</h2>
+          <p>{error}</p>
+        </div>
+      ) : (
+        <>
+          <div className="manage-toolbar">
+            <input
+              className="manage-search"
+              placeholder="Search by title or category"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+
+            <div className="manage-filter-group" role="tablist" aria-label="Service status filter">
+              <button
+                type="button"
+                className={`manage-filter-btn ${statusFilter === "all" ? "active" : ""}`}
+                onClick={() => setStatusFilter("all")}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                className={`manage-filter-btn ${statusFilter === "active" ? "active" : ""}`}
+                onClick={() => setStatusFilter("active")}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                className={`manage-filter-btn ${statusFilter === "paused" ? "active" : ""}`}
+                onClick={() => setStatusFilter("paused")}
+              >
+                Paused
+              </button>
             </div>
+          </div>
 
-            {actionError && <p className="form-status form-status-error">{actionError}</p>}
-            {actionSuccess && <p className="form-status form-status-success">{actionSuccess}</p>}
+          {actionError && <p className="form-status form-status-error">{actionError}</p>}
+          {actionSuccess && <p className="form-status form-status-success">{actionSuccess}</p>}
 
-            {filteredServices.length === 0 ? (
-              <div className="dashboard-placeholder">
-                <h2>No matching listings</h2>
-                <p>Try adjusting your search/filter or create a new service.</p>
-              </div>
-            ) : (
-              <div className="manage-list-grid">
-                {filteredServices.map((service) => {
-                  const isBusy = busyServiceId === service.id;
+          {filteredServices.length === 0 ? (
+            <div className="dashboard-placeholder">
+              <h2>No matching listings</h2>
+              <p>Try adjusting your search/filter or create a new service.</p>
+            </div>
+          ) : (
+            <div className="manage-list-grid">
+              {filteredServices.map((service) => {
+                const isBusy = busyServiceId === service.id;
 
-                  return (
-                    <article key={service.id} className="manage-service-card">
-                      <div className="manage-service-header">
-                        <span className={`manage-status-chip ${service.isActive ? "active" : "paused"}`}>
-                          {service.isActive ? "Active" : "Paused"}
-                        </span>
-                        <span className="manage-date-chip">Created {formatDate(service.createdAt)}</span>
-                      </div>
+                return (
+                  <article key={service.id} className="manage-service-card">
+                    <div className="manage-service-header">
+                      <span className={`manage-status-chip ${service.isActive ? "active" : "paused"}`}>
+                        {service.isActive ? "Active" : "Paused"}
+                      </span>
+                      <span className="manage-date-chip">Created {formatDate(service.createdAt)}</span>
+                    </div>
 
-                      <p className="service-category">{service.category}</p>
-                      <h3>{service.title}</h3>
-                      <p className="service-seller">{service.description}</p>
+                    <p className="service-category">{service.category}</p>
+                    <h3>{service.title}</h3>
+                    <p className="service-seller">{service.description}</p>
 
-                      <div className="service-footer">
-                        <span>Starting at</span>
-                        <strong>{`\u20B9${service.price}`}</strong>
-                      </div>
+                    <div className="service-footer">
+                      <span>Starting at</span>
+                      <strong>{`\u20B9${service.price}`}</strong>
+                    </div>
 
-                      <div className="manage-actions-row">
-                        <button
-                          type="button"
-                          className="btn-outline"
-                          onClick={() => navigate(`/dashboard/services/${service.id}`)}
-                        >
-                          Open
-                        </button>
+                    <div className="manage-actions-row">
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        onClick={() => navigate(`/dashboard/services/${service.id}`)}
+                      >
+                        Open
+                      </button>
 
-                        <button
-                          type="button"
-                          className="btn-outline"
-                          onClick={() => navigate(`/dashboard/services/${service.id}/edit`)}
-                        >
-                          Edit
-                        </button>
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        onClick={() => navigate(`/dashboard/services/${service.id}/edit`)}
+                      >
+                        Edit
+                      </button>
 
-                        <button
-                          type="button"
-                          className="btn-outline"
-                          disabled={isBusy}
-                          onClick={() => handleToggleStatus(service.id, service.isActive)}
-                        >
-                          {service.isActive ? "Pause" : "Activate"}
-                        </button>
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        disabled={isBusy}
+                        onClick={() => handleToggleStatus(service.id, service.isActive)}
+                      >
+                        {service.isActive ? "Pause" : "Activate"}
+                      </button>
 
-                        <button
-                          type="button"
-                          className="manage-delete-btn"
-                          disabled={isBusy}
-                          onClick={() => handleDelete(service.id, service.title)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </section>
-    </DashboardShell>
+                      <button
+                        type="button"
+                        className="manage-delete-btn"
+                        disabled={isBusy}
+                        onClick={() => handleDelete(service.id, service.title)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </section>
   );
 };
 

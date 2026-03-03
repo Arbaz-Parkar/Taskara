@@ -1,12 +1,7 @@
-import DashboardShell from "../components/DashboardShell";
 import OrdersWorkspace from "../components/OrdersWorkspace";
 
 const OrdersPage = () => {
-  return (
-    <DashboardShell>
-      <OrdersWorkspace mode="all" />
-    </DashboardShell>
-  );
+  return <OrdersWorkspace mode="all" />;
 };
 
 export default OrdersPage;
