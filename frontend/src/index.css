@@ -43,6 +43,10 @@ body {
   flex: 1;
 }
 
+.dashboard-route-layout {
+  min-height: 100%;
+}
+
 button,
 input,
 textarea,
