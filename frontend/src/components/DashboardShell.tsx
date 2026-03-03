@@ -52,7 +52,7 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
           <NavLink to="/dashboard/services/new" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
             Create Service
           </NavLink>
-          <NavLink to="/dashboard/services" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
+          <NavLink to="/dashboard/services" end className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
             My Listings
           </NavLink>
           <NavLink to="/dashboard/orders" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
