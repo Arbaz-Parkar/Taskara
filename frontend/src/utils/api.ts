@@ -103,6 +103,7 @@ export type OrderMessage = {
   sender: {
     id: number;
     name: string;
+    avatarUrl?: string | null;
   };
   attachments?: {
     id: number;

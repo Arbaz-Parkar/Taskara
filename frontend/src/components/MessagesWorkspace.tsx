@@ -5,6 +5,7 @@ import {
   fetchOrderMessages,
   fetchSellerOrders,
   getCurrentUser,
+  resolveMediaUrl,
   sendOrderMessage,
 } from "../utils/api";
 import type { OrderMessage, OrderStatus } from "../utils/api";
@@ -23,10 +24,12 @@ type OrderRecord = {
   buyer: {
     id: number;
     name: string;
+    avatarUrl?: string | null;
   };
   seller: {
     id: number;
     name: string;
+    avatarUrl?: string | null;
   };
 };
 
@@ -77,6 +80,24 @@ const resolveAttachmentUrl = (fileUrl: string) => {
   }
 
   return `${API_BASE}${fileUrl}`;
+};
+
+const AvatarCircle = ({ avatarUrl, name }: { avatarUrl?: string | null; name: string }) => {
+  const [broken, setBroken] = useState(false);
+  const src = resolveMediaUrl(avatarUrl);
+
+  return (
+    <span className="message-avatar-circle" aria-hidden="true">
+      {src && !broken ? (
+        <img src={src} alt={`${name} avatar`} onError={() => setBroken(true)} />
+      ) : (
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-4.2 3.6-7 8-7s8 2.8 8 7" />
+        </svg>
+      )}
+    </span>
+  );
 };
 
 const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
@@ -330,9 +351,21 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
                 to={`/dashboard/messages/${order.id}`}
                 className={({ isActive }) => `message-thread-btn ${isActive ? "active" : ""}`}
               >
-                <strong>{counterpartyName}</strong>
-                <span>{order.service.title}</span>
-                <small>Order #{order.id}</small>
+                <div className="message-thread-inner">
+                  <AvatarCircle
+                    name={counterpartyName}
+                    avatarUrl={
+                      order.buyer.id === currentUserId
+                        ? order.seller.avatarUrl
+                        : order.buyer.avatarUrl
+                    }
+                  />
+                  <div className="message-thread-content">
+                    <strong>{counterpartyName}</strong>
+                    <span>{order.service.title}</span>
+                    <small>Order #{order.id}</small>
+                  </div>
+                </div>
               </NavLink>
             );
           })}
@@ -370,31 +403,39 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
                 (messagesByOrder[selectedOrder.id] ?? []).map((message) => (
                   <div
                     key={message.id}
-                    className={`order-chat-item ${
+                    className={`message-chat-row ${
                       message.senderId === currentUserId ? "outgoing" : "incoming"
                     }`}
                   >
-                    <Link to={`/profile/${message.sender.id}`} className="profile-inline-link">
-                      <strong>{message.sender.name}</strong>
-                    </Link>
-                    {message.content && <p className="message-content-pre">{message.content}</p>}
+                    <AvatarCircle name={message.sender.name} avatarUrl={message.sender.avatarUrl} />
 
-                    {(message.attachments ?? []).length > 0 && (
-                      <div className="sent-attachment-grid">
-                        {(message.attachments ?? []).map((attachment) => (
-                          <a
-                            key={attachment.id}
-                            href={resolveAttachmentUrl(attachment.fileUrl)}
-                            className="sent-attachment-card"
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <strong>{attachment.fileName}</strong>
-                            <span>{formatBytes(attachment.size)}</span>
-                          </a>
-                        ))}
-                      </div>
-                    )}
+                    <div
+                      className={`order-chat-item ${
+                        message.senderId === currentUserId ? "outgoing" : "incoming"
+                      }`}
+                    >
+                      <Link to={`/profile/${message.sender.id}`} className="profile-inline-link">
+                        <strong>{message.sender.name}</strong>
+                      </Link>
+                      {message.content && <p className="message-content-pre">{message.content}</p>}
+
+                      {(message.attachments ?? []).length > 0 && (
+                        <div className="sent-attachment-grid">
+                          {(message.attachments ?? []).map((attachment) => (
+                            <a
+                              key={attachment.id}
+                              href={resolveAttachmentUrl(attachment.fileUrl)}
+                              className="sent-attachment-card"
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <strong>{attachment.fileName}</strong>
+                              <span>{formatBytes(attachment.size)}</span>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))
               )}

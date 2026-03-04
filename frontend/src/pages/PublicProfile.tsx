@@ -25,6 +25,7 @@ const PublicProfile = () => {
   const [profile, setProfile] = useState<PublicUserProfile | null>(null);
   const [services, setServices] = useState<PublicUserService[]>([]);
   const [reviews, setReviews] = useState<UserReview[]>([]);
+  const [avatarBroken, setAvatarBroken] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -45,6 +46,7 @@ const PublicProfile = () => {
           fetchPublicUserReviews(userId),
         ]);
         setProfile(profileData);
+        setAvatarBroken(false);
         setServices(servicesData);
         setReviews(reviewsData);
       } catch (err) {
@@ -86,12 +88,33 @@ const PublicProfile = () => {
   return (
     <div className="public-profile-shell">
       <section className="public-profile-hero">
-        <p className="overview-kicker">Taskara Profile</p>
-        <h1>{profile.name}</h1>
-        <p className="public-profile-meta">
-          Joined {formatDate(profile.createdAt)} | Active services: {profile.activeServicesCount}
-        </p>
-        <p className="public-profile-meta">{profile.email}</p>
+        <div className="public-profile-header">
+          <div className="public-profile-avatar">
+            {profile.avatarUrl && !avatarBroken ? (
+              <img
+                src={profile.avatarUrl}
+                alt={`${profile.name} profile`}
+                onError={() => setAvatarBroken(true)}
+              />
+            ) : (
+              <span aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4.2 3.6-7 8-7s8 2.8 8 7" />
+                </svg>
+              </span>
+            )}
+          </div>
+
+          <div>
+            <p className="overview-kicker">Taskara Profile</p>
+            <h1>{profile.name}</h1>
+            <p className="public-profile-meta">
+              Joined {formatDate(profile.createdAt)} | Active services: {profile.activeServicesCount}
+            </p>
+            <p className="public-profile-meta">{profile.email}</p>
+          </div>
+        </div>
 
         <div className="public-profile-badges">
           <span>{profile.providerProfile?.verified ? "Verified Seller" : "Unverified Seller"}</span>

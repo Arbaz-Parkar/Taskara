@@ -23,12 +23,14 @@ const orderInclude = {
     select: {
       id: true,
       name: true,
+      avatarUrl: true,
     },
   },
   seller: {
     select: {
       id: true,
       name: true,
+      avatarUrl: true,
     },
   },
   review: {
@@ -193,6 +195,7 @@ export const getOrderMessages = async (orderId: number, userId: number) => {
         select: {
           id: true,
           name: true,
+          avatarUrl: true,
         },
       },
       attachments: {
@@ -234,6 +237,7 @@ export const createOrderMessage = async (
         select: {
           id: true,
           name: true,
+          avatarUrl: true,
         },
       },
     },

@@ -1682,6 +1682,18 @@ select {
   color: inherit;
 }
 
+.message-thread-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.message-thread-content {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
 .message-thread-btn span,
 .message-thread-btn small {
   color: #7a5a63;
@@ -1709,6 +1721,45 @@ select {
   display: grid;
   gap: 8px;
   align-content: start;
+}
+
+.message-avatar-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid #eec0cd;
+  background: #fff;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.message-avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.message-avatar-circle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: #a53b5a;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.message-chat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.message-chat-row.outgoing {
+  justify-content: flex-end;
+  flex-direction: row-reverse;
 }
 
 .messages-upnext-note {
@@ -1834,6 +1885,40 @@ select {
 .public-profile-hero h1 {
   margin: 0 0 6px;
   font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.public-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.public-profile-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 1px solid #efc2cd;
+  background: #fff;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.public-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.public-profile-avatar svg {
+  width: 34px;
+  height: 34px;
+  fill: none;
+  stroke: #a53b5a;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .public-profile-meta {
