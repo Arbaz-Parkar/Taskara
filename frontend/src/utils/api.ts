@@ -154,10 +154,18 @@ export type UserReview = {
   revieweeId: number;
   rating: number;
   comment: string | null;
+  sellerReply: string | null;
+  sellerReplyAt: string | null;
   createdAt: string;
   reviewer: {
     id: number;
     name: string;
+    avatarUrl?: string | null;
+  };
+  reviewee?: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
   };
   order: {
     id: number;
@@ -414,7 +422,19 @@ export const fetchPublicUserReviews = async (userId: number | string) => {
     throw new Error(result.message || "Failed to load user reviews");
   }
 
-  return result as UserReview[];
+  return (result as UserReview[]).map((review) => ({
+    ...review,
+    reviewer: {
+      ...review.reviewer,
+      avatarUrl: resolveMediaUrl(review.reviewer?.avatarUrl),
+    },
+    reviewee: review.reviewee
+      ? {
+          ...review.reviewee,
+          avatarUrl: resolveMediaUrl(review.reviewee.avatarUrl),
+        }
+      : undefined,
+  }));
 };
 
 export const createReview = async (data: {
@@ -440,6 +460,156 @@ export const createReview = async (data: {
   }
 
   return result as UserReview;
+};
+
+export const fetchMyWrittenReviews = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/reviews/mine/written`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to fetch written reviews");
+  }
+
+  return (result as UserReview[]).map((review) => ({
+    ...review,
+    reviewer: {
+      ...review.reviewer,
+      avatarUrl: resolveMediaUrl(review.reviewer?.avatarUrl),
+    },
+    reviewee: review.reviewee
+      ? {
+          ...review.reviewee,
+          avatarUrl: resolveMediaUrl(review.reviewee.avatarUrl),
+        }
+      : undefined,
+  }));
+};
+
+export const fetchMyReceivedReviews = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/reviews/mine/received`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to fetch received reviews");
+  }
+
+  return (result as UserReview[]).map((review) => ({
+    ...review,
+    reviewer: {
+      ...review.reviewer,
+      avatarUrl: resolveMediaUrl(review.reviewer?.avatarUrl),
+    },
+    reviewee: review.reviewee
+      ? {
+          ...review.reviewee,
+          avatarUrl: resolveMediaUrl(review.reviewee.avatarUrl),
+        }
+      : undefined,
+  }));
+};
+
+export const updateMyWrittenReview = async (
+  reviewId: number,
+  data: {
+    rating?: number;
+    comment?: string;
+  }
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/reviews/${reviewId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update review");
+  }
+
+  const review = result as UserReview;
+
+  return {
+    ...review,
+    reviewer: {
+      ...review.reviewer,
+      avatarUrl: resolveMediaUrl(review.reviewer?.avatarUrl),
+    },
+    reviewee: review.reviewee
+      ? {
+          ...review.reviewee,
+          avatarUrl: resolveMediaUrl(review.reviewee.avatarUrl),
+        }
+      : undefined,
+  };
+};
+
+export const deleteMyWrittenReview = async (reviewId: number) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/reviews/${reviewId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to delete review");
+  }
+
+  return result as { message: string };
+};
+
+export const replyToReceivedReview = async (reviewId: number, reply: string) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/reviews/${reviewId}/reply`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ reply }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to reply to review");
+  }
+
+  const review = result as UserReview;
+
+  return {
+    ...review,
+    reviewer: {
+      ...review.reviewer,
+      avatarUrl: resolveMediaUrl(review.reviewer?.avatarUrl),
+    },
+    reviewee: review.reviewee
+      ? {
+          ...review.reviewee,
+          avatarUrl: resolveMediaUrl(review.reviewee.avatarUrl),
+        }
+      : undefined,
+  };
 };
 
 export const fetchMySettings = async () => {

@@ -142,6 +142,8 @@ model Review {
   revieweeId  Int
   rating      Int
   comment     String?
+  sellerReply String?
+  sellerReplyAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

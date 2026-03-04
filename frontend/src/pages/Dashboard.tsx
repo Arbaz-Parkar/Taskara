@@ -7,6 +7,7 @@ const LEGACY_TAB_ROUTES: Record<string, string> = {
   services: "/dashboard/services",
   orders: "/dashboard/orders",
   messages: "/dashboard/messages",
+  reviews: "/dashboard/reviews",
   settings: "/dashboard/settings",
 };
 

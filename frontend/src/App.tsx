@@ -13,6 +13,7 @@ import BuyerOrdersPage from "./pages/BuyerOrdersPage";
 import SellerOrdersPage from "./pages/SellerOrdersPage";
 import MessagesPage from "./pages/MessagesPage";
 import MessageThreadPage from "./pages/MessageThreadPage";
+import ReviewsPage from "./pages/ReviewsPage";
 import SettingsPage from "./pages/SettingsPage";
 import PublicProfile from "./pages/PublicProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -50,6 +51,7 @@ export default function App() {
             <Route path="orders/seller" element={<SellerOrdersPage />} />
             <Route path="messages" element={<MessagesPage />} />
             <Route path="messages/:orderId" element={<MessageThreadPage />} />
+            <Route path="reviews" element={<ReviewsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>

@@ -84,6 +84,9 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
           <NavLink to="/dashboard/messages" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
             Inbox
           </NavLink>
+          <NavLink to="/dashboard/reviews" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
+            Reviews/Ratings
+          </NavLink>
           <NavLink to="/dashboard/settings" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
             Settings
           </NavLink>

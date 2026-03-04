@@ -80,6 +80,7 @@ export const getPublicReviewsByUserId = async (userId: number) => {
         select: {
           id: true,
           name: true,
+          avatarUrl: true,
         },
       },
       order: {

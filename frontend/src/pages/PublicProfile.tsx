@@ -167,6 +167,16 @@ const PublicProfile = () => {
                 ) : (
                   <p className="service-seller">No written comment provided.</p>
                 )}
+                {review.sellerReply && (
+                  <div className="review-seller-reply">
+                    <p className="review-seller-reply-head">
+                      <span className="review-seller-tag">Seller</span>
+                      <strong>{profile.name}</strong>
+                      {review.sellerReplyAt && <span>{formatDate(review.sellerReplyAt)}</span>}
+                    </p>
+                    <p>{review.sellerReply}</p>
+                  </div>
+                )}
                 <p className="service-seller">
                   For service:{" "}
                   <Link to={`/service/${review.order.service.id}`} className="profile-inline-link">

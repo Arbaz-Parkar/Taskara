@@ -2005,6 +2005,87 @@ select {
   font-weight: 700;
 }
 
+.review-seller-reply {
+  margin-top: 10px;
+  border: 1px solid #f0c3cf;
+  border-radius: 10px;
+  background: #fff8fa;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.review-seller-reply-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.review-seller-reply-head span {
+  font-size: 12px;
+  color: #8a6570;
+}
+
+.review-seller-tag {
+  border: 1px solid #eeb9c8;
+  border-radius: 999px;
+  background: #ffeaf1;
+  color: #8f1235;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+}
+
+.reviews-shell {
+  display: grid;
+  gap: 16px;
+}
+
+.reviews-hero-card {
+  background: linear-gradient(150deg, #fff, #ffeef4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 24px;
+  display: grid;
+  gap: 14px;
+}
+
+.reviews-hero-card h2 {
+  margin: 0 0 8px;
+}
+
+.reviews-hero-card p {
+  color: var(--text-muted);
+}
+
+.reviews-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.reviews-summary-grid article {
+  border: 1px solid #f2c9d4;
+  border-radius: 12px;
+  background: #fff8fa;
+  padding: 12px;
+  display: grid;
+  gap: 2px;
+}
+
+.reviews-summary-grid strong {
+  color: #8f1235;
+  font-size: 1.5rem;
+}
+
+.reviews-summary-grid span {
+  color: #7f5a64;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* ================= CREATE SERVICE ================= */
 
 .create-service-shell {
@@ -2486,6 +2567,10 @@ select {
 
   .service-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .reviews-summary-grid {
+    grid-template-columns: 1fr;
   }
 }
 
