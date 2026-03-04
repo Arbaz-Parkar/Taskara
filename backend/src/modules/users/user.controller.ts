@@ -141,3 +141,39 @@ export const updateMyPassword = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({ message });
   }
 };
+
+export const updateMyAvatar = async (req: AuthRequest, res: Response) => {
+  try {
+    const { fileName, mimeType, dataBase64 } = req.body as {
+      fileName?: string;
+      mimeType?: string;
+      dataBase64?: string;
+    };
+
+    if (!fileName || !mimeType || !dataBase64) {
+      return res
+        .status(400)
+        .json({ message: "fileName, mimeType, and dataBase64 are required" });
+    }
+
+    if (!mimeType.startsWith("image/")) {
+      return res.status(400).json({ message: "Only image files are allowed" });
+    }
+
+    const estimatedBytes = Math.floor((dataBase64.length * 3) / 4);
+    if (estimatedBytes > 5 * 1024 * 1024) {
+      return res.status(400).json({ message: "Avatar must be 5 MB or less" });
+    }
+
+    const updated = await userService.updateMyAvatarByUserId(req.user!.userId, {
+      fileName,
+      mimeType,
+      dataBase64,
+    });
+
+    return res.json(updated);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update avatar";
+    return res.status(400).json({ message });
+  }
+};

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   fetchMySettings,
+  updateMyAvatarSettings,
   updateMyPasswordSettings,
   updateMyPreferencesSettings,
   updateMyProfileSettings,
@@ -20,12 +21,29 @@ const initialSaveState: SaveState = {
   error: "",
 };
 
+const fileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      if (!base64) {
+        reject(new Error("Failed to read file"));
+        return;
+      }
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+
 const SettingsPage = () => {
   const [settings, setSettings] = useState<MySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
   const [profileState, setProfileState] = useState(initialSaveState);
+  const [avatarState, setAvatarState] = useState(initialSaveState);
   const [sellerState, setSellerState] = useState(initialSaveState);
   const [prefsState, setPrefsState] = useState(initialSaveState);
   const [securityState, setSecurityState] = useState(initialSaveState);
@@ -33,6 +51,8 @@ const SettingsPage = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState("");
   const [title, setTitle] = useState("");
   const [country, setCountry] = useState("");
 
@@ -66,6 +86,7 @@ const SettingsPage = () => {
         setName(data.name ?? "");
         setPhone(data.phone ?? "");
         setAvatarUrl(data.avatarUrl ?? "");
+        setAvatarPreviewUrl(data.avatarUrl ?? "");
         setTitle(data.title ?? "");
         setCountry(data.country ?? "");
 
@@ -115,7 +136,6 @@ const SettingsPage = () => {
       await updateMyProfileSettings({
         name: name.trim(),
         phone: phone.trim() || null,
-        avatarUrl: avatarUrl.trim() || null,
         title: title.trim() || null,
         country: country.trim() || null,
       });
@@ -130,6 +150,73 @@ const SettingsPage = () => {
         loading: false,
         message: "",
         error: err instanceof Error ? err.message : "Failed to update profile settings",
+      });
+    }
+  };
+
+  const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setAvatarState({
+        loading: false,
+        message: "",
+        error: "Please select an image file.",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarState({
+        loading: false,
+        message: "",
+        error: "Avatar must be 5 MB or less.",
+      });
+      return;
+    }
+
+    setSelectedAvatarFile(file);
+    setAvatarPreviewUrl(URL.createObjectURL(file));
+    setAvatarState(initialSaveState);
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!selectedAvatarFile) {
+      setAvatarState({
+        loading: false,
+        message: "",
+        error: "Please choose an image first.",
+      });
+      return;
+    }
+
+    try {
+      setAvatarState({ loading: true, message: "", error: "" });
+      const dataBase64 = await fileToBase64(selectedAvatarFile);
+      const updated = await updateMyAvatarSettings({
+        fileName: selectedAvatarFile.name,
+        mimeType: selectedAvatarFile.type,
+        dataBase64,
+      });
+
+      setAvatarUrl(updated.avatarUrl ?? "");
+      setAvatarPreviewUrl(updated.avatarUrl ?? avatarPreviewUrl);
+      setSelectedAvatarFile(null);
+      window.dispatchEvent(new Event("taskara:user-updated"));
+
+      setAvatarState({
+        loading: false,
+        message: "Avatar updated successfully.",
+        error: "",
+      });
+    } catch (err) {
+      setAvatarState({
+        loading: false,
+        message: "",
+        error: err instanceof Error ? err.message : "Failed to upload avatar",
       });
     }
   };
@@ -257,6 +344,36 @@ const SettingsPage = () => {
         </div>
 
         <div className="settings-grid">
+          <div className="settings-avatar-block settings-full-width">
+            <div className="settings-avatar-preview">
+              {avatarPreviewUrl ? (
+                <img src={avatarPreviewUrl} alt="Avatar preview" />
+              ) : (
+                <span aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c0-4.2 3.6-7 8-7s8 2.8 8 7" />
+                  </svg>
+                </span>
+              )}
+            </div>
+            <div className="settings-avatar-actions">
+              <label className="btn-outline settings-file-btn">
+                Choose Avatar
+                <input type="file" accept="image/*" onChange={handleAvatarSelect} />
+              </label>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleAvatarUpload}
+                disabled={avatarState.loading}
+              >
+                {avatarState.loading ? "Uploading..." : "Upload Avatar"}
+              </button>
+              {avatarUrl && <p className="service-seller">Current avatar is active.</p>}
+            </div>
+          </div>
+
           <label className="create-field">
             <span>Full Name</span>
             <input value={name} onChange={(event) => setName(event.target.value)} />
@@ -265,15 +382,6 @@ const SettingsPage = () => {
           <label className="create-field">
             <span>Phone</span>
             <input value={phone} onChange={(event) => setPhone(event.target.value)} />
-          </label>
-
-          <label className="create-field">
-            <span>Avatar URL</span>
-            <input
-              placeholder="https://..."
-              value={avatarUrl}
-              onChange={(event) => setAvatarUrl(event.target.value)}
-            />
           </label>
 
           <label className="create-field">
@@ -291,6 +399,8 @@ const SettingsPage = () => {
           </label>
         </div>
 
+        {avatarState.error && <p className="form-status form-status-error">{avatarState.error}</p>}
+        {avatarState.message && <p className="form-status form-status-success">{avatarState.message}</p>}
         {profileState.error && <p className="form-status form-status-error">{profileState.error}</p>}
         {profileState.message && (
           <p className="form-status form-status-success">{profileState.message}</p>

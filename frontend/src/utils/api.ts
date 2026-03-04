@@ -436,7 +436,6 @@ export const fetchMySettings = async () => {
 export const updateMyProfileSettings = async (data: {
   name?: string;
   phone?: string | null;
-  avatarUrl?: string | null;
   title?: string | null;
   country?: string | null;
 }) => {
@@ -457,6 +456,30 @@ export const updateMyProfileSettings = async (data: {
   }
 
   return result;
+};
+
+export const updateMyAvatarSettings = async (data: {
+  fileName: string;
+  mimeType: string;
+  dataBase64: string;
+}) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/me/avatar`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update avatar");
+  }
+
+  return result as { id: number; avatarUrl: string | null };
 };
 
 export const updateMyProviderProfileSettings = async (data: {

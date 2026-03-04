@@ -5,6 +5,7 @@ import {
   getPublicUserProfile,
   getPublicUserReviews,
   getPublicUserServices,
+  updateMyAvatar,
   updateMyPassword,
   updateMyPreferences,
   updateMyProfile,
@@ -14,6 +15,7 @@ import {
 const router = Router();
 
 router.get("/me/settings", authenticate, getMySettings);
+router.patch("/me/avatar", authenticate, updateMyAvatar);
 router.patch("/me/profile", authenticate, updateMyProfile);
 router.patch("/me/preferences", authenticate, updateMyPreferences);
 router.patch("/me/provider-profile", authenticate, updateMyProviderProfile);

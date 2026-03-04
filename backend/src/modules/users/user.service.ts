@@ -1,5 +1,13 @@
 import prisma from "../../utils/prisma";
 import { comparePassword, hashPassword } from "../../utils/hash";
+import fs from "fs/promises";
+import path from "path";
+import crypto from "crypto";
+
+const avatarUploadsRoot = path.resolve(process.cwd(), "uploads", "avatars");
+
+const sanitizeFileName = (fileName: string) =>
+  fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
 
 export const getPublicUserById = async (userId: number) => {
   return prisma.user.findUnique({
@@ -255,6 +263,40 @@ export const updateMyPasswordByUserId = async (
     where: { id: userId },
     data: {
       passwordHash: nextHash,
+    },
+  });
+};
+
+export const updateMyAvatarByUserId = async (
+  userId: number,
+  data: {
+    fileName: string;
+    mimeType: string;
+    dataBase64: string;
+  }
+) => {
+  const decoded = Buffer.from(data.dataBase64, "base64");
+  if (!decoded.length) {
+    throw new Error("Avatar payload is empty");
+  }
+
+  await fs.mkdir(avatarUploadsRoot, { recursive: true });
+
+  const safeName = sanitizeFileName(data.fileName || "avatar");
+  const uniqueName = `${Date.now()}-${crypto.randomUUID()}-${safeName}`;
+  const filePath = path.join(avatarUploadsRoot, uniqueName);
+  await fs.writeFile(filePath, decoded);
+
+  const relativeUrl = `/uploads/avatars/${uniqueName}`;
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      avatarUrl: relativeUrl,
+    },
+    select: {
+      id: true,
+      avatarUrl: true,
     },
   });
 };
