@@ -31,6 +31,16 @@ const orderInclude = {
       name: true,
     },
   },
+  review: {
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      reviewerId: true,
+      revieweeId: true,
+      createdAt: true,
+    },
+  },
 };
 
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;

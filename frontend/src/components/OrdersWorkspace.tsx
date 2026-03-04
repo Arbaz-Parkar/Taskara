@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
+  createReview,
   fetchBuyerOrders,
   fetchOrderMessages,
   fetchSellerOrders,
@@ -31,6 +32,14 @@ type OrderRecord = {
     id: number;
     name: string;
   };
+  review?: {
+    id: number;
+    rating: number;
+    comment: string | null;
+    reviewerId: number;
+    revieweeId: number;
+    createdAt: string;
+  } | null;
 };
 
 type OrdersFilter = "ALL" | OrderStatus;
@@ -59,6 +68,7 @@ const countByStatus = (orders: OrderRecord[], status: OrderStatus) =>
   orders.filter((order) => order.status === status).length;
 const statusLabel = (status: string) => status.replaceAll("_", " ");
 const statusClass = (status: OrderStatus) => status.toLowerCase();
+const renderStars = (rating: number) => "★".repeat(rating) + "☆".repeat(5 - rating);
 
 const getSellerActions = (status: OrderStatus) => {
   if (status === "PENDING") {
@@ -133,6 +143,10 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
   const [loadingMessagesOrderId, setLoadingMessagesOrderId] = useState<number | null>(null);
   const [sendingMessageOrderId, setSendingMessageOrderId] = useState<number | null>(null);
   const [draftByOrder, setDraftByOrder] = useState<Record<number, string>>({});
+  const [reviewFormOrderId, setReviewFormOrderId] = useState<number | null>(null);
+  const [reviewRatingByOrder, setReviewRatingByOrder] = useState<Record<number, number>>({});
+  const [reviewCommentByOrder, setReviewCommentByOrder] = useState<Record<number, string>>({});
+  const [submittingReviewOrderId, setSubmittingReviewOrderId] = useState<number | null>(null);
 
   const filteredBuyerOrders = useMemo(
     () => filterOrders(buyerOrders, buyerFilter, buyerQuery),
@@ -246,10 +260,61 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
     }
   };
 
+  const handleSubmitReview = async (order: OrderRecord) => {
+    const rating = reviewRatingByOrder[order.id];
+    const comment = reviewCommentByOrder[order.id]?.trim();
+
+    if (!rating || rating < 1 || rating > 5) {
+      setActionError("Please select a rating between 1 and 5.");
+      return;
+    }
+
+    try {
+      setSubmittingReviewOrderId(order.id);
+      setActionError("");
+
+      const review = await createReview({
+        orderId: order.id,
+        rating,
+        comment: comment || undefined,
+      });
+
+      const nextReview = {
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        reviewerId: review.reviewerId,
+        revieweeId: review.revieweeId,
+        createdAt: review.createdAt,
+      };
+
+      setBuyerOrders((current) =>
+        current.map((item) => (item.id === order.id ? { ...item, review: nextReview } : item))
+      );
+      setSellerOrders((current) =>
+        current.map((item) => (item.id === order.id ? { ...item, review: nextReview } : item))
+      );
+
+      setReviewFormOrderId(null);
+      setReviewRatingByOrder((current) => ({ ...current, [order.id]: 0 }));
+      setReviewCommentByOrder((current) => ({ ...current, [order.id]: "" }));
+    } catch (err) {
+      if (err instanceof Error) {
+        setActionError(err.message);
+      } else {
+        setActionError("Failed to submit review");
+      }
+    } finally {
+      setSubmittingReviewOrderId(null);
+    }
+  };
+
   const renderOrderCard = (order: OrderRecord, role: "buyer" | "seller") => {
     const actions = role === "seller" ? getSellerActions(order.status) : getBuyerActions(order.status);
     const messages = messagesByOrder[order.id] ?? [];
     const isExpanded = expandedOrderId === order.id;
+    const canReview = role === "buyer" && order.status === "COMPLETED" && !order.review;
+    const isReviewing = reviewFormOrderId === order.id;
 
     return (
       <article key={`${role}-${order.id}`} className="order-card refined-order-card">
@@ -313,7 +378,78 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
           >
             Open Chat Page
           </button>
+
+          {canReview && (
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={() => {
+                setReviewFormOrderId((current) => (current === order.id ? null : order.id));
+                setReviewRatingByOrder((current) => ({
+                  ...current,
+                  [order.id]: current[order.id] ?? 5,
+                }));
+              }}
+            >
+              {isReviewing ? "Cancel Review" : "Leave Review"}
+            </button>
+          )}
         </div>
+
+        {order.review && (
+          <div className="order-review-summary">
+            <strong>Review Submitted</strong>
+            <p>{renderStars(order.review.rating)}</p>
+            {order.review.comment && <span>{order.review.comment}</span>}
+          </div>
+        )}
+
+        {isReviewing && canReview && (
+          <div className="order-review-form">
+            <label className="create-field">
+              <span>Rating</span>
+              <select
+                value={reviewRatingByOrder[order.id] ?? 5}
+                onChange={(event) =>
+                  setReviewRatingByOrder((current) => ({
+                    ...current,
+                    [order.id]: Number(event.target.value),
+                  }))
+                }
+              >
+                <option value={5}>5 - Excellent</option>
+                <option value={4}>4 - Very Good</option>
+                <option value={3}>3 - Good</option>
+                <option value={2}>2 - Fair</option>
+                <option value={1}>1 - Poor</option>
+              </select>
+            </label>
+
+            <label className="create-field">
+              <span>Comment (Optional)</span>
+              <textarea
+                rows={3}
+                placeholder="Share your experience with this seller..."
+                value={reviewCommentByOrder[order.id] ?? ""}
+                onChange={(event) =>
+                  setReviewCommentByOrder((current) => ({
+                    ...current,
+                    [order.id]: event.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => handleSubmitReview(order)}
+              disabled={submittingReviewOrderId === order.id}
+            >
+              {submittingReviewOrderId === order.id ? "Submitting..." : "Submit Review"}
+            </button>
+          </div>
+        )}
 
         {isExpanded && (
           <div className="order-chat-box">

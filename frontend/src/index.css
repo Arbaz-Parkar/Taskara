@@ -1400,6 +1400,43 @@ select {
   box-shadow: 0 0 0 3px rgba(223, 31, 79, 0.12);
 }
 
+.order-review-summary {
+  margin-top: 10px;
+  border: 1px solid #f0c5d0;
+  border-radius: 10px;
+  background: #fff8fa;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.order-review-summary p {
+  color: #b42852;
+  font-weight: 700;
+}
+
+.order-review-summary span {
+  color: #7d5a64;
+  font-size: 13px;
+}
+
+.order-review-form {
+  margin-top: 10px;
+  border: 1px solid #f0c5d0;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  display: grid;
+  gap: 10px;
+}
+
+.order-review-form select {
+  border: 1px solid #ebc0cb;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: #fff;
+}
+
 .messages-shell {
   display: grid;
   grid-template-columns: 320px 1fr;
