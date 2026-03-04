@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
-import { getCurrentUser } from "../utils/api";
+import { getCurrentUser, resolveMediaUrl } from "../utils/api";
 import { logout } from "../utils/auth";
 
 type User = {
@@ -19,12 +19,14 @@ type DashboardShellProps = {
 const DashboardShell = ({ children }: DashboardShellProps) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [avatarBroken, setAvatarBroken] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const data = await getCurrentUser();
         setUser(data.user);
+        setAvatarBroken(false);
       } catch {
         logout();
         navigate("/login");
@@ -55,6 +57,8 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
 
     navigate(`/profile/${user.userId}`);
   };
+
+  const avatarSrc = resolveMediaUrl(user?.avatarUrl);
 
   return (
     <div className="dashboard-container">
@@ -100,8 +104,13 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
               aria-label="Open my profile"
               disabled={!user?.userId}
             >
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="Profile" className="profile-avatar-image" />
+              {avatarSrc && !avatarBroken ? (
+                <img
+                  src={avatarSrc}
+                  alt="Profile"
+                  className="profile-avatar-image"
+                  onError={() => setAvatarBroken(true)}
+                />
               ) : (
                 <span className="profile-avatar-fallback" aria-hidden="true">
                   <svg viewBox="0 0 24 24">

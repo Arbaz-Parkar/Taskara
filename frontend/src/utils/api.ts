@@ -1,4 +1,5 @@
-const API_BASE = "http://localhost:4000/api";
+const BACKEND_ORIGIN = "http://localhost:4000";
+const API_BASE = `${BACKEND_ORIGIN}/api`;
 
 export const registerUser = async (data: {
   name: string;
@@ -46,7 +47,7 @@ export const loginUser = async (data: {
 export const getCurrentUser = async () => {
   const token = localStorage.getItem("token");
 
-  const res = await fetch("http://localhost:4000/api/auth/me", {
+  const res = await fetch(`${API_BASE}/auth/me`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -58,10 +59,32 @@ export const getCurrentUser = async () => {
     throw new Error(data.message || "Failed to fetch user");
   }
 
-  return data;
+  return {
+    ...data,
+    user: {
+      ...data.user,
+      avatarUrl: resolveMediaUrl(data.user?.avatarUrl),
+    },
+  };
 };
 
-const API = "http://localhost:4000/api";
+const API = API_BASE;
+
+export const resolveMediaUrl = (value?: string | null) => {
+  if (!value) {
+    return null;
+  }
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+
+  if (value.startsWith("/")) {
+    return `${BACKEND_ORIGIN}${value}`;
+  }
+
+  return `${BACKEND_ORIGIN}/${value}`;
+};
 
 export type OrderStatus =
   | "PENDING"
@@ -365,7 +388,10 @@ export const fetchPublicUserProfile = async (userId: number | string) => {
     throw new Error(result.message || "Failed to load user profile");
   }
 
-  return result as PublicUserProfile;
+  return {
+    ...(result as PublicUserProfile),
+    avatarUrl: resolveMediaUrl(result.avatarUrl),
+  } as PublicUserProfile;
 };
 
 export const fetchPublicUserServices = async (userId: number | string) => {
@@ -430,7 +456,10 @@ export const fetchMySettings = async () => {
     throw new Error(result.message || "Failed to load settings");
   }
 
-  return result as MySettings;
+  return {
+    ...(result as MySettings),
+    avatarUrl: resolveMediaUrl(result.avatarUrl),
+  } as MySettings;
 };
 
 export const updateMyProfileSettings = async (data: {
@@ -479,7 +508,10 @@ export const updateMyAvatarSettings = async (data: {
     throw new Error(result.message || "Failed to update avatar");
   }
 
-  return result as { id: number; avatarUrl: string | null };
+  return {
+    ...(result as { id: number; avatarUrl: string | null }),
+    avatarUrl: resolveMediaUrl(result.avatarUrl),
+  };
 };
 
 export const updateMyProviderProfileSettings = async (data: {

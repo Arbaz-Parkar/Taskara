@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   fetchMySettings,
+  resolveMediaUrl,
   updateMyAvatarSettings,
   updateMyPasswordSettings,
   updateMyPreferencesSettings,
@@ -203,7 +204,7 @@ const SettingsPage = () => {
       });
 
       setAvatarUrl(updated.avatarUrl ?? "");
-      setAvatarPreviewUrl(updated.avatarUrl ?? avatarPreviewUrl);
+      setAvatarPreviewUrl(resolveMediaUrl(updated.avatarUrl) ?? avatarPreviewUrl);
       setSelectedAvatarFile(null);
       window.dispatchEvent(new Event("taskara:user-updated"));
 
