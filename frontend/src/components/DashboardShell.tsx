@@ -6,8 +6,10 @@ import { getCurrentUser } from "../utils/api";
 import { logout } from "../utils/auth";
 
 type User = {
+  userId?: number;
   name?: string;
   email: string;
+  avatarUrl?: string | null;
 };
 
 type DashboardShellProps = {
@@ -35,6 +37,14 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleOpenProfile = () => {
+    if (!user?.userId) {
+      return;
+    }
+
+    navigate(`/profile/${user.userId}`);
   };
 
   return (
@@ -74,7 +84,24 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
           </div>
 
           <div className="topbar-actions">
-            <span className="topbar-welcome">Welcome, {user?.name ?? user?.email}</span>
+            <button
+              type="button"
+              className="profile-avatar-btn"
+              onClick={handleOpenProfile}
+              aria-label="Open my profile"
+              disabled={!user?.userId}
+            >
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="Profile" className="profile-avatar-image" />
+              ) : (
+                <span className="profile-avatar-fallback" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c0-4.2 3.6-7 8-7s8 2.8 8 7" />
+                  </svg>
+                </span>
+              )}
+            </button>
             <button className="btn-outline" onClick={handleLogout}>
               Logout
             </button>
