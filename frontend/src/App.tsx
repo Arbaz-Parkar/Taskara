@@ -14,6 +14,7 @@ import SellerOrdersPage from "./pages/SellerOrdersPage";
 import MessagesPage from "./pages/MessagesPage";
 import MessageThreadPage from "./pages/MessageThreadPage";
 import SettingsPage from "./pages/SettingsPage";
+import PublicProfile from "./pages/PublicProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/service/:id" element={<ServiceDetails />} />
+          <Route path="/profile/:userId" element={<PublicProfile />} />
 
           {/* Protected dashboard route tree */}
           <Route

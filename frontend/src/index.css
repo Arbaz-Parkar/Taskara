@@ -1563,6 +1563,54 @@ select {
   color: var(--text-muted);
 }
 
+.public-profile-shell {
+  max-width: 1200px;
+  margin: 30px auto 50px;
+  padding: 0 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.public-profile-hero {
+  background: linear-gradient(140deg, #fff, #fff1f5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 24px;
+}
+
+.public-profile-hero h1 {
+  margin: 0 0 6px;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.public-profile-meta {
+  color: #8a6570;
+  margin-top: 3px;
+}
+
+.public-profile-badges {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.public-profile-badges span {
+  background: #ffe9ef;
+  border: 1px solid #f3becd;
+  color: #922547;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.public-profile-bio {
+  margin-top: 14px;
+  color: #6f4f58;
+}
+
 /* ================= CREATE SERVICE ================= */
 
 .create-service-shell {
