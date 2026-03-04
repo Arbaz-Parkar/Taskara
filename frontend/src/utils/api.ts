@@ -121,6 +121,27 @@ export type PublicUserService = {
   };
 };
 
+export type UserReview = {
+  id: number;
+  orderId: number;
+  reviewerId: number;
+  revieweeId: number;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  reviewer: {
+    id: number;
+    name: string;
+  };
+  order: {
+    id: number;
+    service: {
+      id: number;
+      title: string;
+    };
+  };
+};
+
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
@@ -325,6 +346,42 @@ export const fetchPublicUserServices = async (userId: number | string) => {
   }
 
   return result as PublicUserService[];
+};
+
+export const fetchPublicUserReviews = async (userId: number | string) => {
+  const res = await fetch(`${API}/users/${userId}/reviews`);
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to load user reviews");
+  }
+
+  return result as UserReview[];
+};
+
+export const createReview = async (data: {
+  orderId: number;
+  rating: number;
+  comment?: string;
+}) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/reviews`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to create review");
+  }
+
+  return result as UserReview;
 };
 
 export const createService = async (data: {

@@ -33,6 +33,8 @@ model User {
   buyerOrders     Order[]   @relation("BuyerOrders")
   sellerOrders    Order[]   @relation("SellerOrders")
   orderMessages   OrderMessage[]
+  reviewsGiven    Review[]  @relation("ReviewerReviews")
+  reviewsReceived Review[]  @relation("RevieweeReviews")
 }
 
 model ProviderProfile {
@@ -92,6 +94,7 @@ model Order {
   buyer        User        @relation("BuyerOrders", fields: [buyerId], references: [id])
   seller       User        @relation("SellerOrders", fields: [sellerId], references: [id])
   messages     OrderMessage[]
+  review       Review?
 }
 
 model OrderMessage {
@@ -118,4 +121,19 @@ model OrderMessageAttachment {
   updatedAt  DateTime @updatedAt
 
   message    OrderMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  orderId     Int      @unique
+  reviewerId  Int
+  revieweeId  Int
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reviewer    User     @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  reviewee    User     @relation("RevieweeReviews", fields: [revieweeId], references: [id])
 }

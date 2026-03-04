@@ -58,3 +58,33 @@ export const getPublicServicesByUserId = async (userId: number) => {
     },
   });
 };
+
+export const getPublicReviewsByUserId = async (userId: number) => {
+  return prisma.review.findMany({
+    where: {
+      revieweeId: userId,
+    },
+    include: {
+      reviewer: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      order: {
+        select: {
+          id: true,
+          service: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
