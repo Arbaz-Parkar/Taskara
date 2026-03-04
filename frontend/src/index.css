@@ -1621,6 +1621,63 @@ select {
   color: #6f4f58;
 }
 
+.profile-rating-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.profile-rating-summary > div {
+  border: 1px solid #f0c2ce;
+  border-radius: 12px;
+  background: #fff8fa;
+  padding: 12px;
+  display: grid;
+  gap: 3px;
+}
+
+.profile-rating-summary strong {
+  font-size: 1.4rem;
+  color: #8f1235;
+}
+
+.profile-rating-summary span {
+  font-size: 12px;
+  color: #8a6570;
+  font-weight: 600;
+}
+
+.profile-reviews-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-review-card {
+  border: 1px solid #f1c9d4;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+}
+
+.profile-review-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-review-head span {
+  font-size: 12px;
+  color: #8a6570;
+}
+
+.profile-review-stars {
+  margin: 6px 0 8px;
+  color: #b42852;
+  font-weight: 700;
+}
+
 /* ================= CREATE SERVICE ================= */
 
 .create-service-shell {
