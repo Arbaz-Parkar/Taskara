@@ -90,6 +90,37 @@ export type OrderMessage = {
   }[];
 };
 
+export type PublicUserProfile = {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: string;
+  activeServicesCount: number;
+  providerProfile: {
+    bio: string | null;
+    experienceYears: number | null;
+    baseHourlyRate: number | null;
+    serviceRadiusKm: number | null;
+    averageRating: number;
+    totalReviews: number;
+    verified: boolean;
+  } | null;
+};
+
+export type PublicUserService = {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  price: number;
+  isActive: boolean;
+  createdAt: string;
+  seller: {
+    id: number;
+    name: string;
+  };
+};
+
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
@@ -272,6 +303,28 @@ export const fetchServiceById = async (id: string) => {
   const res = await fetch(`${API}/services/${id}`);
   if (!res.ok) throw new Error("Service not found");
   return res.json();
+};
+
+export const fetchPublicUserProfile = async (userId: number | string) => {
+  const res = await fetch(`${API}/users/${userId}`);
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to load user profile");
+  }
+
+  return result as PublicUserProfile;
+};
+
+export const fetchPublicUserServices = async (userId: number | string) => {
+  const res = await fetch(`${API}/users/${userId}/services`);
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to load user services");
+  }
+
+  return result as PublicUserService[];
 };
 
 export const createService = async (data: {
