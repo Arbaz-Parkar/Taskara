@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   fetchBuyerOrders,
   fetchOrderMessages,
@@ -347,6 +347,16 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
               <p>
                 Order #{selectedOrder.id} | Status: {statusLabel(selectedOrder.status)}
               </p>
+              <p className="service-seller">
+                Buyer:{" "}
+                <Link to={`/profile/${selectedOrder.buyer.id}`} className="profile-inline-link">
+                  <strong>{selectedOrder.buyer.name}</strong>
+                </Link>{" "}
+                | Seller:{" "}
+                <Link to={`/profile/${selectedOrder.seller.id}`} className="profile-inline-link">
+                  <strong>{selectedOrder.seller.name}</strong>
+                </Link>
+              </p>
             </div>
 
             {error && <p className="form-status form-status-error">{error}</p>}
@@ -364,7 +374,9 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
                       message.senderId === currentUserId ? "outgoing" : "incoming"
                     }`}
                   >
-                    <strong>{message.sender.name}</strong>
+                    <Link to={`/profile/${message.sender.id}`} className="profile-inline-link">
+                      <strong>{message.sender.name}</strong>
+                    </Link>
                     {message.content && <p className="message-content-pre">{message.content}</p>}
 
                     {(message.attachments ?? []).length > 0 && (

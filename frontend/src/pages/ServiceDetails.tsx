@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { createOrder, fetchServiceById } from "../utils/api";
 import { isAuthenticated } from "../utils/auth";
@@ -11,6 +11,7 @@ type Service = {
   category: string;
   price: number;
   seller: {
+    id: number;
     name: string;
   };
 };
@@ -79,7 +80,9 @@ const ServiceDetails = () => {
           <h1>{service.title}</h1>
 
           <div className="seller-row">
-            <strong>{service.seller.name}</strong>
+            <Link to={`/profile/${service.seller.id}`} className="profile-inline-link">
+              <strong>{service.seller.name}</strong>
+            </Link>
             <span className="rating">5.0</span>
           </div>
 
@@ -119,7 +122,12 @@ const ServiceDetails = () => {
             {placingOrder ? "Placing Order..." : "Continue to Order"}
           </button>
 
-          <button className="btn-outline contact-btn">Contact Seller</button>
+          <button
+            className="btn-outline contact-btn"
+            onClick={() => navigate(`/profile/${service.seller.id}`)}
+          >
+            Contact Seller
+          </button>
         </aside>
       </div>
     </div>

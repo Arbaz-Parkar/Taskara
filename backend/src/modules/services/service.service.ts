@@ -23,6 +23,7 @@ export const getAllServices = async () => {
     include: {
       seller: {
         select: {
+          id: true,
           name: true,
         },
       },
@@ -39,6 +40,7 @@ export const getServicesBySeller = async (userId: number) => {
     include: {
       seller: {
         select: {
+          id: true,
           name: true,
         },
       },
@@ -74,6 +76,7 @@ export const updateServiceBySeller = async (
     include: {
       seller: {
         select: {
+          id: true,
           name: true,
         },
       },
@@ -103,6 +106,7 @@ export const setServiceStatusBySeller = async (
     include: {
       seller: {
         select: {
+          id: true,
           name: true,
         },
       },
@@ -129,7 +133,7 @@ export const getServiceById = async (id: number) => {
     where: { id },
     include: {
       seller: {
-        select: { name: true },
+        select: { id: true, name: true },
       },
     },
   });

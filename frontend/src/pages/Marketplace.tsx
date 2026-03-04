@@ -1,5 +1,5 @@
 import "../index.css";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { fetchServices } from "../utils/api";
 
@@ -9,6 +9,7 @@ type Service = {
   category: string;
   price: number;
   seller: {
+    id: number;
     name: string;
   };
 };
@@ -56,12 +57,19 @@ const Marketplace = () => {
               <h3>{service.title}</h3>
 
               <p className="service-seller">
-                by <strong>{service.seller.name}</strong>
+                by{" "}
+                <Link
+                  to={`/profile/${service.seller.id}`}
+                  className="profile-inline-link"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <strong>{service.seller.name}</strong>
+                </Link>
               </p>
 
               <div className="service-footer">
                 <span>Starting at</span>
-                <strong>₹{service.price}</strong>
+                <strong>{`\u20B9${service.price}`}</strong>
               </div>
             </div>
           </div>

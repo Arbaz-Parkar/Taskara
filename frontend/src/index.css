@@ -1551,6 +1551,16 @@ select {
   color: #8a6570;
 }
 
+.profile-inline-link {
+  color: #8f1235;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.profile-inline-link:hover {
+  text-decoration: underline;
+}
+
 .overview-market-head {
   margin-bottom: 12px;
 }

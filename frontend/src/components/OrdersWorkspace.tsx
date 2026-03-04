@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   fetchBuyerOrders,
   fetchOrderMessages,
@@ -264,10 +264,16 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
         <p className="service-category">{order.service.category}</p>
         <p className="service-seller">Placed on {formatDate(order.createdAt)}</p>
         <p className="service-seller">
-          Buyer: <strong>{order.buyer.name}</strong>
+          Buyer:{" "}
+          <Link to={`/profile/${order.buyer.id}`} className="profile-inline-link">
+            <strong>{order.buyer.name}</strong>
+          </Link>
         </p>
         <p className="service-seller">
-          Seller: <strong>{order.seller.name}</strong>
+          Seller:{" "}
+          <Link to={`/profile/${order.seller.id}`} className="profile-inline-link">
+            <strong>{order.seller.name}</strong>
+          </Link>
         </p>
 
         {order.requirements && (
