@@ -32,6 +32,15 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
     };
 
     fetchUser();
+
+    const handleUserUpdated = () => {
+      fetchUser();
+    };
+
+    window.addEventListener("taskara:user-updated", handleUserUpdated);
+    return () => {
+      window.removeEventListener("taskara:user-updated", handleUserUpdated);
+    };
   }, [navigate]);
 
   const handleLogout = () => {

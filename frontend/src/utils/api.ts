@@ -93,6 +93,8 @@ export type OrderMessage = {
 export type PublicUserProfile = {
   id: number;
   name: string;
+  avatarUrl?: string | null;
+  title?: string | null;
   email: string;
   createdAt: string;
   activeServicesCount: number;
@@ -140,6 +142,35 @@ export type UserReview = {
       title: string;
     };
   };
+};
+
+export type MySettings = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  title: string | null;
+  country: string | null;
+  timezone: string;
+  language: string;
+  currency: string;
+  emailNotifications: boolean;
+  orderNotifications: boolean;
+  messageNotifications: boolean;
+  marketingNotifications: boolean;
+  profileVisibility: string;
+  showOnlineStatus: boolean;
+  createdAt: string;
+  providerProfile: {
+    bio: string | null;
+    experienceYears: number | null;
+    baseHourlyRate: number | null;
+    serviceRadiusKm: number | null;
+    verified: boolean;
+    averageRating: number;
+    totalReviews: number;
+  } | null;
 };
 
 export const fetchServices = async () => {
@@ -382,6 +413,128 @@ export const createReview = async (data: {
   }
 
   return result as UserReview;
+};
+
+export const fetchMySettings = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/me/settings`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to load settings");
+  }
+
+  return result as MySettings;
+};
+
+export const updateMyProfileSettings = async (data: {
+  name?: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  title?: string | null;
+  country?: string | null;
+}) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/me/profile`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update profile");
+  }
+
+  return result;
+};
+
+export const updateMyProviderProfileSettings = async (data: {
+  bio?: string | null;
+  experienceYears?: number | null;
+  baseHourlyRate?: number | null;
+  serviceRadiusKm?: number | null;
+}) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/me/provider-profile`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update seller profile");
+  }
+
+  return result;
+};
+
+export const updateMyPreferencesSettings = async (data: {
+  timezone?: string;
+  language?: string;
+  currency?: string;
+  emailNotifications?: boolean;
+  orderNotifications?: boolean;
+  messageNotifications?: boolean;
+  marketingNotifications?: boolean;
+  profileVisibility?: string;
+  showOnlineStatus?: boolean;
+}) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/me/preferences`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update preferences");
+  }
+
+  return result;
+};
+
+export const updateMyPasswordSettings = async (data: {
+  currentPassword: string;
+  newPassword: string;
+}) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/me/security/password`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update password");
+  }
+
+  return result as { message: string };
 };
 
 export const createService = async (data: {

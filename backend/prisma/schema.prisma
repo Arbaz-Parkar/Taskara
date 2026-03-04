@@ -18,6 +18,18 @@ model User {
   name           String
   email          String   @unique
   phone          String?
+  avatarUrl      String?
+  title          String?
+  country        String?
+  timezone       String   @default("Asia/Kolkata")
+  language       String   @default("English")
+  currency       String   @default("INR")
+  emailNotifications     Boolean @default(true)
+  orderNotifications     Boolean @default(true)
+  messageNotifications   Boolean @default(true)
+  marketingNotifications Boolean @default(false)
+  profileVisibility      String  @default("PUBLIC")
+  showOnlineStatus       Boolean @default(true)
   passwordHash   String
   roleId         Int
   role           Role     @relation(fields: [roleId], references: [id])
