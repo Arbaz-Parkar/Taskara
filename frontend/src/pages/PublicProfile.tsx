@@ -87,6 +87,14 @@ const PublicProfile = () => {
 
   return (
     <div className="public-profile-shell">
+      <div className="public-profile-back-row">
+        <Link to="/dashboard" className="public-profile-back-btn" aria-label="Back to dashboard">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </Link>
+      </div>
+
       <section className="public-profile-hero">
         <div className="public-profile-header">
           <div className="public-profile-avatar">

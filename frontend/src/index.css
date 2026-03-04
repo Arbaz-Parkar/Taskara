@@ -1874,6 +1874,41 @@ select {
   gap: 16px;
 }
 
+.public-profile-back-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.public-profile-back-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #efc0cd;
+  background: #fff;
+  color: #912043;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: var(--shadow-soft);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.public-profile-back-btn:hover {
+  background: #fff0f5;
+  border-color: #e8adbe;
+}
+
+.public-profile-back-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .public-profile-hero {
   background: linear-gradient(140deg, #fff, #fff1f5);
   border: 1px solid var(--line);
