@@ -1875,8 +1875,10 @@ select {
 }
 
 .public-profile-back-row {
-  display: flex;
-  justify-content: flex-start;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 60;
 }
 
 .public-profile-back-btn {
