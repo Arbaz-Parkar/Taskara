@@ -695,7 +695,6 @@ const SettingsPage = () => {
       <section className="settings-card danger-settings-card">
         <div className="settings-card-head">
           <h3>Account Controls</h3>
-          <p>Operational controls commonly available on production marketplaces.</p>
         </div>
         <ul className="settings-actions-list">
           <li>
@@ -732,7 +731,7 @@ const SettingsPage = () => {
           </li>
           <li>
             <strong>Delete account</strong>
-            <span>Permanent deletion workflow with verification checks.</span>
+            <span>Delete your account permanently.</span>
             <label className="create-field">
               <span>Current Password</span>
               <input
