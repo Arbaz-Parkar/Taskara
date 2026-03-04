@@ -592,6 +592,66 @@ export const updateMyPasswordSettings = async (data: {
   return result as { message: string };
 };
 
+export const exportMyAccountData = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/me/export`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to export account data");
+  }
+
+  return result as Record<string, unknown>;
+};
+
+export const deactivateMyAccount = async (currentPassword: string) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/me/deactivate`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ currentPassword }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to deactivate account");
+  }
+
+  return result as { message: string };
+};
+
+export const deleteMyAccount = async (
+  currentPassword: string,
+  confirmationText: string
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/me`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ currentPassword, confirmationText }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to delete account");
+  }
+
+  return result as { message: string };
+};
+
 export const createService = async (data: {
   title: string;
   description: string;

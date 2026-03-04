@@ -300,3 +300,245 @@ export const updateMyAvatarByUserId = async (
     },
   });
 };
+
+export const exportMyAccountDataByUserId = async (userId: number) => {
+  const [profile, services, buyerOrders, sellerOrders, messages, reviewsGiven, reviewsReceived] =
+    await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatarUrl: true,
+          title: true,
+          country: true,
+          timezone: true,
+          language: true,
+          currency: true,
+          emailNotifications: true,
+          orderNotifications: true,
+          messageNotifications: true,
+          marketingNotifications: true,
+          profileVisibility: true,
+          showOnlineStatus: true,
+          isActive: true,
+          createdAt: true,
+          providerProfile: true,
+        },
+      }),
+      prisma.service.findMany({
+        where: { sellerId: userId },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.order.findMany({
+        where: { buyerId: userId },
+        include: {
+          service: true,
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          review: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.order.findMany({
+        where: { sellerId: userId },
+        include: {
+          service: true,
+          buyer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          review: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.orderMessage.findMany({
+        where: { senderId: userId },
+        include: {
+          attachments: true,
+          order: {
+            select: {
+              id: true,
+              status: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.review.findMany({
+        where: { reviewerId: userId },
+        include: {
+          order: {
+            select: {
+              id: true,
+              service: {
+                select: {
+                  id: true,
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.review.findMany({
+        where: { revieweeId: userId },
+        include: {
+          reviewer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          order: {
+            select: {
+              id: true,
+              service: {
+                select: {
+                  id: true,
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+  return {
+    exportedAt: new Date().toISOString(),
+    profile,
+    services,
+    buyerOrders,
+    sellerOrders,
+    messages,
+    reviewsGiven,
+    reviewsReceived,
+  };
+};
+
+export const deactivateMyAccountByUserId = async (
+  userId: number,
+  currentPassword: string
+) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      passwordHash: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const valid = await comparePassword(currentPassword, user.passwordHash);
+  if (!valid) {
+    throw new Error("Current password is incorrect");
+  }
+
+  await prisma.$transaction([
+    prisma.service.updateMany({
+      where: {
+        sellerId: userId,
+      },
+      data: {
+        isActive: false,
+      },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        isActive: false,
+      },
+    }),
+  ]);
+};
+
+export const deleteMyAccountByUserId = async (
+  userId: number,
+  currentPassword: string
+) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      passwordHash: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const valid = await comparePassword(currentPassword, user.passwordHash);
+  if (!valid) {
+    throw new Error("Current password is incorrect");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.orderMessageAttachment.deleteMany({
+      where: {
+        message: {
+          OR: [
+            { senderId: userId },
+            { order: { buyerId: userId } },
+            { order: { sellerId: userId } },
+          ],
+        },
+      },
+    });
+
+    await tx.orderMessage.deleteMany({
+      where: {
+        OR: [
+          { senderId: userId },
+          { order: { buyerId: userId } },
+          { order: { sellerId: userId } },
+        ],
+      },
+    });
+
+    await tx.review.deleteMany({
+      where: {
+        OR: [{ reviewerId: userId }, { revieweeId: userId }],
+      },
+    });
+
+    await tx.order.deleteMany({
+      where: {
+        OR: [{ buyerId: userId }, { sellerId: userId }],
+      },
+    });
+
+    await tx.service.deleteMany({
+      where: {
+        sellerId: userId,
+      },
+    });
+
+    await tx.providerProfile.deleteMany({
+      where: {
+        userId,
+      },
+    });
+
+    await tx.user.delete({
+      where: { id: userId },
+    });
+  });
+};

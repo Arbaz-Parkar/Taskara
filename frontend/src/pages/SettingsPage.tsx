@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import {
+  deactivateMyAccount,
+  deleteMyAccount,
+  exportMyAccountData,
   fetchMySettings,
   resolveMediaUrl,
   updateMyAvatarSettings,
@@ -9,6 +12,8 @@ import {
   updateMyProviderProfileSettings,
   type MySettings,
 } from "../utils/api";
+import { logout } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 
 type SaveState = {
   loading: boolean;
@@ -39,6 +44,7 @@ const fileToBase64 = (file: File) =>
   });
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<MySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -48,6 +54,7 @@ const SettingsPage = () => {
   const [sellerState, setSellerState] = useState(initialSaveState);
   const [prefsState, setPrefsState] = useState(initialSaveState);
   const [securityState, setSecurityState] = useState(initialSaveState);
+  const [accountState, setAccountState] = useState(initialSaveState);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -75,6 +82,9 @@ const SettingsPage = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [deactivatePassword, setDeactivatePassword] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -311,6 +321,93 @@ const SettingsPage = () => {
         loading: false,
         message: "",
         error: err instanceof Error ? err.message : "Failed to update password",
+      });
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      setAccountState({ loading: true, message: "", error: "" });
+      const data = await exportMyAccountData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `taskara-account-export-${new Date().toISOString()}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+
+      setAccountState({
+        loading: false,
+        message: "Account data exported successfully.",
+        error: "",
+      });
+    } catch (err) {
+      setAccountState({
+        loading: false,
+        message: "",
+        error: err instanceof Error ? err.message : "Failed to export data",
+      });
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    if (!deactivatePassword) {
+      setAccountState({
+        loading: false,
+        message: "",
+        error: "Enter your current password to deactivate account.",
+      });
+      return;
+    }
+
+    try {
+      setAccountState({ loading: true, message: "", error: "" });
+      await deactivateMyAccount(deactivatePassword);
+      logout();
+      navigate("/login", { replace: true });
+    } catch (err) {
+      setAccountState({
+        loading: false,
+        message: "",
+        error: err instanceof Error ? err.message : "Failed to deactivate account",
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      setAccountState({
+        loading: false,
+        message: "",
+        error: "Enter your current password to delete account.",
+      });
+      return;
+    }
+
+    if (deleteConfirmText !== "DELETE") {
+      setAccountState({
+        loading: false,
+        message: "",
+        error: 'Type "DELETE" to confirm permanent deletion.',
+      });
+      return;
+    }
+
+    try {
+      setAccountState({ loading: true, message: "", error: "" });
+      await deleteMyAccount(deletePassword, deleteConfirmText);
+      logout();
+      navigate("/register", { replace: true });
+    } catch (err) {
+      setAccountState({
+        loading: false,
+        message: "",
+        error: err instanceof Error ? err.message : "Failed to delete account",
       });
     }
   };
@@ -604,25 +701,68 @@ const SettingsPage = () => {
           <li>
             <strong>Download account data</strong>
             <span>Export profile, services, orders, and messages.</span>
-            <button type="button" className="btn-outline" disabled>
-              Coming Soon
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={handleExportData}
+              disabled={accountState.loading}
+            >
+              {accountState.loading ? "Exporting..." : "Download JSON Export"}
             </button>
           </li>
           <li>
             <strong>Deactivate account</strong>
             <span>Temporarily disable your account and hide listings.</span>
-            <button type="button" className="btn-outline" disabled>
-              Coming Soon
+            <label className="create-field">
+              <span>Current Password</span>
+              <input
+                type="password"
+                value={deactivatePassword}
+                onChange={(event) => setDeactivatePassword(event.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={handleDeactivateAccount}
+              disabled={accountState.loading}
+            >
+              Deactivate Account
             </button>
           </li>
           <li>
             <strong>Delete account</strong>
             <span>Permanent deletion workflow with verification checks.</span>
-            <button type="button" className="btn-outline" disabled>
-              Coming Soon
+            <label className="create-field">
+              <span>Current Password</span>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(event) => setDeletePassword(event.target.value)}
+              />
+            </label>
+            <label className="create-field">
+              <span>Type DELETE to confirm</span>
+              <input
+                value={deleteConfirmText}
+                onChange={(event) => setDeleteConfirmText(event.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="btn-outline danger-button"
+              onClick={handleDeleteAccount}
+              disabled={accountState.loading}
+            >
+              Permanently Delete Account
             </button>
           </li>
         </ul>
+
+        {accountState.error && <p className="form-status form-status-error">{accountState.error}</p>}
+        {accountState.message && (
+          <p className="form-status form-status-success">{accountState.message}</p>
+        )}
       </section>
     </div>
   );

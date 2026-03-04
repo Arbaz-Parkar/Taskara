@@ -1108,6 +1108,12 @@ select {
   margin-bottom: 6px;
 }
 
+.danger-button {
+  border-color: #e4899f;
+  color: #b10f41;
+  background: #fff2f6;
+}
+
 /* ================= DASHBOARD OVERVIEW ================= */
 
 .overview-shell {

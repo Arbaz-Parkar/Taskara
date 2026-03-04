@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import prisma from "../utils/prisma";
 
 interface JwtPayload {
   userId: number;
@@ -11,7 +12,7 @@ export interface AuthRequest extends Request {
   user?: JwtPayload;
 }
 
-export const authenticate = (
+export const authenticate = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -29,6 +30,22 @@ export const authenticate = (
       token,
       process.env.JWT_SECRET as string
     ) as JwtPayload;
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        isActive: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid account" });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: "Account is deactivated" });
+    }
 
     req.user = decoded;
     next();

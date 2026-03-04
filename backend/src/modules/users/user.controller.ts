@@ -177,3 +177,58 @@ export const updateMyAvatar = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({ message });
   }
 };
+
+export const exportMyAccountData = async (req: AuthRequest, res: Response) => {
+  try {
+    const data = await userService.exportMyAccountDataByUserId(req.user!.userId);
+    return res.json(data);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to export account data";
+    return res.status(400).json({ message });
+  }
+};
+
+export const deactivateMyAccount = async (req: AuthRequest, res: Response) => {
+  try {
+    const { currentPassword } = req.body as { currentPassword?: string };
+
+    if (!currentPassword) {
+      return res.status(400).json({ message: "currentPassword is required" });
+    }
+
+    await userService.deactivateMyAccountByUserId(req.user!.userId, currentPassword);
+    return res.json({ message: "Account deactivated successfully" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to deactivate account";
+    if (message === "Current password is incorrect") {
+      return res.status(401).json({ message });
+    }
+    return res.status(400).json({ message });
+  }
+};
+
+export const deleteMyAccount = async (req: AuthRequest, res: Response) => {
+  try {
+    const { currentPassword, confirmationText } = req.body as {
+      currentPassword?: string;
+      confirmationText?: string;
+    };
+
+    if (!currentPassword) {
+      return res.status(400).json({ message: "currentPassword is required" });
+    }
+
+    if (confirmationText !== "DELETE") {
+      return res.status(400).json({ message: "confirmationText must be DELETE" });
+    }
+
+    await userService.deleteMyAccountByUserId(req.user!.userId, currentPassword);
+    return res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to delete account";
+    if (message === "Current password is incorrect") {
+      return res.status(401).json({ message });
+    }
+    return res.status(400).json({ message });
+  }
+};
