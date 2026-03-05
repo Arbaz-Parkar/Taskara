@@ -205,6 +205,23 @@ export type MySettings = {
   } | null;
 };
 
+export type AdminUserRecord = {
+  id: number;
+  name: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+  role: {
+    name: string;
+  };
+  _count: {
+    services: number;
+    buyerOrders: number;
+    sellerOrders: number;
+    reviewsReceived: number;
+  };
+};
+
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
@@ -821,6 +838,46 @@ export const deleteMyAccount = async (
   }
 
   return result as { message: string };
+};
+
+export const fetchAdminUsers = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/admin/users`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to fetch users");
+  }
+
+  return result as AdminUserRecord[];
+};
+
+export const updateAdminUserStatus = async (
+  userId: number,
+  isActive: boolean
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/admin/users/${userId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ isActive }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update user status");
+  }
+
+  return result as { id: number; isActive: boolean };
 };
 
 export const createService = async (data: {

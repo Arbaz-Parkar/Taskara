@@ -543,3 +543,76 @@ export const deleteMyAccountByUserId = async (
     });
   });
 };
+
+export const getAdminUsers = async () => {
+  return prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isActive: true,
+      createdAt: true,
+      role: {
+        select: {
+          name: true,
+        },
+      },
+      _count: {
+        select: {
+          services: true,
+          buyerOrders: true,
+          sellerOrders: true,
+          reviewsReceived: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
+
+export const updateAdminUserStatus = async (
+  targetUserId: number,
+  isActive: boolean,
+  actingAdminUserId: number
+) => {
+  if (targetUserId === actingAdminUserId) {
+    throw new Error("Admin cannot change own active status");
+  }
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!targetUser) {
+    throw new Error("User not found");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    if (!isActive) {
+      await tx.service.updateMany({
+        where: {
+          sellerId: targetUserId,
+        },
+        data: {
+          isActive: false,
+        },
+      });
+    }
+
+    return tx.user.update({
+      where: { id: targetUserId },
+      data: {
+        isActive,
+      },
+      select: {
+        id: true,
+        isActive: true,
+      },
+    });
+  });
+};

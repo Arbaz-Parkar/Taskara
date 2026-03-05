@@ -232,3 +232,40 @@ export const deleteMyAccount = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({ message });
   }
 };
+
+export const getAdminUsers = async (_req: AuthRequest, res: Response) => {
+  try {
+    const users = await userService.getAdminUsers();
+    return res.json(users);
+  } catch {
+    return res.status(500).json({ message: "Failed to load users" });
+  }
+};
+
+export const updateAdminUserStatus = async (req: AuthRequest, res: Response) => {
+  const userId = Number(req.params.id);
+
+  if (Number.isNaN(userId)) {
+    return res.status(400).json({ message: "Invalid user id" });
+  }
+
+  const { isActive } = req.body as { isActive?: boolean };
+  if (typeof isActive !== "boolean") {
+    return res.status(400).json({ message: "isActive must be a boolean" });
+  }
+
+  try {
+    const updated = await userService.updateAdminUserStatus(
+      userId,
+      isActive,
+      req.user!.userId
+    );
+    return res.json(updated);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update user status";
+    if (message === "User not found") {
+      return res.status(404).json({ message });
+    }
+    return res.status(400).json({ message });
+  }
+};

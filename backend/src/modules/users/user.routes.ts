@@ -1,13 +1,16 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
+import { requireRole } from "../../middlewares/role.middleware";
 import {
   deactivateMyAccount,
   deleteMyAccount,
   exportMyAccountData,
+  getAdminUsers,
   getMySettings,
   getPublicUserProfile,
   getPublicUserReviews,
   getPublicUserServices,
+  updateAdminUserStatus,
   updateMyAvatar,
   updateMyPassword,
   updateMyPreferences,
@@ -26,6 +29,13 @@ router.patch("/me/provider-profile", authenticate, updateMyProviderProfile);
 router.patch("/me/security/password", authenticate, updateMyPassword);
 router.patch("/me/deactivate", authenticate, deactivateMyAccount);
 router.delete("/me", authenticate, deleteMyAccount);
+router.get("/admin/users", authenticate, requireRole(["admin"]), getAdminUsers);
+router.patch(
+  "/admin/users/:id/status",
+  authenticate,
+  requireRole(["admin"]),
+  updateAdminUserStatus
+);
 
 router.get("/:id", getPublicUserProfile);
 router.get("/:id/services", getPublicUserServices);

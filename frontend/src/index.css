@@ -995,6 +995,71 @@ select {
   font-size: 14px;
 }
 
+.admin-users-shell {
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+}
+
+.admin-users-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-users-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.admin-users-toolbar {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-users-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 840px;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  border-bottom: 1px solid #f3d2db;
+  padding: 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-users-table th {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #905466;
+}
+
+.admin-user-cell {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-user-cell span {
+  color: #7f5d67;
+  font-size: 13px;
+}
+
 .dashboard-placeholder {
   background: #fff;
   border: 1px solid var(--line);
@@ -2648,6 +2713,14 @@ select {
   .admin-content-grid {
     grid-template-columns: 1fr;
     padding: 20px;
+  }
+
+  .admin-users-shell {
+    padding: 20px;
+  }
+
+  .admin-users-summary-grid {
+    grid-template-columns: 1fr;
   }
 
   .overview-hero-card {
