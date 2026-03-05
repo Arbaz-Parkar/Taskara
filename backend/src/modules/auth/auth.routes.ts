@@ -5,6 +5,7 @@ import { requireRole } from "../../middlewares/role.middleware";
 import prisma from "../../utils/prisma";
 
 const router = Router();
+const ADMIN_EMAIL = "admin@taskara.com";
 
 router.post("/register", register);
 router.post("/login", login);
@@ -36,7 +37,7 @@ router.get("/me", authenticate, async (req, res) => {
       name: user.name,
       email: user.email,
       avatarUrl: user.avatarUrl,
-      role: user.role.name,
+      role: user.email.toLowerCase() === ADMIN_EMAIL ? "admin" : "user",
     },
   });
 });

@@ -5,6 +5,7 @@ import path from "path";
 import crypto from "crypto";
 
 const avatarUploadsRoot = path.resolve(process.cwd(), "uploads", "avatars");
+const ADMIN_EMAIL = "admin@taskara.com";
 
 const sanitizeFileName = (fileName: string) =>
   fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -545,7 +546,7 @@ export const deleteMyAccountByUserId = async (
 };
 
 export const getAdminUsers = async () => {
-  return prisma.user.findMany({
+  const users = await prisma.user.findMany({
     select: {
       id: true,
       name: true,
@@ -570,6 +571,13 @@ export const getAdminUsers = async () => {
       createdAt: "desc",
     },
   });
+
+  return users.map((user) => ({
+    ...user,
+    role: {
+      name: user.email.toLowerCase() === ADMIN_EMAIL ? "admin" : "user",
+    },
+  }));
 };
 
 export const updateAdminUserStatus = async (
