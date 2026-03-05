@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../utils/api";
-import { isAuthenticated } from "../utils/auth";
+import { isAdminAccount, isAuthenticated, setAuthIdentity } from "../utils/auth";
 import logo from "../assets/logo.png";
 
 const Login = () => {
@@ -14,7 +14,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      navigate("/dashboard", { replace: true });
+      navigate(isAdminAccount() ? "/admin" : "/dashboard", { replace: true });
     }
   }, [navigate]);
 
@@ -25,7 +25,8 @@ const Login = () => {
     try {
       const data = await loginUser({ email, password });
       localStorage.setItem("token", data.token);
-      navigate("/dashboard", { replace: true });
+      setAuthIdentity(data.user?.email, data.user?.role);
+      navigate(isAdminAccount() ? "/admin" : "/dashboard", { replace: true });
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);

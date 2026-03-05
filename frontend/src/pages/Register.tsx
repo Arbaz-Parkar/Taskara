@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../utils/api";
 import logo from "../assets/logo.png";
-import { isAuthenticated } from "../utils/auth";
+import { isAdminAccount, isAuthenticated } from "../utils/auth";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const Register = () => {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      navigate("/dashboard", { replace: true });
+      navigate(isAdminAccount() ? "/admin" : "/dashboard", { replace: true });
     }
   }, [navigate]);
 

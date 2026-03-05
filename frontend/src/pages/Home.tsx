@@ -2,7 +2,7 @@ import "../index.css";
 import logo from "../assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { isAuthenticated } from "../utils/auth";
+import { isAdminAccount, isAuthenticated } from "../utils/auth";
 
 const popularCategories = [
   "Website Development",
@@ -35,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      navigate("/dashboard", { replace: true });
+      navigate(isAdminAccount() ? "/admin" : "/dashboard", { replace: true });
     }
   }, [navigate]);
 
