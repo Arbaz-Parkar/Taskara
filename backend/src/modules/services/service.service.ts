@@ -138,3 +138,67 @@ export const getServiceById = async (id: number) => {
     },
   });
 };
+
+export const getAdminServices = async () => {
+  return prisma.service.findMany({
+    include: {
+      seller: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      _count: {
+        select: {
+          orders: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+export const setServiceStatusByAdmin = async (
+  serviceId: number,
+  isActive: boolean
+) => {
+  const updated = await prisma.service.updateMany({
+    where: {
+      id: serviceId,
+    },
+    data: { isActive },
+  });
+
+  if (updated.count === 0) {
+    return null;
+  }
+
+  return prisma.service.findUnique({
+    where: { id: serviceId },
+    include: {
+      seller: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      _count: {
+        select: {
+          orders: true,
+        },
+      },
+    },
+  });
+};
+
+export const deleteServiceByAdmin = async (serviceId: number) => {
+  const deleted = await prisma.service.deleteMany({
+    where: {
+      id: serviceId,
+    },
+  });
+
+  return deleted.count > 0;
+};

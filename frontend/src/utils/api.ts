@@ -222,6 +222,25 @@ export type AdminUserRecord = {
   };
 };
 
+export type AdminServiceRecord = {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  price: number;
+  isActive: boolean;
+  createdAt: string;
+  sellerId: number;
+  seller: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  _count: {
+    orders: number;
+  };
+};
+
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
@@ -878,6 +897,64 @@ export const updateAdminUserStatus = async (
   }
 
   return result as { id: number; isActive: boolean };
+};
+
+export const fetchAdminServices = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/services/admin/list`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to fetch services");
+  }
+
+  return result as AdminServiceRecord[];
+};
+
+export const updateAdminServiceStatus = async (
+  serviceId: number,
+  isActive: boolean
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/services/admin/${serviceId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ isActive }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update service status");
+  }
+
+  return result as AdminServiceRecord;
+};
+
+export const deleteAdminService = async (serviceId: number) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/services/admin/${serviceId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to delete service");
+  }
+
+  return result as { message: string };
 };
 
 export const createService = async (data: {

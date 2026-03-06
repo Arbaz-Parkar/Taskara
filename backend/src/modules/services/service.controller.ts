@@ -68,3 +68,45 @@ export const getService = async (req: any, res: Response) => {
   const data = await service.getServiceById(id);
   res.json(data);
 };
+
+export const getAdminServices = async (_req: AuthRequest, res: Response) => {
+  const services = await service.getAdminServices();
+  return res.json(services);
+};
+
+export const updateAdminServiceStatus = async (req: AuthRequest, res: Response) => {
+  const id = Number(req.params.id);
+  const { isActive } = req.body as { isActive?: boolean };
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid service id" });
+  }
+
+  if (typeof isActive !== "boolean") {
+    return res.status(400).json({ message: "isActive must be a boolean" });
+  }
+
+  const data = await service.setServiceStatusByAdmin(id, isActive);
+
+  if (!data) {
+    return res.status(404).json({ message: "Service not found" });
+  }
+
+  return res.json(data);
+};
+
+export const deleteAdminService = async (req: AuthRequest, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid service id" });
+  }
+
+  const deleted = await service.deleteServiceByAdmin(id);
+
+  if (!deleted) {
+    return res.status(404).json({ message: "Service not found" });
+  }
+
+  return res.json({ message: "Service deleted successfully" });
+};

@@ -1060,6 +1060,12 @@ select {
   font-size: 13px;
 }
 
+.admin-table-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .dashboard-placeholder {
   background: #fff;
   border: 1px solid var(--line);
@@ -2721,6 +2727,11 @@ select {
 
   .admin-users-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-table-actions {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .overview-hero-card {
