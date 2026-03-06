@@ -5,6 +5,7 @@ import {
   deactivateMyAccount,
   deleteMyAccount,
   exportMyAccountData,
+  getAdminReports,
   getAdminUsers,
   getMySettings,
   getPublicUserProfile,
@@ -30,6 +31,7 @@ router.patch("/me/security/password", authenticate, updateMyPassword);
 router.patch("/me/deactivate", authenticate, deactivateMyAccount);
 router.delete("/me", authenticate, deleteMyAccount);
 router.get("/admin/users", authenticate, requireRole(["admin"]), getAdminUsers);
+router.get("/admin/reports", authenticate, requireRole(["admin"]), getAdminReports);
 router.patch(
   "/admin/users/:id/status",
   authenticate,

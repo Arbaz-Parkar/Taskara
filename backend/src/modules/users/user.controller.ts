@@ -269,3 +269,12 @@ export const updateAdminUserStatus = async (req: AuthRequest, res: Response) => 
     return res.status(400).json({ message });
   }
 };
+
+export const getAdminReports = async (_req: AuthRequest, res: Response) => {
+  try {
+    const data = await userService.getAdminReports();
+    return res.json(data);
+  } catch {
+    return res.status(500).json({ message: "Failed to load reports" });
+  }
+};

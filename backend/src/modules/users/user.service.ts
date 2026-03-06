@@ -624,3 +624,117 @@ export const updateAdminUserStatus = async (
     });
   });
 };
+
+export const getAdminReports = async () => {
+  const [
+    totalUsers,
+    activeUsers,
+    totalServices,
+    activeServices,
+    totalOrders,
+    totalReviews,
+    orderStatusCounts,
+    recentUsers,
+    recentServices,
+    recentOrders,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { isActive: true } }),
+    prisma.service.count(),
+    prisma.service.count({ where: { isActive: true } }),
+    prisma.order.count(),
+    prisma.review.count(),
+    prisma.order.groupBy({
+      by: ["status"],
+      _count: {
+        status: true,
+      },
+    }),
+    prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isActive: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.service.findMany({
+      select: {
+        id: true,
+        title: true,
+        isActive: true,
+        createdAt: true,
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.order.findMany({
+      select: {
+        id: true,
+        status: true,
+        amount: true,
+        createdAt: true,
+        service: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        buyer: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        seller: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+  ]);
+
+  const statusMap: Record<string, number> = {
+    PENDING: 0,
+    ACCEPTED: 0,
+    IN_PROGRESS: 0,
+    DELIVERED: 0,
+    COMPLETED: 0,
+    CANCELLED: 0,
+  };
+
+  orderStatusCounts.forEach((entry) => {
+    statusMap[entry.status] = entry._count.status;
+  });
+
+  return {
+    totals: {
+      users: totalUsers,
+      activeUsers,
+      inactiveUsers: totalUsers - activeUsers,
+      services: totalServices,
+      activeServices,
+      inactiveServices: totalServices - activeServices,
+      orders: totalOrders,
+      reviews: totalReviews,
+    },
+    orderStatus: statusMap,
+    recentUsers,
+    recentServices,
+    recentOrders,
+  };
+};

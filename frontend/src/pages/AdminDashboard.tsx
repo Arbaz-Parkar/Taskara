@@ -4,15 +4,17 @@ import logo from "../assets/logo.png";
 import { logout } from "../utils/auth";
 import {
   deleteAdminService,
+  fetchAdminReports,
   fetchAdminServices,
   fetchAdminUsers,
   updateAdminServiceStatus,
   updateAdminUserStatus,
+  type AdminReports,
   type AdminServiceRecord,
   type AdminUserRecord,
 } from "../utils/api";
 
-type AdminSection = "overview" | "users" | "services";
+type AdminSection = "overview" | "users" | "services" | "reports";
 
 const formatDate = (isoDate: string) => {
   const date = new Date(isoDate);
@@ -44,6 +46,9 @@ const AdminDashboard = () => {
     "ALL"
   );
   const [busyServiceId, setBusyServiceId] = useState<number | null>(null);
+  const [reports, setReports] = useState<AdminReports | null>(null);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState("");
 
   const handleLogout = () => {
     logout();
@@ -76,6 +81,19 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadReports = async () => {
+    try {
+      setReportsLoading(true);
+      setReportsError("");
+      const data = await fetchAdminReports();
+      setReports(data);
+    } catch (error) {
+      setReportsError(error instanceof Error ? error.message : "Failed to load reports");
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeSection === "users") {
       loadUsers();
@@ -83,6 +101,10 @@ const AdminDashboard = () => {
 
     if (activeSection === "services") {
       loadServices();
+    }
+
+    if (activeSection === "reports") {
+      loadReports();
     }
   }, [activeSection]);
 
@@ -241,7 +263,11 @@ const AdminDashboard = () => {
           <button type="button" className="sidebar-link" disabled>
             Orders
           </button>
-          <button type="button" className="sidebar-link" disabled>
+          <button
+            type="button"
+            className={`sidebar-link ${activeSection === "reports" ? "active" : ""}`}
+            onClick={() => setActiveSection("reports")}
+          >
             Reports
           </button>
         </nav>
@@ -256,6 +282,8 @@ const AdminDashboard = () => {
                 ? "Users Management"
                 : activeSection === "services"
                   ? "Services Management"
+                  : activeSection === "reports"
+                    ? "Reports"
                   : "Admin Dashboard"}
             </h2>
           </div>
@@ -280,7 +308,7 @@ const AdminDashboard = () => {
             </article>
             <article className="admin-stat-card">
               <strong>Reports</strong>
-              <span>Trust and safety tools coming next.</span>
+              <span>Platform and operational analytics are now live.</span>
             </article>
           </main>
         )}
@@ -547,6 +575,175 @@ const AdminDashboard = () => {
                 </div>
               )}
             </section>
+          </main>
+        )}
+
+        {activeSection === "reports" && (
+          <main className="admin-users-shell">
+            {reportsError && <p className="form-status form-status-error">{reportsError}</p>}
+            {reportsLoading || !reports ? (
+              <div className="dashboard-placeholder compact-placeholder">Loading reports...</div>
+            ) : (
+              <>
+                <section className="admin-reports-kpi-grid">
+                  <article className="admin-stat-card">
+                    <strong>{reports.totals.users}</strong>
+                    <span>Total Users</span>
+                  </article>
+                  <article className="admin-stat-card">
+                    <strong>{reports.totals.services}</strong>
+                    <span>Total Services</span>
+                  </article>
+                  <article className="admin-stat-card">
+                    <strong>{reports.totals.orders}</strong>
+                    <span>Total Orders</span>
+                  </article>
+                  <article className="admin-stat-card">
+                    <strong>{reports.totals.reviews}</strong>
+                    <span>Total Reviews</span>
+                  </article>
+                </section>
+
+                <section className="admin-users-card">
+                  <div className="overview-market-head">
+                    <h3>Order Status Distribution</h3>
+                    <p>Live workflow volume by lifecycle state.</p>
+                  </div>
+                  <div className="admin-reports-status-grid">
+                    {Object.entries(reports.orderStatus).map(([status, count]) => (
+                      <article key={status} className="admin-stat-card">
+                        <strong>{count}</strong>
+                        <span>{status.replaceAll("_", " ")}</span>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="admin-users-card">
+                  <div className="overview-market-head">
+                    <h3>Recent Users</h3>
+                    <p>Latest signups and account state.</p>
+                  </div>
+                  <div className="admin-users-table-wrap">
+                    <table className="admin-users-table">
+                      <thead>
+                        <tr>
+                          <th>User</th>
+                          <th>Status</th>
+                          <th>Joined</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reports.recentUsers.map((user) => (
+                          <tr key={user.id}>
+                            <td>
+                              <div className="admin-user-cell">
+                                <strong>{user.name}</strong>
+                                <span>{user.email}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span
+                                className={`order-status-chip ${
+                                  user.isActive ? "completed" : "cancelled"
+                                }`}
+                              >
+                                {user.isActive ? "ACTIVE" : "INACTIVE"}
+                              </span>
+                            </td>
+                            <td>{formatDate(user.createdAt)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section className="admin-users-card">
+                  <div className="overview-market-head">
+                    <h3>Recent Services</h3>
+                    <p>Newest listings and seller ownership.</p>
+                  </div>
+                  <div className="admin-users-table-wrap">
+                    <table className="admin-users-table">
+                      <thead>
+                        <tr>
+                          <th>Service</th>
+                          <th>Seller</th>
+                          <th>Status</th>
+                          <th>Created</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reports.recentServices.map((service) => (
+                          <tr key={service.id}>
+                            <td>{service.title}</td>
+                            <td>
+                              <div className="admin-user-cell">
+                                <strong>{service.seller.name}</strong>
+                                <span>{service.seller.email}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span
+                                className={`order-status-chip ${
+                                  service.isActive ? "completed" : "cancelled"
+                                }`}
+                              >
+                                {service.isActive ? "ACTIVE" : "INACTIVE"}
+                              </span>
+                            </td>
+                            <td>{formatDate(service.createdAt)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section className="admin-users-card">
+                  <div className="overview-market-head">
+                    <h3>Recent Orders</h3>
+                    <p>Latest transactions and status progression.</p>
+                  </div>
+                  <div className="admin-users-table-wrap">
+                    <table className="admin-users-table">
+                      <thead>
+                        <tr>
+                          <th>Order</th>
+                          <th>Service</th>
+                          <th>Buyer/Seller</th>
+                          <th>Amount</th>
+                          <th>Status</th>
+                          <th>Created</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reports.recentOrders.map((order) => (
+                          <tr key={order.id}>
+                            <td>#{order.id}</td>
+                            <td>{order.service.title}</td>
+                            <td>
+                              <div className="admin-user-cell">
+                                <strong>B: {order.buyer.name}</strong>
+                                <span>S: {order.seller.name}</span>
+                              </div>
+                            </td>
+                            <td>{`\u20B9${order.amount}`}</td>
+                            <td>
+                              <span className={`order-status-chip ${order.status.toLowerCase()}`}>
+                                {order.status.replaceAll("_", " ")}
+                              </span>
+                            </td>
+                            <td>{formatDate(order.createdAt)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              </>
+            )}
           </main>
         )}
       </section>

@@ -1001,6 +1001,18 @@ select {
   gap: 12px;
 }
 
+.admin-reports-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-reports-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .admin-users-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2726,6 +2738,14 @@ select {
   }
 
   .admin-users-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-reports-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-reports-status-grid {
     grid-template-columns: 1fr;
   }
 

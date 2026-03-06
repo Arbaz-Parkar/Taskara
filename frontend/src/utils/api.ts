@@ -241,6 +241,63 @@ export type AdminServiceRecord = {
   };
 };
 
+export type AdminReports = {
+  totals: {
+    users: number;
+    activeUsers: number;
+    inactiveUsers: number;
+    services: number;
+    activeServices: number;
+    inactiveServices: number;
+    orders: number;
+    reviews: number;
+  };
+  orderStatus: {
+    PENDING: number;
+    ACCEPTED: number;
+    IN_PROGRESS: number;
+    DELIVERED: number;
+    COMPLETED: number;
+    CANCELLED: number;
+  };
+  recentUsers: {
+    id: number;
+    name: string;
+    email: string;
+    isActive: boolean;
+    createdAt: string;
+  }[];
+  recentServices: {
+    id: number;
+    title: string;
+    isActive: boolean;
+    createdAt: string;
+    seller: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  }[];
+  recentOrders: {
+    id: number;
+    status: OrderStatus;
+    amount: number;
+    createdAt: string;
+    service: {
+      id: number;
+      title: string;
+    };
+    buyer: {
+      id: number;
+      name: string;
+    };
+    seller: {
+      id: number;
+      name: string;
+    };
+  }[];
+};
+
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
@@ -955,6 +1012,23 @@ export const deleteAdminService = async (serviceId: number) => {
   }
 
   return result as { message: string };
+};
+
+export const fetchAdminReports = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/users/admin/reports`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to fetch reports");
+  }
+
+  return result as AdminReports;
 };
 
 export const createService = async (data: {
