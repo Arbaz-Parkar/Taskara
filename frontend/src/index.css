@@ -1001,6 +1001,85 @@ select {
   gap: 12px;
 }
 
+.admin-overview-shell {
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+}
+
+.admin-overview-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 12px;
+}
+
+.admin-order-snapshot-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-order-snapshot-row {
+  border: 1px solid #f3d2db;
+  background: #fff9fb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-order-snapshot-row span {
+  color: #7d5a64;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-order-snapshot-row strong {
+  color: #8f1235;
+  font-size: 1rem;
+}
+
+.admin-overview-activity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-overview-activity-card {
+  border: 1px solid #f3d2db;
+  border-radius: 12px;
+  background: #fff9fb;
+  padding: 12px;
+}
+
+.admin-overview-activity-card h4 {
+  margin-bottom: 8px;
+}
+
+.admin-overview-activity-card ul {
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+
+.admin-overview-activity-card li {
+  border: 1px solid #f2d5dc;
+  background: #fff;
+  border-radius: 9px;
+  padding: 8px 9px;
+  display: grid;
+  gap: 2px;
+}
+
+.admin-overview-activity-card strong {
+  font-size: 13px;
+}
+
+.admin-overview-activity-card span {
+  color: #7f5d67;
+  font-size: 12px;
+}
+
 .admin-reports-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2745,6 +2824,10 @@ select {
     padding: 20px;
   }
 
+  .admin-overview-shell {
+    padding: 20px;
+  }
+
   .admin-users-summary-grid {
     grid-template-columns: 1fr;
   }
@@ -2754,6 +2837,14 @@ select {
   }
 
   .admin-reports-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-overview-activity-grid {
     grid-template-columns: 1fr;
   }
 

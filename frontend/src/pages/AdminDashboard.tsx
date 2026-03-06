@@ -138,7 +138,7 @@ const AdminDashboard = () => {
     if (activeSection === "users") loadUsers();
     if (activeSection === "services") loadServices();
     if (activeSection === "orders") loadOrders();
-    if (activeSection === "reports") loadReports();
+    if (activeSection === "reports" || activeSection === "overview") loadReports();
   }, [activeSection]);
 
   const usersSummary = useMemo(() => {
@@ -350,23 +350,112 @@ const AdminDashboard = () => {
         </header>
 
         {activeSection === "overview" && (
-          <main className="admin-content-grid">
-            <article className="admin-stat-card">
-              <strong>Users</strong>
-              <span>Manage account status and role visibility.</span>
-            </article>
-            <article className="admin-stat-card">
-              <strong>Services</strong>
-              <span>Moderate listings with activate/deactivate/delete controls.</span>
-            </article>
-            <article className="admin-stat-card">
-              <strong>Orders</strong>
-              <span>Review all orders and adjust lifecycle status when needed.</span>
-            </article>
-            <article className="admin-stat-card">
-              <strong>Reports</strong>
-              <span>Platform and operational analytics are live.</span>
-            </article>
+          <main className="admin-overview-shell">
+            {reportsError && <p className="form-status form-status-error">{reportsError}</p>}
+            {reportsLoading || !reports ? (
+              <div className="dashboard-placeholder compact-placeholder">Loading overview...</div>
+            ) : (
+              <>
+                <section className="admin-reports-kpi-grid">
+                  <article className="admin-stat-card">
+                    <strong>{reports.totals.users}</strong>
+                    <span>Total Users</span>
+                  </article>
+                  <article className="admin-stat-card">
+                    <strong>{reports.totals.services}</strong>
+                    <span>Total Services</span>
+                  </article>
+                  <article className="admin-stat-card">
+                    <strong>{reports.totals.orders}</strong>
+                    <span>Total Orders</span>
+                  </article>
+                  <article className="admin-stat-card">
+                    <strong>{reports.totals.reviews}</strong>
+                    <span>Total Reviews</span>
+                  </article>
+                </section>
+
+                <section className="admin-overview-grid">
+                  <article className="admin-users-card">
+                    <div className="overview-market-head">
+                      <h3>Platform Health</h3>
+                      <p>Current active and inactive distribution.</p>
+                    </div>
+                    <div className="admin-reports-status-grid">
+                      <article className="admin-stat-card">
+                        <strong>{reports.totals.activeUsers}</strong>
+                        <span>Active Users</span>
+                      </article>
+                      <article className="admin-stat-card">
+                        <strong>{reports.totals.activeServices}</strong>
+                        <span>Active Services</span>
+                      </article>
+                      <article className="admin-stat-card">
+                        <strong>{reports.totals.inactiveUsers + reports.totals.inactiveServices}</strong>
+                        <span>Total Inactive Entities</span>
+                      </article>
+                    </div>
+                  </article>
+
+                  <article className="admin-users-card">
+                    <div className="overview-market-head">
+                      <h3>Order Pipeline Snapshot</h3>
+                      <p>Live volume across workflow states.</p>
+                    </div>
+                    <div className="admin-order-snapshot-list">
+                      {Object.entries(reports.orderStatus).map(([status, count]) => (
+                        <div key={status} className="admin-order-snapshot-row">
+                          <span>{status.replaceAll("_", " ")}</span>
+                          <strong>{count}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                </section>
+
+                <section className="admin-users-card">
+                  <div className="overview-market-head">
+                    <h3>Latest Marketplace Activity</h3>
+                    <p>Recent user signups, listings, and orders at a glance.</p>
+                  </div>
+                  <div className="admin-overview-activity-grid">
+                    <article className="admin-overview-activity-card">
+                      <h4>Recent Users</h4>
+                      <ul>
+                        {reports.recentUsers.map((user) => (
+                          <li key={user.id}>
+                            <strong>{user.name}</strong>
+                            <span>{formatDate(user.createdAt)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                    <article className="admin-overview-activity-card">
+                      <h4>Recent Services</h4>
+                      <ul>
+                        {reports.recentServices.map((service) => (
+                          <li key={service.id}>
+                            <strong>{service.title}</strong>
+                            <span>{service.seller.name}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                    <article className="admin-overview-activity-card">
+                      <h4>Recent Orders</h4>
+                      <ul>
+                        {reports.recentOrders.map((order) => (
+                          <li key={order.id}>
+                            <strong>{`#${order.id} ${order.service.title}`}</strong>
+                            <span>{order.status.replaceAll("_", " ")}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  </div>
+                </section>
+              </>
+            )}
           </main>
         )}
 
