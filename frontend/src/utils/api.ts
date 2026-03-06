@@ -298,6 +298,29 @@ export type AdminReports = {
   }[];
 };
 
+export type AdminOrderRecord = {
+  id: number;
+  status: OrderStatus;
+  amount: number;
+  requirements?: string | null;
+  createdAt: string;
+  service: {
+    id: number;
+    title: string;
+    category: string;
+  };
+  buyer: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
+  };
+  seller: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
+  };
+};
+
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
@@ -1029,6 +1052,46 @@ export const fetchAdminReports = async () => {
   }
 
   return result as AdminReports;
+};
+
+export const fetchAdminOrders = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/orders/admin/list`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to fetch orders");
+  }
+
+  return result as AdminOrderRecord[];
+};
+
+export const updateAdminOrderStatus = async (
+  orderId: number,
+  status: OrderStatus
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/orders/admin/${orderId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update order status");
+  }
+
+  return result as AdminOrderRecord;
 };
 
 export const createService = async (data: {

@@ -96,3 +96,38 @@ export const sendMessageForOrder = async (req: AuthRequest, res: Response) => {
     return res.status(403).json({ message });
   }
 };
+
+export const getAdminOrders = async (_req: AuthRequest, res: Response) => {
+  try {
+    const orders = await orderService.getAdminOrders();
+    return res.json(orders);
+  } catch {
+    return res.status(500).json({ message: "Failed to load orders" });
+  }
+};
+
+export const changeOrderStatusAsAdmin = async (req: AuthRequest, res: Response) => {
+  try {
+    const orderId = Number(req.params.id);
+    const { status } = req.body as { status?: orderService.OrderStatusValue };
+
+    if (Number.isNaN(orderId)) {
+      return res.status(400).json({ message: "Invalid order id" });
+    }
+
+    if (!status) {
+      return res.status(400).json({ message: "status is required" });
+    }
+
+    const order = await orderService.updateOrderStatusByAdmin(orderId, status);
+    return res.json(order);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update order";
+
+    if (message === "Order not found") {
+      return res.status(404).json({ message });
+    }
+
+    return res.status(400).json({ message });
+  }
+};

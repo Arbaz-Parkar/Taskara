@@ -1078,6 +1078,14 @@ select {
   align-items: center;
 }
 
+.admin-status-select {
+  border: 1px solid #e6b8c6;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #6a3948;
+}
+
 .dashboard-placeholder {
   background: #fff;
   border: 1px solid var(--line);

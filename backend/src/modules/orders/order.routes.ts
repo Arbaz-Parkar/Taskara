@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
+import { requireRole } from "../../middlewares/role.middleware";
 import {
+  changeOrderStatusAsAdmin,
   changeOrderStatus,
   createOrder,
+  getAdminOrders,
   getMyBuyerOrders,
   getMessagesForOrder,
   getMySellerOrders,
@@ -15,6 +18,13 @@ router.post("/", authenticate, createOrder);
 router.get("/buyer", authenticate, getMyBuyerOrders);
 router.get("/seller", authenticate, getMySellerOrders);
 router.patch("/:id/status", authenticate, changeOrderStatus);
+router.get("/admin/list", authenticate, requireRole(["admin"]), getAdminOrders);
+router.patch(
+  "/admin/:id/status",
+  authenticate,
+  requireRole(["admin"]),
+  changeOrderStatusAsAdmin
+);
 router.get("/:id/messages", authenticate, getMessagesForOrder);
 router.post("/:id/messages", authenticate, sendMessageForOrder);
 

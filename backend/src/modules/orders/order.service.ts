@@ -308,3 +308,44 @@ export const createOrderMessage = async (
 
   return savedMessage;
 };
+
+export const getAdminOrders = async () => {
+  return prisma.order.findMany({
+    include: orderInclude,
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+const validStatuses: OrderStatusValue[] = [
+  "PENDING",
+  "ACCEPTED",
+  "IN_PROGRESS",
+  "DELIVERED",
+  "COMPLETED",
+  "CANCELLED",
+];
+
+export const updateOrderStatusByAdmin = async (
+  orderId: number,
+  nextStatus: OrderStatusValue
+) => {
+  if (!validStatuses.includes(nextStatus)) {
+    throw new Error("Invalid status");
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+  });
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  return prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status: nextStatus,
+    },
+    include: orderInclude,
+  });
+};
