@@ -8,7 +8,30 @@ type Service = {
   description: string;
   category: string;
   price: number;
+  images?: {
+    id: number;
+    fileUrl: string;
+    sortOrder: number;
+  }[];
 };
+
+const MAX_SERVICE_IMAGES = 5;
+
+const fileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      if (!base64) {
+        reject(new Error("Failed to read file"));
+        return;
+      }
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
 
 const ServiceEditDashboardPage = () => {
   const { serviceId } = useParams();
@@ -23,6 +46,9 @@ const ServiceEditDashboardPage = () => {
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -43,6 +69,9 @@ const ServiceEditDashboardPage = () => {
         setCategory(found.category);
         setPrice(String(found.price));
         setDescription(found.description);
+        setExistingImageUrls(
+          (found.images ?? []).map((image: { fileUrl: string }) => image.fileUrl)
+        );
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -73,6 +102,16 @@ const ServiceEditDashboardPage = () => {
         category,
         description,
         price: Number(price),
+        images: [
+          ...existingImageUrls.map((fileUrl) => ({ fileUrl })),
+          ...(await Promise.all(
+            newImageFiles.map(async (file) => ({
+              fileName: file.name,
+              mimeType: file.type,
+              dataBase64: await fileToBase64(file),
+            }))
+          )),
+        ],
       });
 
       navigate(`/dashboard/services/${service.id}`);
@@ -85,6 +124,47 @@ const ServiceEditDashboardPage = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSelectImages = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) {
+      return;
+    }
+
+    const totalCurrent = existingImageUrls.length + newImageFiles.length;
+    const availableSlots = MAX_SERVICE_IMAGES - totalCurrent;
+    if (availableSlots <= 0) {
+      setError(`You can upload up to ${MAX_SERVICE_IMAGES} images.`);
+      return;
+    }
+
+    const nextFiles = files.slice(0, availableSlots).filter((file) => file.type.startsWith("image/"));
+    if (!nextFiles.length) {
+      setError("Please select image files only.");
+      return;
+    }
+
+    const nextPreviews = nextFiles.map((file) => URL.createObjectURL(file));
+    setNewImageFiles((current) => [...current, ...nextFiles]);
+    setNewImagePreviews((current) => [...current, ...nextPreviews]);
+    setError("");
+    event.target.value = "";
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImageUrls((current) => current.filter((_, currentIndex) => currentIndex !== index));
+  };
+
+  const removeNewImage = (index: number) => {
+    setNewImageFiles((current) => current.filter((_, currentIndex) => currentIndex !== index));
+    setNewImagePreviews((current) => {
+      const target = current[index];
+      if (target) {
+        URL.revokeObjectURL(target);
+      }
+      return current.filter((_, currentIndex) => currentIndex !== index);
+    });
   };
 
   return (
@@ -141,6 +221,35 @@ const ServiceEditDashboardPage = () => {
                 required
               />
             </label>
+
+            <label className="create-field">
+              <span>Service Images (up to 5)</span>
+              <input type="file" accept="image/*" multiple onChange={handleSelectImages} />
+              <small>
+                You can remove current images and upload replacements before saving.
+              </small>
+            </label>
+
+            {(existingImageUrls.length > 0 || newImagePreviews.length > 0) && (
+              <div className="service-image-picker-grid">
+                {existingImageUrls.map((url, index) => (
+                  <div key={url} className="service-image-picker-item">
+                    <img src={url} alt={`Current service image ${index + 1}`} />
+                    <button type="button" onClick={() => removeExistingImage(index)}>
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                {newImagePreviews.map((url, index) => (
+                  <div key={url} className="service-image-picker-item">
+                    <img src={url} alt={`New service image ${index + 1}`} />
+                    <button type="button" onClick={() => removeNewImage(index)}>
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {error && <p className="form-status form-status-error">{error}</p>}
 

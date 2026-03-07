@@ -58,6 +58,16 @@ export const getPublicServicesByUserId = async (userId: number) => {
       price: true,
       isActive: true,
       createdAt: true,
+      images: {
+        select: {
+          id: true,
+          fileUrl: true,
+          sortOrder: true,
+        },
+        orderBy: {
+          sortOrder: "asc",
+        },
+      },
       seller: {
         select: {
           id: true,

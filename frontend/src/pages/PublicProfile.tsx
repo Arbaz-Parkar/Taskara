@@ -212,6 +212,11 @@ const PublicProfile = () => {
           <div className="manage-list-grid">
             {services.map((service) => (
               <article key={service.id} className="manage-service-card">
+                {service.images?.[0]?.fileUrl ? (
+                  <img src={service.images[0].fileUrl} alt={service.title} className="service-card-thumb" />
+                ) : (
+                  <div className="service-image-placeholder service-thumb-placeholder" />
+                )}
                 <p className="service-category">{service.category}</p>
                 <h3>{service.title}</h3>
                 <p className="service-seller">{service.description}</p>

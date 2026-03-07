@@ -2499,6 +2499,38 @@ select {
   font-size: 12px;
 }
 
+.service-image-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.service-image-picker-item {
+  border: 1px solid #efc2cd;
+  border-radius: 12px;
+  background: #fff8fa;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.service-image-picker-item img {
+  width: 100%;
+  height: 100px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.service-image-picker-item button {
+  border: 1px solid #efb8c8;
+  border-radius: 999px;
+  background: #fff;
+  color: #a42049;
+  font-weight: 600;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
 .create-price-field {
   max-width: 230px;
 }
@@ -2562,6 +2594,25 @@ select {
 .service-image-placeholder {
   height: 160px;
   background: linear-gradient(145deg, #ffdce6, #fff2f5);
+}
+
+.service-image-cover {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.service-card-thumb {
+  width: 100%;
+  height: 160px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.service-thumb-placeholder {
+  border-radius: 12px;
+  margin-bottom: 10px;
 }
 
 .service-info {
@@ -2629,6 +2680,14 @@ select {
   height: 320px;
   background: linear-gradient(155deg, #ffe2ea, #fff5f8);
   border-radius: 14px;
+  margin-bottom: 30px;
+}
+
+.service-gallery-image {
+  width: 100%;
+  height: 320px;
+  border-radius: 14px;
+  object-fit: cover;
   margin-bottom: 30px;
 }
 

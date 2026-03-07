@@ -6,12 +6,16 @@ export const createService = async (
   req: AuthRequest,
   res: Response
 ) => {
-  const newService = await service.createService(
-    req.user!.userId, 
-    req.body
-  );
-
-  res.json(newService);
+  try {
+    const newService = await service.createService(
+      req.user!.userId,
+      req.body
+    );
+    return res.json(newService);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to create service";
+    return res.status(400).json({ message });
+  }
 };
 
 export const getServices = async (_: any, res: Response) => {
@@ -25,14 +29,19 @@ export const getMyServices = async (req: AuthRequest, res: Response) => {
 };
 
 export const updateMyService = async (req: AuthRequest, res: Response) => {
-  const id = Number(req.params.id);
-  const data = await service.updateServiceBySeller(req.user!.userId, id, req.body);
+  try {
+    const id = Number(req.params.id);
+    const data = await service.updateServiceBySeller(req.user!.userId, id, req.body);
 
-  if (!data) {
-    return res.status(404).json({ message: "Service not found" });
+    if (!data) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    return res.json(data);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update service";
+    return res.status(400).json({ message });
   }
-
-  return res.json(data);
 };
 
 export const updateMyServiceStatus = async (req: AuthRequest, res: Response) => {
@@ -66,6 +75,9 @@ export const deleteMyService = async (req: AuthRequest, res: Response) => {
 export const getService = async (req: any, res: Response) => {
   const id = Number(req.params.id);
   const data = await service.getServiceById(id);
+  if (!data) {
+    return res.status(404).json({ message: "Service not found" });
+  }
   res.json(data);
 };
 

@@ -145,6 +145,11 @@ export type PublicUserService = {
     id: number;
     name: string;
   };
+  images?: {
+    id: number;
+    fileUrl: string;
+    sortOrder: number;
+  }[];
 };
 
 export type UserReview = {
@@ -239,6 +244,18 @@ export type AdminServiceRecord = {
   _count: {
     orders: number;
   };
+  images?: {
+    id: number;
+    fileUrl: string;
+    sortOrder: number;
+  }[];
+};
+
+export type ServiceImagePayload = {
+  fileUrl?: string;
+  fileName?: string;
+  mimeType?: string;
+  dataBase64?: string;
 };
 
 export type AdminReports = {
@@ -324,7 +341,14 @@ export type AdminOrderRecord = {
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
-  return res.json();
+  const result = await res.json();
+  return (result as any[]).map((service) => ({
+    ...service,
+    images: (service.images ?? []).map((image: any) => ({
+      ...image,
+      fileUrl: resolveMediaUrl(image.fileUrl),
+    })),
+  }));
 };
 
 export const fetchMyServices = async () => {
@@ -336,8 +360,15 @@ export const fetchMyServices = async () => {
     },
   });
 
+  const result = await res.json();
   if (!res.ok) throw new Error("Failed to fetch your services");
-  return res.json();
+  return (result as any[]).map((service) => ({
+    ...service,
+    images: (service.images ?? []).map((image: any) => ({
+      ...image,
+      fileUrl: resolveMediaUrl(image.fileUrl),
+    })),
+  }));
 };
 
 export const updateMyService = async (
@@ -347,6 +378,7 @@ export const updateMyService = async (
     description?: string;
     category?: string;
     price?: number;
+    images?: ServiceImagePayload[];
   }
 ) => {
   const token = localStorage.getItem("token");
@@ -362,7 +394,13 @@ export const updateMyService = async (
 
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || "Failed to update service");
-  return result;
+  return {
+    ...result,
+    images: (result.images ?? []).map((image: any) => ({
+      ...image,
+      fileUrl: resolveMediaUrl(image.fileUrl),
+    })),
+  };
 };
 
 export const updateMyServiceStatus = async (id: number, isActive: boolean) => {
@@ -379,7 +417,13 @@ export const updateMyServiceStatus = async (id: number, isActive: boolean) => {
 
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || "Failed to update status");
-  return result;
+  return {
+    ...result,
+    images: (result.images ?? []).map((image: any) => ({
+      ...image,
+      fileUrl: resolveMediaUrl(image.fileUrl),
+    })),
+  };
 };
 
 export const deleteMyService = async (id: number) => {
@@ -501,8 +545,15 @@ export const sendOrderMessage = async (
 
 export const fetchServiceById = async (id: string) => {
   const res = await fetch(`${API}/services/${id}`);
-  if (!res.ok) throw new Error("Service not found");
-  return res.json();
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Service not found");
+  return {
+    ...result,
+    images: (result.images ?? []).map((image: any) => ({
+      ...image,
+      fileUrl: resolveMediaUrl(image.fileUrl),
+    })),
+  };
 };
 
 export const fetchPublicUserProfile = async (userId: number | string) => {
@@ -527,7 +578,13 @@ export const fetchPublicUserServices = async (userId: number | string) => {
     throw new Error(result.message || "Failed to load user services");
   }
 
-  return result as PublicUserService[];
+  return (result as PublicUserService[]).map((service) => ({
+    ...service,
+    images: (service.images ?? []).map((image) => ({
+      ...image,
+      fileUrl: resolveMediaUrl(image.fileUrl) ?? image.fileUrl,
+    })),
+  }));
 };
 
 export const fetchPublicUserReviews = async (userId: number | string) => {
@@ -993,7 +1050,13 @@ export const fetchAdminServices = async () => {
     throw new Error(result.message || "Failed to fetch services");
   }
 
-  return result as AdminServiceRecord[];
+  return (result as AdminServiceRecord[]).map((service) => ({
+    ...service,
+    images: (service.images ?? []).map((image) => ({
+      ...image,
+      fileUrl: resolveMediaUrl(image.fileUrl) ?? image.fileUrl,
+    })),
+  }));
 };
 
 export const updateAdminServiceStatus = async (
@@ -1099,6 +1162,7 @@ export const createService = async (data: {
   description: string;
   category: string;
   price: number;
+  images?: ServiceImagePayload[];
 }) => {
   const token = localStorage.getItem("token");
 
@@ -1117,5 +1181,11 @@ export const createService = async (data: {
     throw new Error(result.message || "Failed to create service");
   }
 
-  return result;
+  return {
+    ...result,
+    images: (result.images ?? []).map((image: any) => ({
+      ...image,
+      fileUrl: resolveMediaUrl(image.fileUrl),
+    })),
+  };
 };

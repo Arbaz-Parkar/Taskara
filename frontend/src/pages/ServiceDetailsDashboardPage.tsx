@@ -10,6 +10,11 @@ type Service = {
   price: number;
   isActive: boolean;
   createdAt: string;
+  images?: {
+    id: number;
+    fileUrl: string;
+    sortOrder: number;
+  }[];
 };
 
 const formatDate = (isoDate: string) => {
@@ -106,6 +111,9 @@ const ServiceDetailsDashboardPage = () => {
           </div>
 
           <div className="dashboard-placeholder compact-placeholder">
+            {service.images?.[0]?.fileUrl ? (
+              <img src={service.images[0].fileUrl} alt={service.title} className="service-gallery-image" />
+            ) : null}
             <p><strong>Status:</strong> {service.isActive ? "Active" : "Paused"}</p>
             <p><strong>Created:</strong> {formatDate(service.createdAt)}</p>
             <p><strong>Price:</strong> {`\u20B9${service.price}`}</p>

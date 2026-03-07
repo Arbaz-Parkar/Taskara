@@ -14,6 +14,11 @@ type Service = {
     id: number;
     name: string;
   };
+  images?: {
+    id: number;
+    fileUrl: string;
+    sortOrder: number;
+  }[];
 };
 
 const ServiceDetails = () => {
@@ -86,7 +91,11 @@ const ServiceDetails = () => {
             <span className="rating">5.0</span>
           </div>
 
-          <div className="service-gallery" />
+          {service.images?.[0]?.fileUrl ? (
+            <img src={service.images[0].fileUrl} alt={service.title} className="service-gallery-image" />
+          ) : (
+            <div className="service-gallery" />
+          )}
 
           <section className="service-section">
             <h3>About This Service</h3>

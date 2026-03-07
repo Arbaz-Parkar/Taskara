@@ -88,8 +88,28 @@ const initialForm: FormState = {
   price: "",
 };
 
+const MAX_SERVICE_IMAGES = 5;
+
+const fileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      if (!base64) {
+        reject(new Error("Failed to read file"));
+        return;
+      }
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+
 const CreateService = () => {
   const [form, setForm] = useState<FormState>(initialForm);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -131,15 +151,27 @@ const CreateService = () => {
         ? `${form.category} / ${form.subcategory}`
         : form.category;
 
+      const imagePayload = await Promise.all(
+        imageFiles.map(async (file) => ({
+          fileName: file.name,
+          mimeType: file.type,
+          dataBase64: await fileToBase64(file),
+        }))
+      );
+
       await createService({
         title: form.title,
         description: form.description,
         category: categoryLabel,
         price: Number(form.price),
+        images: imagePayload,
       });
 
       setMessage("Service published successfully.");
       setForm(initialForm);
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+      setImageFiles([]);
+      setImagePreviews([]);
     } catch (err) {
       const apiError =
         err instanceof Error ? err.message : "Failed to publish service";
@@ -147,6 +179,42 @@ const CreateService = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSelectImages = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) {
+      return;
+    }
+
+    const availableSlots = MAX_SERVICE_IMAGES - imageFiles.length;
+    if (availableSlots <= 0) {
+      setError(`You can upload up to ${MAX_SERVICE_IMAGES} images.`);
+      return;
+    }
+
+    const nextFiles = files.slice(0, availableSlots).filter((file) => file.type.startsWith("image/"));
+    if (!nextFiles.length) {
+      setError("Please select image files only.");
+      return;
+    }
+
+    const nextPreviews = nextFiles.map((file) => URL.createObjectURL(file));
+    setImageFiles((current) => [...current, ...nextFiles]);
+    setImagePreviews((current) => [...current, ...nextPreviews]);
+    setError("");
+    event.target.value = "";
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImageFiles((current) => current.filter((_, fileIndex) => fileIndex !== index));
+    setImagePreviews((current) => {
+      const target = current[index];
+      if (target) {
+        URL.revokeObjectURL(target);
+      }
+      return current.filter((_, previewIndex) => previewIndex !== index);
+    });
   };
 
   return (
@@ -303,6 +371,25 @@ const CreateService = () => {
             required
           />
         </label>
+
+        <label className="create-field">
+          <span>Service Images (up to 5)</span>
+          <input type="file" accept="image/*" multiple onChange={handleSelectImages} />
+          <small>First image will be used as primary thumbnail in listings.</small>
+        </label>
+
+        {imagePreviews.length > 0 && (
+          <div className="service-image-picker-grid">
+            {imagePreviews.map((preview, index) => (
+              <div key={preview} className="service-image-picker-item">
+                <img src={preview} alt={`Service preview ${index + 1}`} />
+                <button type="button" onClick={() => handleRemoveImage(index)}>
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         <label className="create-field create-price-field">
           <span>Starting Price (INR)</span>

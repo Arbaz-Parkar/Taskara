@@ -14,6 +14,11 @@ type Service = {
   price: number;
   isActive: boolean;
   createdAt: string;
+  images?: {
+    id: number;
+    fileUrl: string;
+    sortOrder: number;
+  }[];
 };
 
 const formatDate = (isoDate: string) => {
@@ -197,6 +202,16 @@ const ServicesManagementPage = () => {
 
                 return (
                   <article key={service.id} className="manage-service-card">
+                    {service.images?.[0]?.fileUrl ? (
+                      <img
+                        src={service.images[0].fileUrl}
+                        alt={service.title}
+                        className="service-card-thumb"
+                      />
+                    ) : (
+                      <div className="service-image-placeholder service-thumb-placeholder" />
+                    )}
+
                     <div className="manage-service-header">
                       <span className={`manage-status-chip ${service.isActive ? "active" : "paused"}`}>
                         {service.isActive ? "Active" : "Paused"}

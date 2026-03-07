@@ -1,7 +1,7 @@
 import "../index.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { fetchServices } from "../utils/api";
+import { fetchServices, resolveMediaUrl } from "../utils/api";
 
 type Service = {
   id: number;
@@ -12,6 +12,11 @@ type Service = {
     id: number;
     name: string;
   };
+  images?: {
+    id: number;
+    fileUrl: string;
+    sortOrder: number;
+  }[];
 };
 
 const Marketplace = () => {
@@ -49,7 +54,15 @@ const Marketplace = () => {
             className="service-market-card"
             onClick={() => navigate(`/service/${service.id}`)}
           >
-            <div className="service-image-placeholder" />
+            {service.images?.[0]?.fileUrl ? (
+              <img
+                src={resolveMediaUrl(service.images[0].fileUrl) ?? service.images[0].fileUrl}
+                alt={service.title}
+                className="service-image-cover"
+              />
+            ) : (
+              <div className="service-image-placeholder" />
+            )}
 
             <div className="service-info">
               <p className="service-category">{service.category}</p>
