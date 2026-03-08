@@ -32,7 +32,11 @@ const formatResponseTier = (tier?: string) => {
   return "Response time unknown";
 };
 
-const Marketplace = () => {
+type MarketplaceProps = {
+  initialQuery?: string;
+};
+
+const Marketplace = ({ initialQuery = "" }: MarketplaceProps) => {
   const navigate = useNavigate();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +49,10 @@ const Marketplace = () => {
   const [minRating, setMinRating] = useState("");
   const [responseSpeed, setResponseSpeed] = useState<"" | "FAST" | "DAY" | "SLOW">("");
   const [sort, setSort] = useState<SortMode>("BEST_MATCH");
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   const categoryOptions = useMemo(() => {
     const categories = Array.from(new Set(services.map((service) => service.category))).sort();

@@ -15,6 +15,7 @@ const LEGACY_TAB_ROUTES: Record<string, string> = {
 const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const dashboardQuery = searchParams.get("q") ?? "";
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -97,7 +98,7 @@ const Dashboard = () => {
           <h3>Live Marketplace</h3>
           <p>Browse currently active services from other users.</p>
         </div>
-        <Marketplace />
+        <Marketplace initialQuery={dashboardQuery} />
       </section>
     </div>
   );

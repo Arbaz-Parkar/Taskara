@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { getCurrentUser, resolveMediaUrl } from "../utils/api";
 import { logout } from "../utils/auth";
@@ -18,8 +18,10 @@ type DashboardShellProps = {
 
 const DashboardShell = ({ children }: DashboardShellProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [avatarBroken, setAvatarBroken] = useState(false);
+  const [topbarQuery, setTopbarQuery] = useState("");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -60,6 +62,25 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
 
   const avatarSrc = resolveMediaUrl(user?.avatarUrl);
 
+  useEffect(() => {
+    if (!location.pathname.startsWith("/dashboard")) {
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    setTopbarQuery(params.get("q") ?? "");
+  }, [location.pathname, location.search]);
+
+  const handleTopbarSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const q = topbarQuery.trim();
+    const params = new URLSearchParams();
+    if (q) {
+      params.set("q", q);
+    }
+    navigate(`/dashboard${params.toString() ? `?${params.toString()}` : ""}`);
+  };
+
   return (
     <div className="dashboard-container">
       <aside className="dashboard-sidebar">
@@ -98,9 +119,13 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
 
       <div className="dashboard-main">
         <header className="dashboard-topbar">
-          <div className="topbar-search">
-            <input placeholder="Search services, skills, or categories..." />
-          </div>
+          <form className="topbar-search" onSubmit={handleTopbarSearchSubmit}>
+            <input
+              placeholder="Search services, skills, or categories..."
+              value={topbarQuery}
+              onChange={(event) => setTopbarQuery(event.target.value)}
+            />
+          </form>
 
           <div className="topbar-actions">
             <button
