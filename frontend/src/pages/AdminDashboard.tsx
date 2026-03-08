@@ -10,6 +10,8 @@ import {
   fetchAdminReports,
   fetchAdminServices,
   fetchAdminUsers,
+  getCurrentUser,
+  resolveMediaUrl,
   sendDisputeMessage,
   updateAdminDisputeStatus,
   updateAdminOrderStatus,
@@ -39,6 +41,11 @@ type AdminDisputeDetail = Omit<AdminDisputeRecord, "messages"> & {
       name: string;
     };
   }[];
+};
+
+type PendingAttachment = {
+  id: string;
+  file: File;
 };
 
 const formatDate = (isoDate: string) => {
@@ -84,9 +91,34 @@ const fileToBase64 = (file: File) =>
     reader.readAsDataURL(file);
   });
 
+const formatBytes = (value: number) => {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const AvatarCircle = ({ avatarUrl, name }: { avatarUrl?: string | null; name: string }) => {
+  const [broken, setBroken] = useState(false);
+  const src = resolveMediaUrl(avatarUrl);
+
+  return (
+    <span className="message-avatar-circle" aria-hidden="true">
+      {src && !broken ? (
+        <img src={src} alt={`${name} avatar`} onError={() => setBroken(true)} />
+      ) : (
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-4.2 3.6-7 8-7s8 2.8 8 7" />
+        </svg>
+      )}
+    </span>
+  );
+};
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
+  const [currentAdminId, setCurrentAdminId] = useState<number>(0);
 
   const [users, setUsers] = useState<AdminUserRecord[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -122,7 +154,7 @@ const AdminDashboard = () => {
   const [selectedDisputeId, setSelectedDisputeId] = useState<number | null>(null);
   const [selectedDisputeThread, setSelectedDisputeThread] = useState<AdminDisputeDetail | null>(null);
   const [disputeReplyText, setDisputeReplyText] = useState("");
-  const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [replyFiles, setReplyFiles] = useState<PendingAttachment[]>([]);
   const [busyDisputeId, setBusyDisputeId] = useState<number | null>(null);
   const [disputeStatusDraft, setDisputeStatusDraft] = useState<Record<number, DisputeStatus>>({});
 
@@ -222,6 +254,18 @@ const AdminDashboard = () => {
       setReportsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadAdminUser = async () => {
+      try {
+        const me = await getCurrentUser();
+        setCurrentAdminId(me.user?.userId ?? 0);
+      } catch {
+        setCurrentAdminId(0);
+      }
+    };
+    void loadAdminUser();
+  }, []);
 
   useEffect(() => {
     if (activeSection === "users") loadUsers();
@@ -417,8 +461,26 @@ const AdminDashboard = () => {
       return;
     }
 
-    const valid = selected.filter((file) => file.size <= 10 * 1024 * 1024).slice(0, 5);
-    setReplyFiles(valid);
+    setReplyFiles((current) => {
+      const existing = new Set(current.map((item) => item.id));
+      const merged = [...current];
+      selected
+        .filter((file) => file.size <= 10 * 1024 * 1024)
+        .slice(0, 5)
+        .forEach((file) => {
+          const id = `${file.name}-${file.size}-${file.lastModified}`;
+          if (!existing.has(id)) {
+            merged.push({ id, file });
+          }
+        });
+      return merged.slice(0, 5);
+    });
+
+    event.target.value = "";
+  };
+
+  const handleRemoveReplyAttachment = (id: string) => {
+    setReplyFiles((current) => current.filter((item) => item.id !== id));
   };
 
   const handleSendDisputeReply = async () => {
@@ -438,7 +500,7 @@ const AdminDashboard = () => {
       setDisputesError("");
       setDisputesNotice("");
       const attachments = await Promise.all(
-        replyFiles.map(async (file) => ({
+        replyFiles.map(async ({ file }) => ({
           fileName: file.name,
           mimeType: file.type,
           dataBase64: await fileToBase64(file),
@@ -886,9 +948,14 @@ const AdminDashboard = () => {
                           onClick={() => handleSelectDispute(dispute.id)}
                           disabled={busyDisputeId === dispute.id}
                         >
-                          <strong>Dispute #{dispute.id}</strong>
-                          <span>Order #{dispute.orderId} | {dispute.order.service.title}</span>
-                          <small>{dispute.status.replaceAll("_", " ")}</small>
+                          <div className="message-thread-inner">
+                            <AvatarCircle name={dispute.raisedBy.name} avatarUrl={dispute.raisedBy.avatarUrl} />
+                            <div className="message-thread-content">
+                              <strong>Dispute #{dispute.id}</strong>
+                              <span>Order #{dispute.orderId} | {dispute.order.service.title}</span>
+                              <small>{dispute.status.replaceAll("_", " ")}</small>
+                            </div>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -938,35 +1005,50 @@ const AdminDashboard = () => {
                           </button>
                         </div>
 
-                        <div className="order-chat-box">
-                          <div className="order-chat-list">
-                            {selectedDisputeThread.messages.map((message) => (
-                              <article key={message.id} className="order-chat-item incoming">
-                                <strong>
-                                  {message.sender.name}{" "}
-                                  {message.sender.role?.name?.toLowerCase() === "admin"
-                                    ? "(Admin)"
-                                    : ""}
-                                </strong>
-                                <p>{message.content}</p>
-                                {(message.attachments ?? []).length > 0 && (
-                                  <div className="sent-attachment-grid">
-                                    {(message.attachments ?? []).map((attachment) => (
-                                      <a
-                                        key={attachment.id}
-                                        href={attachment.fileUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="sent-attachment-card"
-                                      >
-                                        {attachment.fileName}
-                                      </a>
-                                    ))}
-                                  </div>
-                                )}
-                              </article>
-                            ))}
-                          </div>
+                        <div className="messages-chat-list">
+                          {selectedDisputeThread.messages.length === 0 ? (
+                            <p className="service-seller">No dispute messages yet.</p>
+                          ) : (
+                            selectedDisputeThread.messages.map((message) => (
+                              <div
+                                key={message.id}
+                                className={`message-chat-row ${
+                                  message.senderId === currentAdminId ? "outgoing" : "incoming"
+                                }`}
+                              >
+                                <AvatarCircle name={message.sender.name} avatarUrl={message.sender.avatarUrl} />
+                                <div
+                                  className={`order-chat-item ${
+                                    message.senderId === currentAdminId ? "outgoing" : "incoming"
+                                  }`}
+                                >
+                                  <strong>
+                                    {message.sender.name}{" "}
+                                    {message.sender.role?.name?.toLowerCase() === "admin"
+                                      ? "(Admin)"
+                                      : ""}
+                                  </strong>
+                                  <p>{message.content}</p>
+                                  {(message.attachments ?? []).length > 0 && (
+                                    <div className="sent-attachment-grid">
+                                      {(message.attachments ?? []).map((attachment) => (
+                                        <a
+                                          key={attachment.id}
+                                          href={attachment.fileUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="sent-attachment-card"
+                                        >
+                                          <strong>{attachment.fileName}</strong>
+                                          <span>{formatBytes(attachment.size)}</span>
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
                         </div>
 
                         <div className="order-chat-compose">
@@ -975,19 +1057,34 @@ const AdminDashboard = () => {
                             onChange={(event) => setDisputeReplyText(event.target.value)}
                             placeholder="Reply to buyer/seller in this dispute..."
                           />
+                          <label className="message-attach-btn" aria-label="Attach files">
+                            Attach
+                            <input type="file" multiple onChange={handleDisputeReplyFileChange} />
+                          </label>
                           <button
                             type="button"
-                            className="btn-outline"
+                            className="btn-primary"
                             onClick={handleSendDisputeReply}
                             disabled={busyDisputeId === selectedDisputeThread.id}
                           >
                             Send
                           </button>
                         </div>
-                        <label className="create-field settings-full-width">
-                          <span>Attach files for this admin reply</span>
-                          <input type="file" multiple onChange={handleDisputeReplyFileChange} />
-                        </label>
+                        {replyFiles.length > 0 ? (
+                          <div className="message-attachment-list">
+                            {replyFiles.map(({ id, file }) => (
+                              <div key={id} className="message-attachment-chip">
+                                <span>{`${file.name} (${formatBytes(file.size)})`}</span>
+                                <button type="button" onClick={() => handleRemoveReplyAttachment(id)}>
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                        <p className="messages-upnext-note">
+                          Uploaded files are attached to this dispute message and visible to all involved parties.
+                        </p>
 
                         {selectedDisputeThread.timeline?.length ? (
                           <div className="orders-section-card">

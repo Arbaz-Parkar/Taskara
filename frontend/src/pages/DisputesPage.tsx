@@ -5,6 +5,7 @@ import {
   fetchEligibleDisputeOrders,
   fetchMyDisputes,
   getCurrentUser,
+  resolveMediaUrl,
   sendDisputeMessage,
   type DisputeMessage,
   type DisputeRecord,
@@ -21,6 +22,37 @@ const initialSaveState: SaveState = {
   loading: false,
   message: "",
   error: "",
+};
+
+type PendingAttachment = {
+  id: string;
+  file: File;
+};
+
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+
+const formatBytes = (value: number) => {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const AvatarCircle = ({ avatarUrl, name }: { avatarUrl?: string | null; name: string }) => {
+  const [broken, setBroken] = useState(false);
+  const src = resolveMediaUrl(avatarUrl);
+
+  return (
+    <span className="message-avatar-circle" aria-hidden="true">
+      {src && !broken ? (
+        <img src={src} alt={`${name} avatar`} onError={() => setBroken(true)} />
+      ) : (
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-4.2 3.6-7 8-7s8 2.8 8 7" />
+        </svg>
+      )}
+    </span>
+  );
 };
 
 const fileToBase64 = (file: File) =>
@@ -48,12 +80,13 @@ const DisputesPage = () => {
   const [selectedOrderIdForDispute, setSelectedOrderIdForDispute] = useState<number | null>(null);
   const [selectedDisputeId, setSelectedDisputeId] = useState<number | null>(null);
   const [selectedDispute, setSelectedDispute] = useState<DisputeRecord | null>(null);
+  const [disputeQuery, setDisputeQuery] = useState("");
   const [disputeMessages, setDisputeMessages] = useState<DisputeMessage[]>([]);
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeInitialMessage, setDisputeInitialMessage] = useState("");
   const [disputeReplyText, setDisputeReplyText] = useState("");
   const [newDisputeFiles, setNewDisputeFiles] = useState<File[]>([]);
-  const [replyDisputeFiles, setReplyDisputeFiles] = useState<File[]>([]);
+  const [replyDisputeFiles, setReplyDisputeFiles] = useState<PendingAttachment[]>([]);
 
   const loadDisputeWorkspace = async (preferredDisputeId?: number) => {
     try {
@@ -110,14 +143,30 @@ const DisputesPage = () => {
       return;
     }
 
-    const imageOrDocument = selected.filter((file) => file.size <= 10 * 1024 * 1024);
+    const imageOrDocument = selected.filter((file) => file.size <= MAX_ATTACHMENT_BYTES);
     const capped = imageOrDocument.slice(0, 5);
 
     if (mode === "new") {
       setNewDisputeFiles(capped);
     } else {
-      setReplyDisputeFiles(capped);
+      setReplyDisputeFiles((current) => {
+        const existing = new Set(current.map((item) => item.id));
+        const merged = [...current];
+        capped.forEach((file) => {
+          const id = `${file.name}-${file.size}-${file.lastModified}`;
+          if (!existing.has(id)) {
+            merged.push({ id, file });
+          }
+        });
+        return merged.slice(0, 5);
+      });
     }
+
+    event.target.value = "";
+  };
+
+  const handleRemoveReplyAttachment = (id: string) => {
+    setReplyDisputeFiles((current) => current.filter((item) => item.id !== id));
   };
 
   const handleCreateDispute = async () => {
@@ -214,7 +263,7 @@ const DisputesPage = () => {
     try {
       setDisputeState({ loading: true, message: "", error: "" });
       const attachments = await Promise.all(
-        replyDisputeFiles.map(async (file) => ({
+        replyDisputeFiles.map(async ({ file }) => ({
           fileName: file.name,
           mimeType: file.type,
           dataBase64: await fileToBase64(file),
@@ -382,18 +431,50 @@ const DisputesPage = () => {
             <div className="messages-shell">
               <section className="messages-list-panel">
                 <h3>My Cases</h3>
+                <input
+                  className="manage-search"
+                  placeholder="Search disputes by id or service"
+                  value={disputeQuery}
+                  onChange={(event) => setDisputeQuery(event.target.value)}
+                />
                 <div className="messages-list">
                   {disputes.length ? (
-                    disputes.map((dispute) => (
+                    disputes
+                      .filter((dispute) => {
+                        const q = disputeQuery.trim().toLowerCase();
+                        if (!q) return true;
+                        return (
+                          String(dispute.id).includes(q) ||
+                          String(dispute.orderId).includes(q) ||
+                          dispute.order.service.title.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((dispute) => (
                       <button
                         key={dispute.id}
                         type="button"
                         className={`message-thread-btn ${selectedDisputeId === dispute.id ? "active" : ""}`}
                         onClick={() => handleSelectDispute(dispute.id)}
                       >
-                        <strong>Dispute #{dispute.id}</strong>
-                        <span>{dispute.order.service.title}</span>
-                        <small>{dispute.status.replace(/_/g, " ")}</small>
+                        <div className="message-thread-inner">
+                          <AvatarCircle
+                            name={
+                              dispute.buyer.id === currentUserId
+                                ? dispute.seller.name
+                                : dispute.buyer.name
+                            }
+                            avatarUrl={
+                              dispute.buyer.id === currentUserId
+                                ? dispute.seller.avatarUrl
+                                : dispute.buyer.avatarUrl
+                            }
+                          />
+                          <div className="message-thread-content">
+                            <strong>Dispute #{dispute.id}</strong>
+                            <span>{dispute.order.service.title}</span>
+                            <small>{dispute.status.replace(/_/g, " ")}</small>
+                          </div>
+                        </div>
                       </button>
                     ))
                   ) : (
@@ -413,36 +494,48 @@ const DisputesPage = () => {
                     </div>
                     <p className="service-seller">{selectedDispute.reason}</p>
 
-                    <div className="order-chat-box">
-                      <div className="order-chat-list">
-                        {disputeMessages.map((message) => (
-                          <article
+                    <div className="messages-chat-list">
+                      {disputeMessages.length === 0 ? (
+                        <p className="service-seller">No dispute messages yet.</p>
+                      ) : (
+                        disputeMessages.map((message) => (
+                          <div
                             key={message.id}
-                            className={`order-chat-item ${message.senderId === currentUserId ? "outgoing" : "incoming"}`}
+                            className={`message-chat-row ${
+                              message.senderId === currentUserId ? "outgoing" : "incoming"
+                            }`}
                           >
-                            <strong>
-                              {message.sender.name}{" "}
-                              {message.sender.role?.name?.toLowerCase() === "admin" ? "(Admin)" : ""}
-                            </strong>
-                            <p>{message.content}</p>
-                            {(message.attachments ?? []).length > 0 && (
-                              <div className="sent-attachment-grid">
-                                {(message.attachments ?? []).map((attachment) => (
-                                  <a
-                                    key={attachment.id}
-                                    href={attachment.fileUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="sent-attachment-card"
-                                  >
-                                    {attachment.fileName}
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                          </article>
-                        ))}
-                      </div>
+                            <AvatarCircle name={message.sender.name} avatarUrl={message.sender.avatarUrl} />
+                            <div
+                              className={`order-chat-item ${
+                                message.senderId === currentUserId ? "outgoing" : "incoming"
+                              }`}
+                            >
+                              <strong>
+                                {message.sender.name}{" "}
+                                {message.sender.role?.name?.toLowerCase() === "admin" ? "(Admin)" : ""}
+                              </strong>
+                              <p>{message.content}</p>
+                              {(message.attachments ?? []).length > 0 && (
+                                <div className="sent-attachment-grid">
+                                  {(message.attachments ?? []).map((attachment) => (
+                                    <a
+                                      key={attachment.id}
+                                      href={attachment.fileUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="sent-attachment-card"
+                                    >
+                                      <strong>{attachment.fileName}</strong>
+                                      <span>{formatBytes(attachment.size)}</span>
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
 
                     <div className="order-chat-compose">
@@ -451,9 +544,17 @@ const DisputesPage = () => {
                         onChange={(event) => setDisputeReplyText(event.target.value)}
                         placeholder="Reply to admin in this dispute..."
                       />
+                      <label className="message-attach-btn" aria-label="Attach files">
+                        Attach
+                        <input
+                          type="file"
+                          multiple
+                          onChange={(event) => handleDisputeFileSelection(event, "reply")}
+                        />
+                      </label>
                       <button
                         type="button"
-                        className="btn-outline"
+                        className="btn-primary"
                         onClick={handleSendDisputeReply}
                         disabled={disputeState.loading}
                       >
@@ -461,14 +562,22 @@ const DisputesPage = () => {
                       </button>
                     </div>
 
-                    <label className="create-field settings-full-width">
-                      <span>Attach files for this reply</span>
-                      <input
-                        type="file"
-                        multiple
-                        onChange={(event) => handleDisputeFileSelection(event, "reply")}
-                      />
-                    </label>
+                    {replyDisputeFiles.length > 0 ? (
+                      <div className="message-attachment-list">
+                        {replyDisputeFiles.map(({ id, file }) => (
+                          <div key={id} className="message-attachment-chip">
+                            <span>{`${file.name} (${formatBytes(file.size)})`}</span>
+                            <button type="button" onClick={() => handleRemoveReplyAttachment(id)}>
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <p className="messages-upnext-note">
+                      Uploaded files are attached to this dispute message and visible to both parties.
+                    </p>
 
                     {selectedDispute.timeline?.length ? (
                       <div className="orders-section-card">
