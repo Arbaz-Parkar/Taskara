@@ -1338,6 +1338,11 @@ select {
   margin-bottom: 6px;
 }
 
+.dispute-submit-btn {
+  margin-top: 10px;
+  margin-bottom: 18px;
+}
+
 .danger-button {
   border-color: #e4899f;
   color: #b10f41;

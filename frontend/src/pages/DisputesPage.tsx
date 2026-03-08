@@ -369,7 +369,7 @@ const DisputesPage = () => {
 
             <button
               type="button"
-              className="btn-primary"
+              className="btn-primary dispute-submit-btn"
               onClick={handleCreateDispute}
               disabled={disputeState.loading}
             >
