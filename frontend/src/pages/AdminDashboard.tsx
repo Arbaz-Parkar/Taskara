@@ -3,24 +3,43 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { logout } from "../utils/auth";
 import {
+  fetchAdminDisputes,
+  fetchDisputeById,
   deleteAdminService,
   fetchAdminOrders,
   fetchAdminReports,
   fetchAdminServices,
   fetchAdminUsers,
+  sendDisputeMessage,
+  updateAdminDisputeStatus,
   updateAdminOrderStatus,
   updateAdminServiceStatus,
   updateAdminUserStatus,
+  type AdminDisputeRecord,
   type AdminOrderRecord,
   type AdminReports,
   type AdminServiceRecord,
   type AdminUserRecord,
+  type DisputeMessage,
+  type DisputeStatus,
   type OrderStatus,
 } from "../utils/api";
 
-type AdminSection = "overview" | "users" | "services" | "orders" | "reports";
+type AdminSection = "overview" | "users" | "services" | "orders" | "disputes" | "reports";
 type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
 type OrderFilter = "ALL" | OrderStatus;
+type DisputeFilter = "ALL" | DisputeStatus;
+type AdminDisputeDetail = Omit<AdminDisputeRecord, "messages"> & {
+  messages: DisputeMessage[];
+  timeline?: {
+    key: string;
+    label: string;
+    at: string;
+    actor: {
+      name: string;
+    };
+  }[];
+};
 
 const formatDate = (isoDate: string) => {
   const date = new Date(isoDate);
@@ -40,6 +59,30 @@ const orderFilterOptions: OrderFilter[] = [
   "COMPLETED",
   "CANCELLED",
 ];
+
+const disputeFilterOptions: DisputeFilter[] = [
+  "ALL",
+  "OPEN",
+  "UNDER_REVIEW",
+  "RESOLVED",
+  "REJECTED",
+];
+
+const fileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      if (!base64) {
+        reject(new Error("Failed to read file"));
+        return;
+      }
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -69,6 +112,19 @@ const AdminDashboard = () => {
   const [ordersFilter, setOrdersFilter] = useState<OrderFilter>("ALL");
   const [busyOrderId, setBusyOrderId] = useState<number | null>(null);
   const [orderStatusDraft, setOrderStatusDraft] = useState<Record<number, OrderStatus>>({});
+
+  const [disputes, setDisputes] = useState<AdminDisputeRecord[]>([]);
+  const [disputesLoading, setDisputesLoading] = useState(false);
+  const [disputesError, setDisputesError] = useState("");
+  const [disputesNotice, setDisputesNotice] = useState("");
+  const [disputesQuery, setDisputesQuery] = useState("");
+  const [disputesFilter, setDisputesFilter] = useState<DisputeFilter>("ALL");
+  const [selectedDisputeId, setSelectedDisputeId] = useState<number | null>(null);
+  const [selectedDisputeThread, setSelectedDisputeThread] = useState<AdminDisputeDetail | null>(null);
+  const [disputeReplyText, setDisputeReplyText] = useState("");
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [busyDisputeId, setBusyDisputeId] = useState<number | null>(null);
+  const [disputeStatusDraft, setDisputeStatusDraft] = useState<Record<number, DisputeStatus>>({});
 
   const [reports, setReports] = useState<AdminReports | null>(null);
   const [reportsLoading, setReportsLoading] = useState(false);
@@ -122,6 +178,39 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadDisputes = async (preferredDisputeId?: number) => {
+    try {
+      setDisputesLoading(true);
+      setDisputesError("");
+      const data = await fetchAdminDisputes();
+      setDisputes(data);
+      setDisputeStatusDraft(
+        data.reduce<Record<number, DisputeStatus>>((acc, dispute) => {
+          acc[dispute.id] = dispute.status;
+          return acc;
+        }, {})
+      );
+
+      const targetId =
+        preferredDisputeId ??
+        selectedDisputeId ??
+        (data.length ? data[0].id : null);
+
+      if (targetId) {
+        const detail = (await fetchDisputeById(targetId)) as AdminDisputeDetail;
+        setSelectedDisputeId(targetId);
+        setSelectedDisputeThread(detail);
+      } else {
+        setSelectedDisputeId(null);
+        setSelectedDisputeThread(null);
+      }
+    } catch (error) {
+      setDisputesError(error instanceof Error ? error.message : "Failed to load disputes");
+    } finally {
+      setDisputesLoading(false);
+    }
+  };
+
   const loadReports = async () => {
     try {
       setReportsLoading(true);
@@ -138,6 +227,7 @@ const AdminDashboard = () => {
     if (activeSection === "users") loadUsers();
     if (activeSection === "services") loadServices();
     if (activeSection === "orders") loadOrders();
+    if (activeSection === "disputes") loadDisputes();
     if (activeSection === "reports" || activeSection === "overview") loadReports();
   }, [activeSection]);
 
@@ -162,6 +252,14 @@ const AdminDashboard = () => {
       completed: orders.filter((order) => order.status === "COMPLETED").length,
     };
   }, [orders]);
+
+  const disputesSummary = useMemo(() => {
+    const total = disputes.length;
+    const open = disputes.filter((dispute) => dispute.status === "OPEN").length;
+    const underReview = disputes.filter((dispute) => dispute.status === "UNDER_REVIEW").length;
+    const resolved = disputes.filter((dispute) => dispute.status === "RESOLVED").length;
+    return { total, open, underReview, resolved };
+  }, [disputes]);
 
   const filteredUsers = useMemo(() => {
     const query = usersQuery.trim().toLowerCase();
@@ -209,6 +307,22 @@ const AdminDashboard = () => {
       return statusMatch && queryMatch;
     });
   }, [orders, ordersFilter, ordersQuery]);
+
+  const filteredDisputes = useMemo(() => {
+    const query = disputesQuery.trim().toLowerCase();
+    return disputes.filter((dispute) => {
+      const statusMatch = disputesFilter === "ALL" || dispute.status === disputesFilter;
+      const queryMatch =
+        !query ||
+        String(dispute.id).includes(query) ||
+        String(dispute.orderId).includes(query) ||
+        dispute.order.service.title.toLowerCase().includes(query) ||
+        dispute.buyer.name.toLowerCase().includes(query) ||
+        dispute.seller.name.toLowerCase().includes(query) ||
+        dispute.reason.toLowerCase().includes(query);
+      return statusMatch && queryMatch;
+    });
+  }, [disputes, disputesFilter, disputesQuery]);
 
   const handleToggleUserStatus = async (userId: number, nextStatus: boolean) => {
     try {
@@ -283,6 +397,100 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleSelectDispute = async (disputeId: number) => {
+    try {
+      setBusyDisputeId(disputeId);
+      setDisputesError("");
+      const detail = (await fetchDisputeById(disputeId)) as AdminDisputeDetail;
+      setSelectedDisputeId(disputeId);
+      setSelectedDisputeThread(detail);
+    } catch (error) {
+      setDisputesError(error instanceof Error ? error.message : "Failed to load dispute thread");
+    } finally {
+      setBusyDisputeId(null);
+    }
+  };
+
+  const handleDisputeReplyFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(event.target.files ?? []);
+    if (!selected.length) {
+      return;
+    }
+
+    const valid = selected.filter((file) => file.size <= 10 * 1024 * 1024).slice(0, 5);
+    setReplyFiles(valid);
+  };
+
+  const handleSendDisputeReply = async () => {
+    if (!selectedDisputeId) {
+      return;
+    }
+
+    const hasText = Boolean(disputeReplyText.trim());
+    const hasFiles = replyFiles.length > 0;
+    if (!hasText && !hasFiles) {
+      setDisputesError("Enter a reply or attach at least one file.");
+      return;
+    }
+
+    try {
+      setBusyDisputeId(selectedDisputeId);
+      setDisputesError("");
+      setDisputesNotice("");
+      const attachments = await Promise.all(
+        replyFiles.map(async (file) => ({
+          fileName: file.name,
+          mimeType: file.type,
+          dataBase64: await fileToBase64(file),
+        }))
+      );
+
+      await sendDisputeMessage(selectedDisputeId, {
+        content: disputeReplyText.trim(),
+        attachments,
+      });
+
+      const detail = (await fetchDisputeById(selectedDisputeId)) as AdminDisputeDetail;
+      setSelectedDisputeThread(detail);
+      setDisputeReplyText("");
+      setReplyFiles([]);
+      setDisputesNotice("Reply sent successfully.");
+      await loadDisputes(selectedDisputeId);
+    } catch (error) {
+      setDisputesError(error instanceof Error ? error.message : "Failed to send dispute reply");
+    } finally {
+      setBusyDisputeId(null);
+    }
+  };
+
+  const handleUpdateDisputeStatus = async (disputeId: number) => {
+    const nextStatus = disputeStatusDraft[disputeId];
+    if (!nextStatus) {
+      return;
+    }
+
+    try {
+      setBusyDisputeId(disputeId);
+      setDisputesError("");
+      setDisputesNotice("");
+      const updated = await updateAdminDisputeStatus(disputeId, nextStatus);
+      setDisputes((current) =>
+        current.map((dispute) => (dispute.id === disputeId ? { ...dispute, ...updated } : dispute))
+      );
+      if (selectedDisputeId === disputeId) {
+        const detail = (await fetchDisputeById(disputeId)) as AdminDisputeDetail;
+        setSelectedDisputeThread(detail);
+      }
+      setDisputesNotice("Dispute status updated successfully.");
+    } catch (error) {
+      setDisputesError(
+        error instanceof Error ? error.message : "Failed to update dispute status"
+      );
+    } finally {
+      setBusyDisputeId(null);
+    }
+  };
+
   const pageTitle =
     activeSection === "users"
       ? "Users Management"
@@ -290,9 +498,11 @@ const AdminDashboard = () => {
         ? "Services Management"
         : activeSection === "orders"
           ? "Orders Management"
-          : activeSection === "reports"
-            ? "Reports"
-            : "Admin Dashboard";
+          : activeSection === "disputes"
+            ? "Disputes Inbox"
+            : activeSection === "reports"
+              ? "Reports"
+              : "Admin Dashboard";
 
   return (
     <div className="admin-shell">
@@ -327,6 +537,13 @@ const AdminDashboard = () => {
             onClick={() => setActiveSection("orders")}
           >
             Orders
+          </button>
+          <button
+            type="button"
+            className={`sidebar-link ${activeSection === "disputes" ? "active" : ""}`}
+            onClick={() => setActiveSection("disputes")}
+          >
+            Disputes
           </button>
           <button
             type="button"
@@ -612,6 +829,190 @@ const AdminDashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+            </section>
+          </main>
+        )}
+
+        {activeSection === "disputes" && (
+          <main className="admin-users-shell">
+            <section className="admin-users-summary-grid">
+              <article className="admin-stat-card"><strong>{disputesSummary.total}</strong><span>Total Disputes</span></article>
+              <article className="admin-stat-card"><strong>{disputesSummary.open}</strong><span>Open</span></article>
+              <article className="admin-stat-card"><strong>{disputesSummary.underReview}</strong><span>Under Review</span></article>
+              <article className="admin-stat-card"><strong>{disputesSummary.resolved}</strong><span>Resolved</span></article>
+            </section>
+
+            <section className="admin-users-card">
+              <div className="admin-users-toolbar">
+                <input
+                  className="manage-search"
+                  placeholder="Search by dispute id, order id, service, buyer, seller"
+                  value={disputesQuery}
+                  onChange={(event) => setDisputesQuery(event.target.value)}
+                />
+                <div className="manage-filter-group">
+                  {disputeFilterOptions.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      className={`manage-filter-btn ${disputesFilter === status ? "active" : ""}`}
+                      onClick={() => setDisputesFilter(status)}
+                    >
+                      {status === "ALL" ? "All" : status.replaceAll("_", " ")}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {disputesError && <p className="form-status form-status-error">{disputesError}</p>}
+              {disputesNotice && <p className="form-status form-status-success">{disputesNotice}</p>}
+
+              {disputesLoading ? (
+                <div className="dashboard-placeholder compact-placeholder">Loading disputes...</div>
+              ) : filteredDisputes.length === 0 ? (
+                <div className="dashboard-placeholder compact-placeholder"><h2>No disputes found</h2><p>Try changing your search or filters.</p></div>
+              ) : (
+                <div className="messages-shell">
+                  <section className="messages-list-panel">
+                    <h3>Dispute Cases</h3>
+                    <div className="messages-list">
+                      {filteredDisputes.map((dispute) => (
+                        <button
+                          key={dispute.id}
+                          type="button"
+                          className={`message-thread-btn ${selectedDisputeId === dispute.id ? "active" : ""}`}
+                          onClick={() => handleSelectDispute(dispute.id)}
+                          disabled={busyDisputeId === dispute.id}
+                        >
+                          <strong>Dispute #{dispute.id}</strong>
+                          <span>Order #{dispute.orderId} | {dispute.order.service.title}</span>
+                          <small>{dispute.status.replaceAll("_", " ")}</small>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="messages-chat-panel">
+                    {selectedDisputeThread ? (
+                      <>
+                        <div className="messages-chat-head">
+                          <h3>
+                            Dispute #{selectedDisputeThread.id} | Order #{selectedDisputeThread.orderId}
+                          </h3>
+                          <p>
+                            Buyer: {selectedDisputeThread.buyer.name} | Seller: {selectedDisputeThread.seller.name}
+                          </p>
+                        </div>
+
+                        <p className="service-seller">{selectedDisputeThread.reason}</p>
+
+                        <div className="admin-table-actions" style={{ marginBottom: 10 }}>
+                          <select
+                            className="admin-status-select"
+                            value={
+                              disputeStatusDraft[selectedDisputeThread.id] ??
+                              selectedDisputeThread.status
+                            }
+                            onChange={(event) =>
+                              setDisputeStatusDraft((current) => ({
+                                ...current,
+                                [selectedDisputeThread.id]: event.target.value as DisputeStatus,
+                              }))
+                            }
+                          >
+                            {disputeFilterOptions.filter((status) => status !== "ALL").map((status) => (
+                              <option key={status} value={status}>
+                                {status.replaceAll("_", " ")}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className="btn-outline"
+                            onClick={() => handleUpdateDisputeStatus(selectedDisputeThread.id)}
+                            disabled={busyDisputeId === selectedDisputeThread.id}
+                          >
+                            {busyDisputeId === selectedDisputeThread.id ? "Updating..." : "Apply Status"}
+                          </button>
+                        </div>
+
+                        <div className="order-chat-box">
+                          <div className="order-chat-list">
+                            {selectedDisputeThread.messages.map((message) => (
+                              <article key={message.id} className="order-chat-item incoming">
+                                <strong>
+                                  {message.sender.name}{" "}
+                                  {message.sender.role?.name?.toLowerCase() === "admin"
+                                    ? "(Admin)"
+                                    : ""}
+                                </strong>
+                                <p>{message.content}</p>
+                                {(message.attachments ?? []).length > 0 && (
+                                  <div className="sent-attachment-grid">
+                                    {(message.attachments ?? []).map((attachment) => (
+                                      <a
+                                        key={attachment.id}
+                                        href={attachment.fileUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="sent-attachment-card"
+                                      >
+                                        {attachment.fileName}
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                              </article>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="order-chat-compose">
+                          <input
+                            value={disputeReplyText}
+                            onChange={(event) => setDisputeReplyText(event.target.value)}
+                            placeholder="Reply to buyer/seller in this dispute..."
+                          />
+                          <button
+                            type="button"
+                            className="btn-outline"
+                            onClick={handleSendDisputeReply}
+                            disabled={busyDisputeId === selectedDisputeThread.id}
+                          >
+                            Send
+                          </button>
+                        </div>
+                        <label className="create-field settings-full-width">
+                          <span>Attach files for this admin reply</span>
+                          <input type="file" multiple onChange={handleDisputeReplyFileChange} />
+                        </label>
+
+                        {selectedDisputeThread.timeline?.length ? (
+                          <div className="orders-section-card">
+                            <div className="orders-section-head">
+                              <h3>Status Timeline</h3>
+                            </div>
+                            <div className="order-chat-list">
+                              {selectedDisputeThread.timeline.map((event) => (
+                                <article key={event.key} className="order-chat-item incoming">
+                                  <strong>{event.label}</strong>
+                                  <p>
+                                    {new Date(event.at).toLocaleString()} by {event.actor.name}
+                                  </p>
+                                </article>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </>
+                    ) : (
+                      <div className="dashboard-placeholder compact-placeholder">
+                        Select a dispute from the left to review and respond.
+                      </div>
+                    )}
+                  </section>
                 </div>
               )}
             </section>

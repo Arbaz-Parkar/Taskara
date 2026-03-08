@@ -442,6 +442,56 @@ export type AdminOrderRecord = {
   };
 };
 
+export type AdminDisputeRecord = {
+  id: number;
+  orderId: number;
+  buyerId: number;
+  sellerId: number;
+  raisedById: number;
+  reason: string;
+  status: DisputeStatus;
+  createdAt: string;
+  updatedAt: string;
+  order: {
+    id: number;
+    status: OrderStatus;
+    amount: number;
+    service: {
+      id: number;
+      title: string;
+      category: string;
+    };
+  };
+  buyer: {
+    id: number;
+    name: string;
+    email?: string;
+    avatarUrl?: string | null;
+  };
+  seller: {
+    id: number;
+    name: string;
+    email?: string;
+    avatarUrl?: string | null;
+  };
+  raisedBy: {
+    id: number;
+    name: string;
+    email?: string;
+    avatarUrl?: string | null;
+  };
+  messages?: {
+    id: number;
+    content: string;
+    createdAt: string;
+    sender: {
+      id: number;
+      name: string;
+      avatarUrl?: string | null;
+    };
+  }[];
+};
+
 export const fetchServices = async () => {
   const res = await fetch(`${API}/services`);
   if (!res.ok) throw new Error("Failed to fetch services");
@@ -1457,6 +1507,83 @@ export const updateAdminOrderStatus = async (
   }
 
   return result as AdminOrderRecord;
+};
+
+export const fetchAdminDisputes = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/disputes/admin/list`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to fetch disputes");
+  }
+
+  return (result as AdminDisputeRecord[]).map((dispute) => ({
+    ...dispute,
+    buyer: {
+      ...dispute.buyer,
+      avatarUrl: resolveMediaUrl(dispute.buyer.avatarUrl),
+    },
+    seller: {
+      ...dispute.seller,
+      avatarUrl: resolveMediaUrl(dispute.seller.avatarUrl),
+    },
+    raisedBy: {
+      ...dispute.raisedBy,
+      avatarUrl: resolveMediaUrl(dispute.raisedBy.avatarUrl),
+    },
+    messages:
+      dispute.messages?.map((message) => ({
+        ...message,
+        sender: {
+          ...message.sender,
+          avatarUrl: resolveMediaUrl(message.sender.avatarUrl),
+        },
+      })) ?? [],
+  }));
+};
+
+export const updateAdminDisputeStatus = async (
+  disputeId: number,
+  status: DisputeStatus
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/disputes/admin/${disputeId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to update dispute status");
+  }
+
+  const dispute = result as AdminDisputeRecord;
+  return {
+    ...dispute,
+    buyer: {
+      ...dispute.buyer,
+      avatarUrl: resolveMediaUrl(dispute.buyer.avatarUrl),
+    },
+    seller: {
+      ...dispute.seller,
+      avatarUrl: resolveMediaUrl(dispute.seller.avatarUrl),
+    },
+    raisedBy: {
+      ...dispute.raisedBy,
+      avatarUrl: resolveMediaUrl(dispute.raisedBy.avatarUrl),
+    },
+  };
 };
 
 export const createService = async (data: {

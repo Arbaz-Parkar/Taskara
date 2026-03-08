@@ -304,6 +304,72 @@ export const getMyDisputes = async (userId: number) => {
   });
 };
 
+export const getAdminDisputes = async () => {
+  return prisma.dispute.findMany({
+    include: {
+      order: {
+        select: {
+          id: true,
+          status: true,
+          amount: true,
+          service: {
+            select: {
+              id: true,
+              title: true,
+              category: true,
+            },
+          },
+        },
+      },
+      buyer: {
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          email: true,
+        },
+      },
+      seller: {
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          email: true,
+        },
+      },
+      raisedBy: {
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          email: true,
+        },
+      },
+      messages: {
+        take: 1,
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          sender: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+};
+
 export const createDispute = async (
   userId: number,
   payload: {

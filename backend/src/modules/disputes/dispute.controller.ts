@@ -12,6 +12,15 @@ export const getMyDisputes = async (req: AuthRequest, res: Response) => {
   return res.json(disputes);
 };
 
+export const getAdminDisputes = async (_req: AuthRequest, res: Response) => {
+  try {
+    const disputes = await disputeService.getAdminDisputes();
+    return res.json(disputes);
+  } catch {
+    return res.status(500).json({ message: "Failed to load disputes" });
+  }
+};
+
 export const createDispute = async (req: AuthRequest, res: Response) => {
   try {
     const { orderId, reason, message, attachments } = req.body as {
