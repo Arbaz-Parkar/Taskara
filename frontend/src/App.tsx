@@ -14,6 +14,7 @@ import SellerOrdersPage from "./pages/SellerOrdersPage";
 import MessagesPage from "./pages/MessagesPage";
 import MessageThreadPage from "./pages/MessageThreadPage";
 import ReviewsPage from "./pages/ReviewsPage";
+import DisputesPage from "./pages/DisputesPage";
 import SettingsPage from "./pages/SettingsPage";
 import PublicProfile from "./pages/PublicProfile";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="orders/seller" element={<SellerOrdersPage />} />
             <Route path="messages" element={<MessagesPage />} />
             <Route path="messages/:orderId" element={<MessageThreadPage />} />
+            <Route path="disputes" element={<DisputesPage />} />
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
