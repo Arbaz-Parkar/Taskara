@@ -492,8 +492,33 @@ export type AdminDisputeRecord = {
   }[];
 };
 
-export const fetchServices = async () => {
-  const res = await fetch(`${API}/services`);
+export type ServiceSearchParams = {
+  q?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  responseSpeed?: "FAST" | "DAY" | "SLOW";
+  sort?:
+    | "BEST_MATCH"
+    | "PRICE_LOW_HIGH"
+    | "PRICE_HIGH_LOW"
+    | "RATING_HIGH_LOW"
+    | "RESPONSE_FAST";
+};
+
+export const fetchServices = async (params: ServiceSearchParams = {}) => {
+  const query = new URLSearchParams();
+  if (params.q) query.set("q", params.q);
+  if (params.category) query.set("category", params.category);
+  if (typeof params.minPrice === "number") query.set("minPrice", String(params.minPrice));
+  if (typeof params.maxPrice === "number") query.set("maxPrice", String(params.maxPrice));
+  if (typeof params.minRating === "number") query.set("minRating", String(params.minRating));
+  if (params.responseSpeed) query.set("responseSpeed", params.responseSpeed);
+  if (params.sort) query.set("sort", params.sort);
+
+  const querySuffix = query.toString() ? `?${query.toString()}` : "";
+  const res = await fetch(`${API}/services${querySuffix}`);
   if (!res.ok) throw new Error("Failed to fetch services");
   const result = await res.json();
   return (result as any[]).map((service) => ({

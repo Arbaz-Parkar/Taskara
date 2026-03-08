@@ -18,8 +18,40 @@ export const createService = async (
   }
 };
 
-export const getServices = async (_: any, res: Response) => {
-  const services = await service.getAllServices();
+export const getServices = async (req: any, res: Response) => {
+  const parseNumber = (value: unknown) => {
+    if (typeof value !== "string" || !value.trim()) {
+      return undefined;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+  const responseSpeed =
+    req.query.responseSpeed === "FAST" ||
+    req.query.responseSpeed === "DAY" ||
+    req.query.responseSpeed === "SLOW"
+      ? req.query.responseSpeed
+      : undefined;
+
+  const sort =
+    req.query.sort === "BEST_MATCH" ||
+    req.query.sort === "PRICE_LOW_HIGH" ||
+    req.query.sort === "PRICE_HIGH_LOW" ||
+    req.query.sort === "RATING_HIGH_LOW" ||
+    req.query.sort === "RESPONSE_FAST"
+      ? req.query.sort
+      : undefined;
+
+  const services = await service.getAllServices({
+    q: typeof req.query.q === "string" ? req.query.q : undefined,
+    category: typeof req.query.category === "string" ? req.query.category : undefined,
+    minPrice: parseNumber(req.query.minPrice),
+    maxPrice: parseNumber(req.query.maxPrice),
+    minRating: parseNumber(req.query.minRating),
+    responseSpeed,
+    sort,
+  });
   res.json(services);
 };
 
