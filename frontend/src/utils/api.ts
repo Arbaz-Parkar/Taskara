@@ -114,6 +114,110 @@ export type OrderMessage = {
   }[];
 };
 
+export type DisputeStatus = "OPEN" | "UNDER_REVIEW" | "RESOLVED" | "REJECTED";
+
+export type DisputeTimelineEvent = {
+  key: string;
+  type: "DISPUTE_OPENED" | "STATUS_UPDATED" | "MESSAGE_POSTED";
+  status: DisputeStatus;
+  at: string;
+  actor: {
+    id: number;
+    name: string;
+  };
+  label: string;
+};
+
+export type DisputeMessage = {
+  id: number;
+  disputeId: number;
+  senderId: number;
+  content: string;
+  createdAt: string;
+  sender: {
+    id: number;
+    name: string;
+    email?: string;
+    avatarUrl?: string | null;
+    role?: {
+      name: string;
+    };
+  };
+  attachments?: {
+    id: number;
+    fileName: string;
+    fileUrl: string;
+    mimeType: string;
+    size: number;
+  }[];
+};
+
+export type DisputeRecord = {
+  id: number;
+  orderId: number;
+  buyerId: number;
+  sellerId: number;
+  raisedById: number;
+  reason: string;
+  status: DisputeStatus;
+  createdAt: string;
+  updatedAt: string;
+  order: {
+    id: number;
+    status: OrderStatus;
+    amount: number;
+    service: {
+      id: number;
+      title: string;
+      category: string;
+    };
+  };
+  buyer: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
+  };
+  seller: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
+  };
+  raisedBy: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
+  };
+  messages?: DisputeMessage[];
+  timeline?: DisputeTimelineEvent[];
+};
+
+export type EligibleDisputeOrder = {
+  id: number;
+  status: OrderStatus;
+  amount: number;
+  updatedAt: string;
+  service: {
+    id: number;
+    title: string;
+    category: string;
+  };
+  buyer: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
+  };
+  seller: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
+  };
+  dispute: {
+    id: number;
+    status: DisputeStatus;
+    createdAt: string;
+  } | null;
+};
+
 export type PublicUserProfile = {
   id: number;
   name: string;
@@ -518,6 +622,204 @@ export const fetchOrderMessages = async (orderId: number) => {
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || "Failed to load messages");
   return result as OrderMessage[];
+};
+
+export const fetchEligibleDisputeOrders = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/disputes/mine/orders-eligible`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to load eligible orders");
+  return (result as EligibleDisputeOrder[]).map((order) => ({
+    ...order,
+    buyer: {
+      ...order.buyer,
+      avatarUrl: resolveMediaUrl(order.buyer.avatarUrl),
+    },
+    seller: {
+      ...order.seller,
+      avatarUrl: resolveMediaUrl(order.seller.avatarUrl),
+    },
+  }));
+};
+
+export const fetchMyDisputes = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/disputes/mine`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to load disputes");
+  return (result as DisputeRecord[]).map((dispute) => ({
+    ...dispute,
+    buyer: {
+      ...dispute.buyer,
+      avatarUrl: resolveMediaUrl(dispute.buyer.avatarUrl),
+    },
+    seller: {
+      ...dispute.seller,
+      avatarUrl: resolveMediaUrl(dispute.seller.avatarUrl),
+    },
+    raisedBy: {
+      ...dispute.raisedBy,
+      avatarUrl: resolveMediaUrl(dispute.raisedBy.avatarUrl),
+    },
+  }));
+};
+
+export const createDispute = async (payload: {
+  orderId: number;
+  reason: string;
+  message?: string;
+  attachments?: { fileName: string; mimeType?: string; dataBase64: string }[];
+}) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/disputes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to create dispute");
+
+  const dispute = result as DisputeRecord;
+  return {
+    ...dispute,
+    buyer: {
+      ...dispute.buyer,
+      avatarUrl: resolveMediaUrl(dispute.buyer.avatarUrl),
+    },
+    seller: {
+      ...dispute.seller,
+      avatarUrl: resolveMediaUrl(dispute.seller.avatarUrl),
+    },
+    raisedBy: {
+      ...dispute.raisedBy,
+      avatarUrl: resolveMediaUrl(dispute.raisedBy.avatarUrl),
+    },
+    messages:
+      dispute.messages?.map((message) => ({
+        ...message,
+        sender: {
+          ...message.sender,
+          avatarUrl: resolveMediaUrl(message.sender.avatarUrl),
+        },
+      })) ?? [],
+  };
+};
+
+export const fetchDisputeById = async (disputeId: number) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/disputes/${disputeId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to load dispute");
+
+  const dispute = result as DisputeRecord & { messages: DisputeMessage[] };
+  return {
+    ...dispute,
+    buyer: {
+      ...dispute.buyer,
+      avatarUrl: resolveMediaUrl(dispute.buyer.avatarUrl),
+    },
+    seller: {
+      ...dispute.seller,
+      avatarUrl: resolveMediaUrl(dispute.seller.avatarUrl),
+    },
+    raisedBy: {
+      ...dispute.raisedBy,
+      avatarUrl: resolveMediaUrl(dispute.raisedBy.avatarUrl),
+    },
+    messages: dispute.messages.map((message) => ({
+      ...message,
+      sender: {
+        ...message.sender,
+        avatarUrl: resolveMediaUrl(message.sender.avatarUrl),
+      },
+      attachments: (message.attachments ?? []).map((attachment) => ({
+        ...attachment,
+        fileUrl: resolveMediaUrl(attachment.fileUrl) ?? attachment.fileUrl,
+      })),
+    })),
+  };
+};
+
+export const fetchDisputeMessages = async (disputeId: number) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/disputes/${disputeId}/messages`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to load dispute messages");
+  return (result as DisputeMessage[]).map((message) => ({
+    ...message,
+    sender: {
+      ...message.sender,
+      avatarUrl: resolveMediaUrl(message.sender.avatarUrl),
+    },
+    attachments: (message.attachments ?? []).map((attachment) => ({
+      ...attachment,
+      fileUrl: resolveMediaUrl(attachment.fileUrl) ?? attachment.fileUrl,
+    })),
+  }));
+};
+
+export const sendDisputeMessage = async (
+  disputeId: number,
+  payload: {
+    content?: string;
+    attachments?: { fileName: string; mimeType?: string; dataBase64: string }[];
+  }
+) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/disputes/${disputeId}/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to send dispute message");
+
+  const message = result as DisputeMessage;
+  return {
+    ...message,
+    sender: {
+      ...message.sender,
+      avatarUrl: resolveMediaUrl(message.sender.avatarUrl),
+    },
+    attachments: (message.attachments ?? []).map((attachment) => ({
+      ...attachment,
+      fileUrl: resolveMediaUrl(attachment.fileUrl) ?? attachment.fileUrl,
+    })),
+  };
 };
 
 export const sendOrderMessage = async (

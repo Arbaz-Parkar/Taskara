@@ -45,6 +45,10 @@ model User {
   buyerOrders     Order[]   @relation("BuyerOrders")
   sellerOrders    Order[]   @relation("SellerOrders")
   orderMessages   OrderMessage[]
+  disputesRaised  Dispute[] @relation("RaisedDisputes")
+  disputesBuyer   Dispute[] @relation("BuyerDisputes")
+  disputesSeller  Dispute[] @relation("SellerDisputes")
+  disputeMessages DisputeMessage[]
   reviewsGiven    Review[]  @relation("ReviewerReviews")
   reviewsReceived Review[]  @relation("RevieweeReviews")
 }
@@ -119,6 +123,7 @@ model Order {
   seller       User        @relation("SellerOrders", fields: [sellerId], references: [id])
   messages     OrderMessage[]
   review       Review?
+  dispute      Dispute?
 }
 
 model OrderMessage {
@@ -162,4 +167,55 @@ model Review {
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   reviewer    User     @relation("ReviewerReviews", fields: [reviewerId], references: [id])
   reviewee    User     @relation("RevieweeReviews", fields: [revieweeId], references: [id])
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+model Dispute {
+  id         Int          @id @default(autoincrement())
+  orderId    Int          @unique
+  buyerId    Int
+  sellerId   Int
+  raisedById Int
+  reason     String
+  status     DisputeStatus @default(OPEN)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  buyer      User         @relation("BuyerDisputes", fields: [buyerId], references: [id])
+  seller     User         @relation("SellerDisputes", fields: [sellerId], references: [id])
+  raisedBy   User         @relation("RaisedDisputes", fields: [raisedById], references: [id])
+  messages   DisputeMessage[]
+}
+
+model DisputeMessage {
+  id          Int      @id @default(autoincrement())
+  disputeId   Int
+  senderId    Int
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  dispute      Dispute                    @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  sender       User                       @relation(fields: [senderId], references: [id])
+  attachments  DisputeMessageAttachment[]
+}
+
+model DisputeMessageAttachment {
+  id         Int      @id @default(autoincrement())
+  messageId  Int
+  fileName   String
+  fileUrl    String
+  mimeType   String
+  size       Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  message    DisputeMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
 }
