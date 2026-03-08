@@ -833,10 +833,11 @@ select {
   background: rgba(255, 255, 255, 0.92);
   border-bottom: 1px solid var(--line);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 14px 28px;
   backdrop-filter: blur(8px);
+  gap: 14px;
 }
 
 .topbar-left {
@@ -867,8 +868,15 @@ select {
   background: #8d2743;
 }
 
+.topbar-search-form {
+  flex: 1;
+  max-width: 980px;
+  display: grid;
+  gap: 10px;
+}
+
 .topbar-search input {
-  width: min(100%, 380px);
+  width: min(100%, 760px);
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid #ebc0cb;
@@ -886,6 +894,26 @@ select {
   align-items: center;
   gap: 12px;
   justify-content: flex-end;
+  align-self: flex-start;
+}
+
+.topbar-smart-filters {
+  display: grid;
+  grid-template-columns: 1.2fr repeat(2, 0.8fr) 0.8fr 0.95fr 1fr auto;
+  gap: 8px;
+}
+
+.topbar-smart-filters select,
+.topbar-smart-filters input {
+  border: 1px solid #ebc0cb;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  min-width: 0;
+}
+
+.topbar-apply-btn {
+  white-space: nowrap;
 }
 
 .profile-avatar-btn {
@@ -2858,6 +2886,14 @@ select {
     gap: 12px;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .topbar-search-form {
+    max-width: 100%;
+  }
+
+  .topbar-smart-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .topbar-actions {
