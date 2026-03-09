@@ -138,6 +138,8 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
         setNotifications(data.items);
         setUnreadCount(data.unreadCount);
       } catch (error) {
+        setNotifications([]);
+        setUnreadCount(0);
         setNotificationsError(
           error instanceof Error ? error.message : "Failed to load notifications"
         );
@@ -358,10 +360,8 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
                   <div className="notification-list">
                     {notificationsLoading ? (
                       <p className="service-seller">Loading notifications...</p>
-                    ) : notificationsError ? (
-                      <p className="form-status form-status-error">{notificationsError}</p>
-                    ) : notifications.length === 0 ? (
-                      <p className="service-seller">No notifications yet.</p>
+                    ) : notificationsError || notifications.length === 0 ? (
+                      <p className="service-seller">No notifications at this time. You&apos;re all caught up.</p>
                     ) : (
                       notifications.map((notification) => (
                         <button
