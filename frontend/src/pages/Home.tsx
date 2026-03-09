@@ -1,8 +1,9 @@
 import "../index.css";
 import logo from "../assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isAdminAccount, isAuthenticated } from "../utils/auth";
+import { fetchMarketplaceStats, type MarketplaceStats } from "../utils/api";
 
 const popularCategories = [
   "Website Development",
@@ -32,12 +33,72 @@ const platformHighlights = [
 
 export default function Home() {
   const navigate = useNavigate();
+  const [stats, setStats] = useState<MarketplaceStats | null>(null);
 
   useEffect(() => {
     if (isAuthenticated()) {
       navigate(isAdminAccount() ? "/admin" : "/dashboard", { replace: true });
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      return;
+    }
+
+    const loadStats = async () => {
+      try {
+        const liveStats = await fetchMarketplaceStats();
+        setStats(liveStats);
+      } catch {
+        setStats(null);
+      }
+    };
+
+    void loadStats();
+  }, []);
+
+  const momentumCards = useMemo(() => {
+    const responseLabel =
+      stats?.avgFirstResponseHours == null
+        ? "No response data yet"
+        : `${stats.avgFirstResponseHours}h`;
+
+    return [
+      {
+        value: stats ? `${stats.activeServices.toLocaleString()}` : "--",
+        label: "Active services",
+      },
+      {
+        value: stats ? `${stats.averageRating.toFixed(1)}/5` : "--",
+        label: "Average buyer rating",
+      },
+      {
+        value: stats ? `${stats.activeSellers.toLocaleString()}` : "--",
+        label: "Active sellers",
+      },
+      {
+        value: stats ? `${stats.activeCategories}` : "--",
+        label: "Live categories",
+      },
+      {
+        value: stats ? `${stats.completedOrders.toLocaleString()}` : "--",
+        label: "Completed orders",
+      },
+      {
+        value: stats ? `${stats.ordersThisWeek.toLocaleString()}` : "--",
+        label: "Orders this week",
+      },
+      {
+        value: stats ? `${stats.totalReviews.toLocaleString()}` : "--",
+        label: "Verified reviews",
+      },
+      {
+        value: responseLabel,
+        label: "Typical first response",
+      },
+    ];
+  }, [stats]);
 
   if (isAuthenticated()) {
     return null;
@@ -86,22 +147,12 @@ export default function Home() {
         <div className="home-hero-card">
           <h3>Live Marketplace Momentum</h3>
           <div className="home-hero-metric-grid">
-            <article>
-              <strong>12K+</strong>
-              <span>Services listed</span>
-            </article>
-            <article>
-              <strong>4.8/5</strong>
-              <span>Average buyer rating</span>
-            </article>
-            <article>
-              <strong>24h</strong>
-              <span>Typical first response</span>
-            </article>
-            <article>
-              <strong>90+</strong>
-              <span>Specialized categories</span>
-            </article>
+            {momentumCards.map((card) => (
+              <article key={card.label}>
+                <strong>{card.value}</strong>
+                <span>{card.label}</span>
+              </article>
+            ))}
           </div>
         </div>
       </section>

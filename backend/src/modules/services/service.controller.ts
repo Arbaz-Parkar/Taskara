@@ -55,6 +55,15 @@ export const getServices = async (req: any, res: Response) => {
   res.json(services);
 };
 
+export const getMarketplaceStats = async (_req: any, res: Response) => {
+  try {
+    const stats = await service.getMarketplaceStats();
+    return res.json(stats);
+  } catch {
+    return res.status(500).json({ message: "Failed to load marketplace stats" });
+  }
+};
+
 export const getMyServices = async (req: AuthRequest, res: Response) => {
   const services = await service.getServicesBySeller(req.user!.userId);
   res.json(services);

@@ -314,6 +314,17 @@ export type MySettings = {
   } | null;
 };
 
+export type MarketplaceStats = {
+  activeServices: number;
+  activeSellers: number;
+  averageRating: number;
+  totalReviews: number;
+  completedOrders: number;
+  ordersThisWeek: number;
+  activeCategories: number;
+  avgFirstResponseHours: number | null;
+};
+
 export type AppNotification = {
   id: number;
   type: "ORDER_ACCEPTED" | "ORDER_DELIVERED" | "REVIEW_RECEIVED" | "REVIEW_REPLY_POSTED";
@@ -543,6 +554,15 @@ export const fetchServices = async (params: ServiceSearchParams = {}) => {
       fileUrl: resolveMediaUrl(image.fileUrl),
     })),
   }));
+};
+
+export const fetchMarketplaceStats = async () => {
+  const res = await fetch(`${API}/services/market-stats`);
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to load marketplace stats");
+  }
+  return result as MarketplaceStats;
 };
 
 export const fetchMyServices = async () => {

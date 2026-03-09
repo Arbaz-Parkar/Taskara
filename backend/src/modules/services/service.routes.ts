@@ -5,6 +5,7 @@ import {
   deleteAdminService,
   createService,
   getAdminServices,
+  getMarketplaceStats,
   getServices,
   getService,
   getMyServices,
@@ -36,6 +37,7 @@ router.delete(
 
 /* Public routes */
 router.get("/", getServices);
+router.get("/market-stats", getMarketplaceStats);
 router.get("/:id", getService);
 
 /* Protected route (must be logged in) */

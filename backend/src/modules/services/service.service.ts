@@ -465,6 +465,100 @@ export const getServiceById = async (id: number) => {
   });
 };
 
+export const getMarketplaceStats = async () => {
+  const now = new Date();
+  const weekAgo = new Date(now);
+  weekAgo.setDate(now.getDate() - 7);
+
+  const [
+    activeServices,
+    activeSellerRows,
+    averageReview,
+    totalReviews,
+    completedOrders,
+    ordersThisWeek,
+    activeCategoryRows,
+    orderRows,
+  ] = await Promise.all([
+    prisma.service.count({
+      where: { isActive: true },
+    }),
+    prisma.service.findMany({
+      where: { isActive: true },
+      select: { sellerId: true },
+      distinct: ["sellerId"],
+    }),
+    prisma.review.aggregate({
+      _avg: {
+        rating: true,
+      },
+    }),
+    prisma.review.count(),
+    prisma.order.count({
+      where: { status: "COMPLETED" },
+    }),
+    prisma.order.count({
+      where: {
+        createdAt: {
+          gte: weekAgo,
+        },
+      },
+    }),
+    prisma.service.findMany({
+      where: { isActive: true },
+      select: { category: true },
+      distinct: ["category"],
+    }),
+    prisma.order.findMany({
+      select: {
+        id: true,
+        sellerId: true,
+        createdAt: true,
+        messages: {
+          select: {
+            senderId: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
+    }),
+  ]);
+
+  const firstResponseHours: number[] = [];
+  orderRows.forEach((order) => {
+    const sellerReply = order.messages.find((message) => message.senderId === order.sellerId);
+    if (!sellerReply) {
+      return;
+    }
+    const diffHours =
+      (new Date(sellerReply.createdAt).getTime() - new Date(order.createdAt).getTime()) /
+      (1000 * 60 * 60);
+    if (Number.isFinite(diffHours) && diffHours >= 0) {
+      firstResponseHours.push(diffHours);
+    }
+  });
+
+  const avgFirstResponseHours =
+    firstResponseHours.length > 0
+      ? firstResponseHours.reduce((sum, value) => sum + value, 0) / firstResponseHours.length
+      : null;
+
+  return {
+    activeServices,
+    activeSellers: activeSellerRows.length,
+    averageRating: Number((averageReview._avg.rating ?? 0).toFixed(1)),
+    totalReviews,
+    completedOrders,
+    ordersThisWeek,
+    activeCategories: activeCategoryRows.length,
+    avgFirstResponseHours:
+      avgFirstResponseHours == null ? null : Number(avgFirstResponseHours.toFixed(1)),
+  };
+};
+
 export const getAdminServices = async () => {
   return prisma.service.findMany({
     include: {
