@@ -944,7 +944,8 @@ select {
 .notification-dropdown {
   position: absolute;
   top: 52px;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: min(420px, calc(100vw - 40px));
   max-height: 520px;
   overflow: hidden;
