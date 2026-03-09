@@ -1,8 +1,15 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
-import { getCurrentUser, resolveMediaUrl } from "../utils/api";
+import {
+  fetchMyNotifications,
+  getCurrentUser,
+  markAllNotificationsRead,
+  markNotificationRead,
+  resolveMediaUrl,
+  type AppNotification,
+} from "../utils/api";
 import { logout } from "../utils/auth";
 
 type User = {
@@ -30,6 +37,12 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
   const [marketSort, setMarketSort] = useState<
     "BEST_MATCH" | "PRICE_LOW_HIGH" | "PRICE_HIGH_LOW" | "RATING_HIGH_LOW" | "RESPONSE_FAST"
   >("BEST_MATCH");
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState("");
+  const notificationRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -114,6 +127,86 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
     if (marketResponseSpeed) params.set("responseSpeed", marketResponseSpeed);
     if (marketSort) params.set("sort", marketSort);
     navigate(`/dashboard${params.toString() ? `?${params.toString()}` : ""}`);
+  };
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        setNotificationsLoading(true);
+        setNotificationsError("");
+        const data = await fetchMyNotifications(50);
+        setNotifications(data.items);
+        setUnreadCount(data.unreadCount);
+      } catch (error) {
+        setNotificationsError(
+          error instanceof Error ? error.message : "Failed to load notifications"
+        );
+      } finally {
+        setNotificationsLoading(false);
+      }
+    };
+
+    void loadNotifications();
+    const intervalId = window.setInterval(() => {
+      void loadNotifications();
+    }, 30000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!notificationsOpen) {
+      return;
+    }
+
+    const onClickOutside = (event: MouseEvent) => {
+      if (!notificationRef.current) {
+        return;
+      }
+
+      if (!notificationRef.current.contains(event.target as Node)) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", onClickOutside);
+    return () => {
+      window.removeEventListener("mousedown", onClickOutside);
+    };
+  }, [notificationsOpen]);
+
+  const handleNotificationClick = async (notification: AppNotification) => {
+    try {
+      if (!notification.isRead) {
+        await markNotificationRead(notification.id);
+      }
+
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === notification.id ? { ...item, isRead: true } : item
+        )
+      );
+      setUnreadCount((current) => Math.max(0, current - (notification.isRead ? 0 : 1)));
+      setNotificationsOpen(false);
+
+      if (notification.link) {
+        navigate(notification.link);
+      }
+    } catch {
+      // Keep dropdown open and let user retry.
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsRead();
+      setNotifications((current) => current.map((item) => ({ ...item, isRead: true })));
+      setUnreadCount(0);
+    } catch {
+      // Ignore and keep UI usable.
+    }
   };
 
   return (
@@ -233,6 +326,63 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
           </form>
 
           <div className="topbar-actions">
+            <div className="notification-wrap" ref={notificationRef}>
+              <button
+                type="button"
+                className="notification-bell-btn"
+                aria-label="Notifications"
+                onClick={() => setNotificationsOpen((current) => !current)}
+              >
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 4a5 5 0 0 0-5 5v3.1c0 .8-.3 1.5-.8 2.1L5 16h14l-1.2-1.8c-.5-.6-.8-1.3-.8-2.1V9a5 5 0 0 0-5-5Z" />
+                  <path d="M9 18a3 3 0 0 0 6 0" />
+                </svg>
+                {unreadCount > 0 ? (
+                  <span className="notification-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>
+                ) : null}
+              </button>
+
+              {notificationsOpen ? (
+                <div className="notification-dropdown">
+                  <div className="notification-dropdown-head">
+                    <h4>Notifications</h4>
+                    <button
+                      type="button"
+                      className="btn-outline"
+                      onClick={handleMarkAllRead}
+                      disabled={unreadCount === 0}
+                    >
+                      Mark all read
+                    </button>
+                  </div>
+                  <div className="notification-list">
+                    {notificationsLoading ? (
+                      <p className="service-seller">Loading notifications...</p>
+                    ) : notificationsError ? (
+                      <p className="form-status form-status-error">{notificationsError}</p>
+                    ) : notifications.length === 0 ? (
+                      <p className="service-seller">No notifications yet.</p>
+                    ) : (
+                      notifications.map((notification) => (
+                        <button
+                          key={notification.id}
+                          type="button"
+                          className={`notification-item ${notification.isRead ? "" : "unread"}`}
+                          onClick={() => void handleNotificationClick(notification)}
+                        >
+                          <div className="notification-item-head">
+                            <strong>{notification.title}</strong>
+                            <small>{new Date(notification.createdAt).toLocaleString()}</small>
+                          </div>
+                          <p>{notification.message}</p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
             <button
               type="button"
               className="profile-avatar-btn"

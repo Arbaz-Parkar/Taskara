@@ -49,6 +49,8 @@ model User {
   disputesBuyer   Dispute[] @relation("BuyerDisputes")
   disputesSeller  Dispute[] @relation("SellerDisputes")
   disputeMessages DisputeMessage[]
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationActor")
   reviewsGiven    Review[]  @relation("ReviewerReviews")
   reviewsReceived Review[]  @relation("RevieweeReviews")
 }
@@ -218,4 +220,20 @@ model DisputeMessageAttachment {
   updatedAt  DateTime @updatedAt
 
   message    DisputeMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  recipientId Int
+  actorId     Int?
+  type        String
+  title       String
+  message     String
+  link        String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  recipient   User     @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor       User?    @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
 }

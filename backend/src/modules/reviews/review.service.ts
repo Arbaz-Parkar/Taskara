@@ -1,4 +1,5 @@
 import prisma from "../../utils/prisma";
+import { createNotification } from "../notifications/notification.service";
 
 const recalculateSellerRating = async (revieweeId: number) => {
   const aggregate = await prisma.review.aggregate({
@@ -83,6 +84,15 @@ export const createReview = async (
   });
 
   await recalculateSellerRating(order.sellerId);
+
+  await createNotification({
+    recipientId: order.sellerId,
+    actorId: reviewerId,
+    type: "REVIEW_RECEIVED",
+    title: "New review received",
+    message: `You received a ${data.rating}-star review on order #${order.id}.`,
+    link: "/dashboard/reviews",
+  });
 
   return review;
 };
@@ -288,7 +298,7 @@ export const replyToReceivedReview = async (
     throw new Error("Reply is required");
   }
 
-  return prisma.review.update({
+  const updated = await prisma.review.update({
     where: { id: reviewId },
     data: {
       sellerReply: nextReply,
@@ -315,4 +325,15 @@ export const replyToReceivedReview = async (
       },
     },
   });
+
+  await createNotification({
+    recipientId: updated.reviewerId,
+    actorId: revieweeId,
+    type: "REVIEW_REPLY_POSTED",
+    title: "Seller replied to your review",
+    message: `A seller replied to your review for "${updated.order.service.title}".`,
+    link: "/dashboard/reviews",
+  });
+
+  return updated;
 };

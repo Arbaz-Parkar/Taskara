@@ -897,6 +897,119 @@ select {
   align-self: flex-start;
 }
 
+.notification-wrap {
+  position: relative;
+}
+
+.notification-bell-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #efc1cd;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.notification-bell-btn svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: #8d2a47;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -3px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  padding: 0 5px;
+  background: #df1f4f;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: min(420px, calc(100vw - 40px));
+  max-height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 20px 40px rgba(79, 18, 37, 0.16);
+  z-index: 120;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.notification-dropdown-head {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f3d0d9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notification-dropdown-head h4 {
+  margin: 0;
+}
+
+.notification-list {
+  overflow-y: auto;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.notification-item {
+  text-align: left;
+  border: 1px solid #f1cad4;
+  border-radius: 10px;
+  background: #fff9fb;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.notification-item.unread {
+  background: #ffeff4;
+  border-color: #eeb5c5;
+}
+
+.notification-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notification-item-head small {
+  color: #7f5f68;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.notification-item p {
+  color: #5f434c;
+}
+
 .topbar-smart-filters {
   display: grid;
   grid-template-columns: 1.2fr repeat(2, 0.8fr) 0.8fr 0.95fr 1fr auto;

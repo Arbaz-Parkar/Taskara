@@ -7,6 +7,7 @@ import orderRoutes from "./modules/orders/order.routes";
 import userRoutes from "./modules/users/user.routes";
 import reviewRoutes from "./modules/reviews/review.routes";
 import disputeRoutes from "./modules/disputes/dispute.routes";
+import notificationRoutes from "./modules/notifications/notification.routes";
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/disputes", disputeRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 export default app;

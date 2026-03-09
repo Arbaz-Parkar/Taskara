@@ -314,6 +314,21 @@ export type MySettings = {
   } | null;
 };
 
+export type AppNotification = {
+  id: number;
+  type: "ORDER_ACCEPTED" | "ORDER_DELIVERED" | "REVIEW_RECEIVED" | "REVIEW_REPLY_POSTED";
+  title: string;
+  message: string;
+  link: string | null;
+  isRead: boolean;
+  createdAt: string;
+  actor: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
+  } | null;
+};
+
 export type AdminUserRecord = {
   id: number;
   name: string;
@@ -1181,6 +1196,70 @@ export const fetchMySettings = async () => {
     ...(result as MySettings),
     avatarUrl: resolveMediaUrl(result.avatarUrl),
   } as MySettings;
+};
+
+export const fetchMyNotifications = async (limit = 40) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/notifications/mine?limit=${limit}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to load notifications");
+  }
+
+  const data = result as { items: AppNotification[]; unreadCount: number };
+
+  return {
+    items: data.items.map((notification) => ({
+      ...notification,
+      actor: notification.actor
+        ? {
+            ...notification.actor,
+            avatarUrl: resolveMediaUrl(notification.actor.avatarUrl),
+          }
+        : null,
+    })),
+    unreadCount: data.unreadCount,
+  };
+};
+
+export const markNotificationRead = async (notificationId: number) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API}/notifications/${notificationId}/read`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to mark notification as read");
+  }
+
+  return result as { message: string };
+};
+
+export const markAllNotificationsRead = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API}/notifications/mine/read-all`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Failed to mark notifications as read");
+  }
+
+  return result as { message: string };
 };
 
 export const updateMyProfileSettings = async (data: {

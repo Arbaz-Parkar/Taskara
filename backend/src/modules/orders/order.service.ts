@@ -2,6 +2,7 @@ import prisma from "../../utils/prisma";
 import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { createNotification } from "../notifications/notification.service";
 
 export type OrderStatusValue =
   | "PENDING"
@@ -160,13 +161,37 @@ export const updateOrderStatus = async (
     throw new Error("You are not allowed to update this order");
   }
 
-  return prisma.order.update({
+  const updated = await prisma.order.update({
     where: { id: orderId },
     data: {
       status: nextStatus,
     },
     include: orderInclude,
   });
+
+  if (nextStatus === "ACCEPTED") {
+    await createNotification({
+      recipientId: updated.buyerId,
+      actorId: userId,
+      type: "ORDER_ACCEPTED",
+      title: "Order accepted",
+      message: `Your order #${updated.id} for "${updated.service.title}" was accepted.`,
+      link: "/dashboard/orders",
+    });
+  }
+
+  if (nextStatus === "DELIVERED") {
+    await createNotification({
+      recipientId: updated.buyerId,
+      actorId: userId,
+      type: "ORDER_DELIVERED",
+      title: "Order delivered",
+      message: `Order #${updated.id} has been marked delivered by the seller.`,
+      link: "/dashboard/orders",
+    });
+  }
+
+  return updated;
 };
 
 const getOrderForUser = async (orderId: number, userId: number) => {
@@ -341,11 +366,33 @@ export const updateOrderStatusByAdmin = async (
     throw new Error("Order not found");
   }
 
-  return prisma.order.update({
+  const updated = await prisma.order.update({
     where: { id: orderId },
     data: {
       status: nextStatus,
     },
     include: orderInclude,
   });
+
+  if (nextStatus === "ACCEPTED") {
+    await createNotification({
+      recipientId: updated.buyerId,
+      type: "ORDER_ACCEPTED",
+      title: "Order accepted",
+      message: `Your order #${updated.id} for "${updated.service.title}" is now accepted.`,
+      link: "/dashboard/orders",
+    });
+  }
+
+  if (nextStatus === "DELIVERED") {
+    await createNotification({
+      recipientId: updated.buyerId,
+      type: "ORDER_DELIVERED",
+      title: "Order delivered",
+      message: `Order #${updated.id} has been marked delivered.`,
+      link: "/dashboard/orders",
+    });
+  }
+
+  return updated;
 };
