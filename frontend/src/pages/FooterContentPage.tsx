@@ -120,12 +120,12 @@ const clientContent: Record<string, FooterContentData> = {
     guideLabel: "Client Guide",
     topCards: [
       {
-        title: "For clients",
+        title: "For Clients",
         body:
           "Clients can search for local and digital services, compare listings, review seller profiles, and order the service that best matches their needs.",
       },
       {
-        title: "For sellers",
+        title: "For Sellers",
         body:
           "Sellers can create service listings, manage their own storefront, receive buyer orders, communicate inside the platform, and grow their reputation over time.",
       },
@@ -1467,6 +1467,9 @@ const findItemBySlug = (slug?: string) => {
 const FooterContentPage = () => {
   const { slug } = useParams();
   const activeItem = findItemBySlug(slug);
+  const activeGroup = footerNavGroups.find((group) =>
+    group.items.some((item) => item.slug === activeItem.slug)
+  );
   const activePage =
     clientContent[activeItem.slug] ??
     sellerContent[activeItem.slug] ??
@@ -1485,6 +1488,10 @@ const FooterContentPage = () => {
         <aside className="footer-page-sidebar">
           <p className="footer-page-kicker">TASKARA GUIDE</p>
           <h1>Information Center</h1>
+          <div className="footer-page-sidebar-meta">
+            <span>{footerNavGroups.length} collections</span>
+            <span>{footerNavGroups.reduce((count, group) => count + group.items.length, 0)} topics</span>
+          </div>
 
           <nav className="footer-page-nav" aria-label="Footer navigation">
             {footerNavGroups.map((group) => (
@@ -1523,6 +1530,12 @@ const FooterContentPage = () => {
                 build each footer topic one by one and load its actual content into this page.
               </p>
             )}
+            <div className="footer-page-meta-row">
+              <span>{activeGroup?.title ?? "Guide"}</span>
+              <span>
+                {activeGroup ? `${activeGroup.items.length} topics in this section` : "Topic overview"}
+              </span>
+            </div>
           </div>
 
           {activePage ? (
@@ -1591,20 +1604,20 @@ const FooterContentPage = () => {
           ) : (
             <div className="footer-page-placeholder-grid">
               <article className="footer-page-placeholder-card">
-                <h3>Overview Block</h3>
-                <p>Reserved for the main introduction and top-level explanation for this section.</p>
+                <h3>Overview</h3>
+                <p>This area is reserved for the main introduction and top-level explanation for this section.</p>
               </article>
 
               <article className="footer-page-placeholder-card">
-                <h3>Details Block</h3>
+                <h3>Details</h3>
                 <p>
-                  Reserved for policies, guidance, FAQs, resources, or long-form marketplace copy.
+                  This area is reserved for policies, guidance, FAQs, resources, or longer supporting content.
                 </p>
               </article>
 
               <article className="footer-page-placeholder-card">
-                <h3>Action Block</h3>
-                <p>Reserved for links, calls to action, contact methods, or follow-up navigation.</p>
+                <h3>Next Steps</h3>
+                <p>This area is reserved for links, calls to action, contact methods, or follow-up navigation.</p>
               </article>
             </div>
           )}
