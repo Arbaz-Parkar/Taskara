@@ -762,6 +762,343 @@ const sellerContent: Record<string, FooterContentData> = {
   },
 };
 
+const companyContent: Record<string, FooterContentData> = {
+  about: {
+    intro:
+      "Taskara is a hyperlocal service marketplace built to connect buyers with service providers through a structured workflow that includes listings, orders, messaging, reviews, and platform support.",
+    guideLabel: "Company Overview",
+    topCards: [
+      {
+        title: "What Taskara stands for",
+        body:
+          "The platform is designed to make service discovery and service delivery feel organized, transparent, and professional for both clients and sellers.",
+      },
+      {
+        title: "What makes it different",
+        body:
+          "Taskara supports both digital work and real-world local services, which makes it broader than a marketplace built only for one kind of provider.",
+      },
+    ],
+    highlightTitle: "What Taskara is trying to build",
+    highlightBody:
+      "The goal is to create a marketplace where discovery, trust, transactions, and communication all work together instead of feeling disconnected.",
+    sections: [
+      {
+        title: "A structured service journey",
+        body:
+          "From listing creation to order completion, the platform is organized around a complete service flow instead of acting like a simple classifieds board.",
+      },
+      {
+        title: "Support for local and digital work",
+        body:
+          "Taskara is built for categories like design, development, writing, marketing, and also local services such as plumbing, deliveries, and home support.",
+      },
+      {
+        title: "Trust through platform systems",
+        body:
+          "Profiles, reviews, messaging, disputes, and notifications all help users work with more confidence and clearer expectations.",
+      },
+      {
+        title: "Built with long-term growth in mind",
+        body:
+          "The platform architecture leaves room for future features such as stronger admin tooling, richer analytics, and deeper marketplace support.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Positioning",
+        title: "A marketplace with real product flow",
+        body:
+          "Taskara is designed around real interactions between buyers and sellers, not just static listing pages.",
+      },
+      {
+        eyebrow: "Vision",
+        title: "Hyperlocal and scalable",
+        body:
+          "The idea is to support services that can work within local communities while still being flexible enough for broader digital marketplace use.",
+      },
+    ],
+  },
+  careers: {
+    intro:
+      "The careers section represents the future team and growth direction of Taskara as the platform expands beyond a single project into a more complete product vision.",
+    guideLabel: "Company Overview",
+    topCards: [
+      {
+        title: "Why careers matter",
+        body:
+          "A growing marketplace eventually needs people across product, engineering, operations, support, moderation, and community growth.",
+      },
+      {
+        title: "What this page is for",
+        body:
+          "It gives the platform a dedicated place to describe future opportunities, team culture, and the kinds of roles that would help Taskara grow.",
+      },
+    ],
+    highlightTitle: "What a future Taskara team could focus on",
+    highlightBody:
+      "As the marketplace matures, growth will depend not only on code, but also on product direction, trust systems, user support, and community building.",
+    sections: [
+      {
+        title: "Engineering and platform work",
+        body:
+          "Future contributors could improve marketplace stability, user experience, discovery systems, moderation tools, and internal platform operations.",
+      },
+      {
+        title: "Operations and support",
+        body:
+          "As service volume grows, support and dispute handling become more important to maintaining trust across the platform.",
+      },
+      {
+        title: "Growth and community",
+        body:
+          "A marketplace also needs people who understand community building, category expansion, seller development, and strategic growth.",
+      },
+      {
+        title: "A place for future hiring information",
+        body:
+          "This section can later include roles, expectations, application steps, and a clearer view of how the Taskara team is evolving.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Long-Term View",
+        title: "Products grow through people",
+        body:
+          "Behind every strong platform is a team that handles product decisions, trust, support, systems, and growth with care.",
+      },
+      {
+        eyebrow: "Future Expansion",
+        title: "Ready for a real team page later",
+        body:
+          "The structure is here so this section can grow into a proper careers page without changing the overall footer architecture.",
+      },
+    ],
+  },
+  "terms-of-service": {
+    intro:
+      "The Terms of Service section explains the rules, expectations, and platform boundaries that help Taskara operate in a structured and fair way.",
+    guideLabel: "Company Overview",
+    topCards: [
+      {
+        title: "Why terms exist",
+        body:
+          "Terms create shared expectations for how users interact with the platform, use services, and participate in marketplace activity.",
+      },
+      {
+        title: "What they usually cover",
+        body:
+          "They normally define account usage, listing responsibility, order expectations, acceptable conduct, and how disputes or restrictions may be handled.",
+      },
+    ],
+    highlightTitle: "What platform terms help protect",
+    highlightBody:
+      "Clear terms support users, protect the marketplace, and make it easier to define how the platform should be used responsibly.",
+    sections: [
+      {
+        title: "Account and platform use",
+        body:
+          "Users are expected to use the platform in a lawful, respectful, and honest manner while maintaining accurate account information.",
+      },
+      {
+        title: "Listing and service responsibility",
+        body:
+          "Sellers are responsible for presenting services clearly and accurately so buyers understand what they are ordering.",
+      },
+      {
+        title: "Order and communication behavior",
+        body:
+          "Marketplace communication should remain professional, practical, and tied to the service transaction wherever possible.",
+      },
+      {
+        title: "Moderation and enforcement",
+        body:
+          "Platforms need the ability to review issues, respond to misuse, and maintain a safe operating environment for the wider user base.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Purpose",
+        title: "Rules support trust",
+        body:
+          "Terms are not only legal framing. They also help define what responsible participation looks like on the platform.",
+      },
+      {
+        eyebrow: "Future Expansion",
+        title: "Can be formalized later",
+        body:
+          "This page acts as the base for a fuller legal and policy section as the project grows further.",
+      },
+    ],
+  },
+  "privacy-policy": {
+    intro:
+      "The Privacy Policy section explains how user information is handled within Taskara and why privacy matters in a platform that manages accounts, services, orders, and communication.",
+    guideLabel: "Company Overview",
+    topCards: [
+      {
+        title: "Why privacy matters",
+        body:
+          "A marketplace naturally handles account details, listings, messages, orders, and profile information, so users should understand how that data is treated.",
+      },
+      {
+        title: "What this page represents",
+        body:
+          "It gives Taskara a clear place to explain data responsibility, transparency, and the basic expectations around information handling.",
+      },
+    ],
+    highlightTitle: "What a privacy policy should make clear",
+    highlightBody:
+      "Users should be able to understand what data is collected, why it is needed, and how the platform uses it to support marketplace activity.",
+    sections: [
+      {
+        title: "Account and profile information",
+        body:
+          "Basic user identity and profile details help support authentication, visibility, trust, and marketplace participation.",
+      },
+      {
+        title: "Service and order data",
+        body:
+          "Listings, orders, delivery updates, and related workflow details are part of how the platform enables real transactions.",
+      },
+      {
+        title: "Messages and communication",
+        body:
+          "Order-linked messaging exists to keep service communication organized and easier to reference when needed.",
+      },
+      {
+        title: "Platform responsibility",
+        body:
+          "A privacy policy should help users understand that data should be handled with care, purpose, and transparency.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "User Trust",
+        title: "Transparency matters",
+        body:
+          "People are more comfortable using a platform when they understand how their information supports the product experience.",
+      },
+      {
+        eyebrow: "Policy Growth",
+        title: "A base for a fuller privacy document",
+        body:
+          "This section can later expand into a more formal privacy statement with deeper legal and technical detail.",
+      },
+    ],
+  },
+  "press-and-news": {
+    intro:
+      "The Press & News section gives Taskara a place to communicate platform milestones, announcements, updates, and public-facing progress over time.",
+    guideLabel: "Company Overview",
+    topCards: [
+      {
+        title: "Why this matters",
+        body:
+          "A marketplace grows through visibility, credibility, and momentum. Public updates help show how the platform is evolving.",
+      },
+      {
+        title: "What belongs here",
+        body:
+          "Product announcements, feature releases, milestones, media mentions, launch updates, and important platform changes all fit naturally into this section.",
+      },
+    ],
+    highlightTitle: "How press and updates support a marketplace",
+    highlightBody:
+      "A strong public presence helps users, partners, and future stakeholders understand where the platform is heading and what it is building.",
+    sections: [
+      {
+        title: "Product announcements",
+        body:
+          "Major feature launches, admin tools, marketplace improvements, or trust and safety updates can be shared through this page.",
+      },
+      {
+        title: "Growth milestones",
+        body:
+          "Marketplace stats, new categories, seller growth, and community progress can all help show development over time.",
+      },
+      {
+        title: "Public storytelling",
+        body:
+          "Press content also helps shape how the platform is understood by external audiences beyond its current user base.",
+      },
+      {
+        title: "A hub for future updates",
+        body:
+          "This section can later evolve into a dedicated news feed or media page as the project grows further.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Brand Value",
+        title: "Visibility supports growth",
+        body:
+          "Public updates help a marketplace feel alive, active, and easier to trust from the outside.",
+      },
+      {
+        eyebrow: "Future Direction",
+        title: "Ready for structured announcements",
+        body:
+          "This gives Taskara a foundation for future launch notes, updates, and public progress stories.",
+      },
+    ],
+  },
+  contact: {
+    intro:
+      "The contact section provides a direct way to reach Taskara for questions, project communication, or general platform inquiries.",
+    guideLabel: "Company Overview",
+    topCards: [
+      {
+        title: "Get in touch",
+        body:
+          "If you need to reach Taskara for support, collaboration, or general communication, the details below can be used as the primary contact points.",
+      },
+      {
+        title: "Best use of this page",
+        body:
+          "This space works well for project contact details, communication channels, and future support information as the platform continues to grow.",
+      },
+    ],
+    highlightTitle: "Taskara contact information",
+    highlightBody:
+      "You can use the following details for direct communication related to the project and the platform.",
+    sections: [
+      {
+        title: "Mobile number",
+        body: "+917666082523",
+      },
+      {
+        title: "Email address",
+        body: "arbaazparkar15@gmail.com",
+      },
+      {
+        title: "Project communication",
+        body:
+          "This contact page can also expand later into support, partnership, or team communication channels as Taskara grows.",
+      },
+      {
+        title: "Response expectations",
+        body:
+          "As this is currently a project-stage platform, this section serves as a direct point of contact rather than a large support desk.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Direct Contact",
+        title: "Simple and clear communication",
+        body:
+          "The goal of this page is to make it easy for someone to know exactly how to reach Taskara without searching elsewhere.",
+      },
+      {
+        eyebrow: "Future Expansion",
+        title: "Can grow into full support channels",
+        body:
+          "Later, this section can include support forms, business inquiries, and dedicated communication paths for different needs.",
+      },
+    ],
+  },
+};
+
 const findItemBySlug = (slug?: string) => {
   if (!slug) {
     return defaultItem;
@@ -780,7 +1117,10 @@ const findItemBySlug = (slug?: string) => {
 const FooterContentPage = () => {
   const { slug } = useParams();
   const activeItem = findItemBySlug(slug);
-  const activePage = clientContent[activeItem.slug] ?? sellerContent[activeItem.slug];
+  const activePage =
+    clientContent[activeItem.slug] ??
+    sellerContent[activeItem.slug] ??
+    companyContent[activeItem.slug];
 
   return (
     <div className="footer-page-shell">
