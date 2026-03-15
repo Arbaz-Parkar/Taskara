@@ -25,6 +25,7 @@ type FooterContentCard = {
 
 type FooterContentData = {
   intro: string;
+  guideLabel?: string;
   topCards?: FooterContentCard[];
   highlightTitle?: string;
   highlightBody?: string;
@@ -105,6 +106,7 @@ const clientContent: Record<string, FooterContentData> = {
   "how-taskara-works": {
     intro:
       "Taskara is built around a complete marketplace flow where clients can discover the right service, place orders, communicate clearly, receive delivery, and review the experience in one connected system.",
+    guideLabel: "Client Guide",
     topCards: [
       {
         title: "For clients",
@@ -142,6 +144,7 @@ const clientContent: Record<string, FooterContentData> = {
   "quality-guide": {
     intro:
       "The quality guide helps clients understand what a strong Taskara service looks like before placing an order, so expectations stay clear from the start.",
+    guideLabel: "Client Guide",
     topCards: [
       {
         title: "What to review first",
@@ -197,6 +200,7 @@ const clientContent: Record<string, FooterContentData> = {
   "project-briefs": {
     intro:
       "A good project brief helps sellers understand exactly what you need. Better briefs usually lead to faster delivery, fewer revisions, and smoother communication.",
+    guideLabel: "Client Guide",
     topCards: [
       {
         title: "Why briefs matter",
@@ -252,6 +256,7 @@ const clientContent: Record<string, FooterContentData> = {
   "hiring-support": {
     intro:
       "Hiring support on Taskara is about helping clients choose the right seller with better judgment, better questions, and better alignment before an order starts.",
+    guideLabel: "Client Guide",
     topCards: [
       {
         title: "Start with fit",
@@ -307,6 +312,7 @@ const clientContent: Record<string, FooterContentData> = {
   "enterprise-solutions": {
     intro:
       "Enterprise solutions are for teams that need a more structured way to discover service providers, coordinate work, and maintain consistency across multiple projects.",
+    guideLabel: "Client Guide",
     topCards: [
       {
         title: "Built for growing teams",
@@ -362,6 +368,7 @@ const clientContent: Record<string, FooterContentData> = {
   "trust-and-safety": {
     intro:
       "Trust and safety on Taskara is about creating a marketplace where buyers and sellers can work with more confidence, clearer expectations, and better safeguards.",
+    guideLabel: "Client Guide",
     topCards: [
       {
         title: "Why trust matters",
@@ -416,6 +423,345 @@ const clientContent: Record<string, FooterContentData> = {
   },
 };
 
+const sellerContent: Record<string, FooterContentData> = {
+  "become-a-seller": {
+    intro:
+      "Becoming a seller on Taskara means turning your skill into a structured service that buyers can discover, order, review, and return to again.",
+    guideLabel: "Seller Guide",
+    topCards: [
+      {
+        title: "Who Taskara is for",
+        body:
+          "Taskara supports both digital professionals and hyperlocal service providers, so sellers can offer online work as well as real-world services in their area.",
+      },
+      {
+        title: "What you need to begin",
+        body:
+          "A clear service idea, realistic pricing, a strong title, a professional description, and a good understanding of what you can reliably deliver.",
+      },
+    ],
+    highlightTitle: "How to get started as a seller",
+    highlightBody:
+      "The strongest sellers usually start simple, define their offer clearly, and build trust through consistency instead of trying to do everything at once.",
+    sections: [
+      {
+        title: "Create a focused service",
+        body:
+          "Start with one service that is easy to explain and easy for buyers to understand. Clear offers convert better than vague all-in-one listings.",
+      },
+      {
+        title: "Set practical pricing",
+        body:
+          "Choose pricing that reflects your effort, skill level, and delivery scope. Unrealistic pricing often leads to bad expectations on both sides.",
+      },
+      {
+        title: "Write with clarity",
+        body:
+          "Explain what you do, what the buyer receives, how long it takes, and what input you need. Clear writing makes your listing feel more trustworthy.",
+      },
+      {
+        title: "Build reputation over time",
+        body:
+          "Completed orders, good communication, strong reviews, and professional delivery all help you grow steadily on the platform.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Seller Reminder",
+        title: "Start with a promise you can keep",
+        body:
+          "It is better to offer one strong service with a clear scope than to overpromise and struggle to deliver consistently.",
+      },
+      {
+        eyebrow: "Growth Mindset",
+        title: "Refine as you learn",
+        body:
+          "You can improve your service title, images, pricing, and positioning over time as you learn what buyers respond to most.",
+      },
+    ],
+  },
+  "seller-handbook": {
+    intro:
+      "The seller handbook is a practical guide to how professional sellers should present services, manage orders, communicate with buyers, and maintain quality on Taskara.",
+    guideLabel: "Seller Guide",
+    topCards: [
+      {
+        title: "What the handbook covers",
+        body:
+          "It gives sellers a clear idea of the standards expected in listings, delivery, revisions, messaging, and overall platform behavior.",
+      },
+      {
+        title: "Why it matters",
+        body:
+          "Consistent seller habits improve buyer trust, reduce confusion, and create a better marketplace experience for everyone involved.",
+      },
+    ],
+    highlightTitle: "Core practices every seller should follow",
+    highlightBody:
+      "A strong seller experience is usually built on responsiveness, honesty, organization, and a clear understanding of scope.",
+    sections: [
+      {
+        title: "Be precise in your listing",
+        body:
+          "Your service page should explain exactly what you offer, what is included, and what the buyer should expect after ordering.",
+      },
+      {
+        title: "Communicate early and clearly",
+        body:
+          "Use order-linked messaging to keep updates practical, answer questions directly, and avoid leaving buyers unsure about progress.",
+      },
+      {
+        title: "Respect the agreed scope",
+        body:
+          "If the buyer asks for something outside the original service scope, clarify it instead of silently taking on mismatched work.",
+      },
+      {
+        title: "Deliver professionally",
+        body:
+          "Well-structured delivery, clear notes, and timely updates often matter just as much as the work itself when it comes to buyer satisfaction.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Professional Standard",
+        title: "Clarity beats complexity",
+        body:
+          "Buyers usually trust sellers who explain things simply, stay organized, and communicate with confidence.",
+      },
+      {
+        eyebrow: "Long-Term Value",
+        title: "Good habits build repeat business",
+        body:
+          "Reliable process and strong communication make buyers more likely to return and leave positive reviews.",
+      },
+    ],
+  },
+  "community-hub": {
+    intro:
+      "The community hub is the shared space for seller learning, platform knowledge, and collective marketplace improvement on Taskara.",
+    guideLabel: "Seller Guide",
+    topCards: [
+      {
+        title: "Why community matters",
+        body:
+          "Sellers improve faster when they can learn from common patterns, shared experiences, and practical marketplace advice.",
+      },
+      {
+        title: "What belongs here",
+        body:
+          "Best practices, seller guidance, workflow ideas, platform tips, and support resources all fit naturally into a strong community hub.",
+      },
+    ],
+    highlightTitle: "What the community hub is meant to support",
+    highlightBody:
+      "This space is intended to help sellers improve their services, make better marketplace decisions, and feel more connected to how the platform works.",
+    sections: [
+      {
+        title: "Learning from real seller experience",
+        body:
+          "Patterns around listing quality, delivery flow, revisions, and buyer communication can help newer sellers avoid common mistakes.",
+      },
+      {
+        title: "Sharing service growth ideas",
+        body:
+          "Sellers often benefit from seeing how others improve titles, descriptions, visuals, pricing, and positioning.",
+      },
+      {
+        title: "Strengthening marketplace standards",
+        body:
+          "A stronger seller community usually leads to clearer listings, smoother orders, and a better experience for buyers as well.",
+      },
+      {
+        title: "Creating room for future support",
+        body:
+          "This section can later expand into discussions, guides, updates, and other resources that help sellers grow on the platform.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Community Value",
+        title: "Growth is easier when knowledge is shared",
+        body:
+          "Sellers do better when they can learn from platform patterns instead of figuring everything out alone.",
+      },
+      {
+        eyebrow: "Future Direction",
+        title: "A foundation for deeper seller resources",
+        body:
+          "The community hub gives Taskara a place to expand seller education and shared knowledge as the platform grows.",
+      },
+    ],
+  },
+  "seller-success-stories": {
+    intro:
+      "Seller success stories highlight how strong services, consistent delivery, and good communication can help providers grow on Taskara over time.",
+    guideLabel: "Seller Guide",
+    topCards: [
+      {
+        title: "Why success stories matter",
+        body:
+          "They make growth feel practical. Sellers can see that success usually comes from process, reliability, and focus rather than shortcuts.",
+      },
+      {
+        title: "What strong stories show",
+        body:
+          "The best examples usually reveal how a seller positioned their service, improved quality, handled buyers well, and built trust gradually.",
+      },
+    ],
+    highlightTitle: "What seller growth often looks like",
+    highlightBody:
+      "Most strong marketplace journeys are built step by step through clearer offers, better client experience, and steady reputation building.",
+    sections: [
+      {
+        title: "Start with one clear offer",
+        body:
+          "Many successful sellers begin with a focused service instead of launching too many offers at the same time.",
+      },
+      {
+        title: "Improve from buyer feedback",
+        body:
+          "Reviews, repeat questions, and revision patterns can all help a seller improve their listing and delivery process.",
+      },
+      {
+        title: "Build trust through consistency",
+        body:
+          "Showing up on time, communicating properly, and delivering what was promised creates stronger long-term growth than flashy marketing alone.",
+      },
+      {
+        title: "Turn quality into momentum",
+        body:
+          "Once a seller has strong reviews and clear positioning, it becomes easier for buyers to trust their services and order with confidence.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Seller Lesson",
+        title: "Progress usually compounds",
+        body:
+          "Each well-handled order can strengthen your profile, improve your service quality, and make the next order easier to win.",
+      },
+      {
+        eyebrow: "Mindset",
+        title: "Consistency is often the real differentiator",
+        body:
+          "A seller who is dependable, organized, and clear often performs better over time than someone who only focuses on appearance.",
+      },
+    ],
+  },
+  "service-catalog-tips": {
+    intro:
+      "Service catalog tips help sellers shape listings that are easier to understand, easier to compare, and more compelling to buyers browsing the marketplace.",
+    guideLabel: "Seller Guide",
+    topCards: [
+      {
+        title: "Why your catalog matters",
+        body:
+          "Your service catalog is how buyers understand your offer. If it feels confusing or weak, they may leave before ordering.",
+      },
+      {
+        title: "What a strong catalog does",
+        body:
+          "It makes your services look focused, professional, and intentional while helping buyers quickly understand what each listing is for.",
+      },
+    ],
+    highlightTitle: "How to improve your service catalog",
+    highlightBody:
+      "A strong catalog usually feels consistent in pricing, messaging, visuals, and service structure instead of looking random or repetitive.",
+    sections: [
+      {
+        title: "Avoid duplicate sounding listings",
+        body:
+          "Each service should have a distinct purpose. If multiple listings sound almost identical, buyers can get confused about what to choose.",
+      },
+      {
+        title: "Use strong titles and images",
+        body:
+          "The title should explain the outcome clearly, and the service visuals should reinforce professionalism and relevance.",
+      },
+      {
+        title: "Keep scope easy to compare",
+        body:
+          "Buyers should be able to understand what changes between your offerings, whether that is complexity, speed, format, or depth.",
+      },
+      {
+        title: "Refine based on results",
+        body:
+          "If certain listings get more clicks or better conversion, that is useful feedback for improving the rest of your catalog.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Catalog Rule",
+        title: "Every listing should earn its place",
+        body:
+          "If a service is not clearly different or clearly useful, it may be worth rewriting, merging, or repositioning it.",
+      },
+      {
+        eyebrow: "Marketplace Effect",
+        title: "A better catalog improves buyer confidence",
+        body:
+          "Organized service pages make your profile feel stronger and help buyers choose more quickly with less uncertainty.",
+      },
+    ],
+  },
+  "affiliate-program": {
+    intro:
+      "The affiliate program section is where Taskara can explain how partners, promoters, and community advocates may help bring more buyers and sellers to the marketplace.",
+    guideLabel: "Seller Guide",
+    topCards: [
+      {
+        title: "What this area represents",
+        body:
+          "It introduces the idea of marketplace growth through referrals, partnerships, and structured promotion rather than relying only on direct platform discovery.",
+      },
+      {
+        title: "Why it matters",
+        body:
+          "Affiliate-style growth can help a marketplace expand reach while creating new opportunities for creators, communities, and ecosystem partners.",
+      },
+    ],
+    highlightTitle: "How affiliate support can fit into Taskara",
+    highlightBody:
+      "This section acts as a foundation for future growth programs tied to referrals, awareness, and marketplace expansion.",
+    sections: [
+      {
+        title: "Promote relevant services",
+        body:
+          "Partners should focus on bringing in buyers who are actually aligned with the kinds of services available on the platform.",
+      },
+      {
+        title: "Support marketplace growth",
+        body:
+          "Affiliate participation can help bring visibility to sellers, increase buyer traffic, and strengthen category demand over time.",
+      },
+      {
+        title: "Keep promotion trustworthy",
+        body:
+          "Good marketplace promotion should be clear, honest, and useful instead of exaggerated or misleading.",
+      },
+      {
+        title: "Leave room for future expansion",
+        body:
+          "This section can later grow into a more complete referral or affiliate system with clearer program rules and incentives.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Growth Potential",
+        title: "Partnership can strengthen marketplace reach",
+        body:
+          "Well-aligned promotion helps good services get discovered by the right audience instead of being lost in a crowded market.",
+      },
+      {
+        eyebrow: "Future Program",
+        title: "A base for structured referral growth",
+        body:
+          "This area gives Taskara a place to formalize referral or affiliate workflows later without redesigning the information architecture.",
+      },
+    ],
+  },
+};
+
 const findItemBySlug = (slug?: string) => {
   if (!slug) {
     return defaultItem;
@@ -434,7 +780,7 @@ const findItemBySlug = (slug?: string) => {
 const FooterContentPage = () => {
   const { slug } = useParams();
   const activeItem = findItemBySlug(slug);
-  const clientPage = clientContent[activeItem.slug];
+  const activePage = clientContent[activeItem.slug] ?? sellerContent[activeItem.slug];
 
   return (
     <div className="footer-page-shell">
@@ -482,10 +828,8 @@ const FooterContentPage = () => {
           <div className="footer-page-card">
             <p className="footer-page-section-label">Selected Section</p>
             <h2>{activeItem.label}</h2>
-            {clientPage ? (
-              <p>
-                {clientPage.intro}
-              </p>
+            {activePage ? (
+              <p>{activePage.intro}</p>
             ) : (
               <p>
                 This is the shell for the <strong>{activeItem.label}</strong> section. We can now
@@ -494,11 +838,11 @@ const FooterContentPage = () => {
             )}
           </div>
 
-          {clientPage ? (
+          {activePage ? (
             <>
-              {clientPage.topCards ? (
+              {activePage.topCards ? (
                 <div className="footer-info-grid">
-                  {clientPage.topCards.map((card) => (
+                  {activePage.topCards.map((card) => (
                     <article key={card.title} className="footer-page-placeholder-card footer-info-card">
                       {card.eyebrow ? <p className="footer-page-section-label">{card.eyebrow}</p> : null}
                       <h3>{card.title}</h3>
@@ -515,18 +859,20 @@ const FooterContentPage = () => {
                 </div>
               ) : null}
 
-              {clientPage.sections ? (
+              {activePage.sections ? (
                 <div className="footer-page-placeholder-card footer-journey-card">
                   <div className="footer-journey-head">
                     <div>
-                      <p className="footer-page-section-label">Client Guide</p>
-                      <h3>{clientPage.highlightTitle}</h3>
+                      <p className="footer-page-section-label">
+                        {activePage.guideLabel ?? "Guide"}
+                      </p>
+                      <h3>{activePage.highlightTitle}</h3>
                     </div>
-                    {clientPage.highlightBody ? <p>{clientPage.highlightBody}</p> : null}
+                    {activePage.highlightBody ? <p>{activePage.highlightBody}</p> : null}
                   </div>
 
                   <div className="footer-journey-grid">
-                    {clientPage.sections.map((section) => (
+                    {activePage.sections.map((section) => (
                       <article key={section.title} className="footer-journey-step">
                         <h4>{section.title}</h4>
                         <p>{section.body}</p>
@@ -536,9 +882,9 @@ const FooterContentPage = () => {
                 </div>
               ) : null}
 
-              {clientPage.bottomCards ? (
+              {activePage.bottomCards ? (
                 <div className="footer-info-grid footer-info-grid-wide">
-                  {clientPage.bottomCards.map((card) => (
+                  {activePage.bottomCards.map((card) => (
                     <article key={card.title} className="footer-page-placeholder-card footer-info-card">
                       {card.eyebrow ? <p className="footer-page-section-label">{card.eyebrow}</p> : null}
                       <h3>{card.title}</h3>
