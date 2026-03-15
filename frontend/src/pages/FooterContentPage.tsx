@@ -35,6 +35,17 @@ type FooterContentData = {
 
 const footerNavGroups: FooterNavGroup[] = [
   {
+    title: "Categories",
+    items: [
+      { label: "Programming & Tech", slug: "programming-and-tech" },
+      { label: "Graphics & Design", slug: "graphics-and-design" },
+      { label: "Digital Marketing", slug: "digital-marketing" },
+      { label: "Writing & Translation", slug: "writing-and-translation" },
+      { label: "Video & Animation", slug: "video-and-animation" },
+      { label: "Business", slug: "business" },
+    ],
+  },
+  {
     title: "For Clients",
     items: [
       { label: "How Taskara Works", slug: "how-taskara-works" },
@@ -1099,6 +1110,345 @@ const companyContent: Record<string, FooterContentData> = {
   },
 };
 
+const categoryContent: Record<string, FooterContentData> = {
+  "programming-and-tech": {
+    intro:
+      "The Programming & Tech category is where buyers can discover technical services ranging from web development and software work to setup, maintenance, and digital problem solving.",
+    guideLabel: "Category Overview",
+    topCards: [
+      {
+        title: "What fits here",
+        body:
+          "This area is suited to technical services like website creation, app development, debugging, automation support, setup work, and related digital problem solving.",
+      },
+      {
+        title: "Who it helps",
+        body:
+          "Buyers looking for skilled technical execution and sellers offering practical digital solutions can both use this category as a focused marketplace space.",
+      },
+    ],
+    highlightTitle: "What buyers can expect in this category",
+    highlightBody:
+      "Technical services usually perform best when listings explain scope, platform, deliverables, and the exact result the buyer should expect.",
+    sections: [
+      {
+        title: "Clear technical scope",
+        body:
+          "Listings should explain what will be built, fixed, improved, or configured so the buyer understands the actual outcome.",
+      },
+      {
+        title: "Strong communication matters",
+        body:
+          "Because technical work often depends on details, buyers and sellers benefit from structured requirements and clear follow-up.",
+      },
+      {
+        title: "Useful for local and remote demand",
+        body:
+          "This category can support remote digital work as well as location-specific technical support depending on the service offered.",
+      },
+      {
+        title: "A foundation for specialized services",
+        body:
+          "As the marketplace grows, this category can expand into deeper technical niches and more advanced service types.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Category Focus",
+        title: "Built for practical technical work",
+        body:
+          "This category supports services where clarity, scope, and execution quality matter a lot to buyer confidence.",
+      },
+      {
+        eyebrow: "Marketplace Fit",
+        title: "A natural core category",
+        body:
+          "Programming and technology services are often central to service marketplaces and fit naturally into Taskara's broader ecosystem.",
+      },
+    ],
+  },
+  "graphics-and-design": {
+    intro:
+      "The Graphics & Design category is for creative services where presentation, branding, visuals, and communication design play a central role.",
+    guideLabel: "Category Overview",
+    topCards: [
+      {
+        title: "What belongs here",
+        body:
+          "Branding, poster design, social media creatives, thumbnails, presentations, logo work, and other visual design services fit naturally in this category.",
+      },
+      {
+        title: "What buyers usually need",
+        body:
+          "Clients often come here looking for strong visual communication, clean presentation, and designs that support a specific business or creative goal.",
+      },
+    ],
+    highlightTitle: "How this category works best",
+    highlightBody:
+      "Creative services tend to work better when the brief is clear, the examples are strong, and the listing explains style and deliverables properly.",
+    sections: [
+      {
+        title: "Define visual scope clearly",
+        body:
+          "Buyers should be able to understand what kind of design they are purchasing and in what format the final result will be delivered.",
+      },
+      {
+        title: "Use references effectively",
+        body:
+          "Creative work usually benefits from style references, existing branding, and clear examples of what the buyer likes or wants to avoid.",
+      },
+      {
+        title: "Presentation shapes trust",
+        body:
+          "A well-presented design listing often gives buyers more confidence in the seller's visual judgment and professionalism.",
+      },
+      {
+        title: "Built for repeat demand",
+        body:
+          "Many design services are recurring in nature, which makes this category useful for long-term buyer and seller relationships.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Creative Category",
+        title: "Strong visuals help buyers choose",
+        body:
+          "Because design is highly visual, listings in this category benefit a lot from clean examples and clear service positioning.",
+      },
+      {
+        eyebrow: "Growth Potential",
+        title: "A strong area for recurring work",
+        body:
+          "Design services often lead to repeated orders when sellers communicate well and maintain consistency.",
+      },
+    ],
+  },
+  "digital-marketing": {
+    intro:
+      "The Digital Marketing category supports services focused on visibility, audience growth, campaigns, content strategy, and online reach.",
+    guideLabel: "Category Overview",
+    topCards: [
+      {
+        title: "Typical services",
+        body:
+          "This category can include social media support, campaign planning, SEO-related help, content promotion, audience strategy, and other growth-focused work.",
+      },
+      {
+        title: "Why it matters",
+        body:
+          "Many buyers come to marketplaces not just for execution, but for results that help their product, brand, or business get noticed.",
+      },
+    ],
+    highlightTitle: "What makes marketing services easier to trust",
+    highlightBody:
+      "The strongest listings explain the strategy, the type of work included, and what kind of outcome the buyer should realistically expect.",
+    sections: [
+      {
+        title: "Be realistic about outcomes",
+        body:
+          "Marketing services should avoid vague promises and instead focus on practical deliverables and measurable work.",
+      },
+      {
+        title: "Clarify the channel or goal",
+        body:
+          "A listing should make it clear whether the work is focused on reach, engagement, content, campaigns, or audience building.",
+      },
+      {
+        title: "Strategy and execution should align",
+        body:
+          "Buyers need to know whether they are ordering planning support, content execution, optimization, or a mix of these.",
+      },
+      {
+        title: "A useful category for business growth",
+        body:
+          "This area is important because many businesses need marketing help even when they are not ready to hire a full team.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Business Value",
+        title: "Marketing services shape visibility",
+        body:
+          "This category supports buyers who want help getting seen, understood, and discovered more effectively.",
+      },
+      {
+        eyebrow: "Platform Relevance",
+        title: "A strong fit for growing businesses",
+        body:
+          "Digital marketing remains one of the most useful marketplace categories for startups, creators, and local businesses.",
+      },
+    ],
+  },
+  "writing-and-translation": {
+    intro:
+      "The Writing & Translation category supports services where clarity, communication, language quality, and content accuracy matter most.",
+    guideLabel: "Category Overview",
+    topCards: [
+      {
+        title: "What this category includes",
+        body:
+          "It can cover writing support, content creation, editing, proofreading, translations, and language-focused communication services.",
+      },
+      {
+        title: "Why buyers use it",
+        body:
+          "Buyers often need polished communication, clearer messaging, or content adapted for a different audience or language context.",
+      },
+    ],
+    highlightTitle: "What helps writing services perform well",
+    highlightBody:
+      "Strong writing listings usually define tone, format, audience, and revision expectations clearly so buyers know what kind of output they are ordering.",
+    sections: [
+      {
+        title: "Audience and tone matter",
+        body:
+          "Writing quality depends heavily on who the content is for and how it is meant to sound, so listings should be clear about both.",
+      },
+      {
+        title: "Accuracy builds trust",
+        body:
+          "Whether the service is content writing or translation, buyers need confidence that the output will be clear, useful, and professionally handled.",
+      },
+      {
+        title: "Examples improve confidence",
+        body:
+          "Samples, delivery format expectations, and topic clarity all help buyers understand whether a seller is the right fit.",
+      },
+      {
+        title: "Useful across many industries",
+        body:
+          "Because communication needs exist in almost every domain, this category supports a wide range of buyer needs.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Communication Value",
+        title: "Clear writing creates stronger outcomes",
+        body:
+          "This category helps buyers improve how they communicate, publish, present, or localize content.",
+      },
+      {
+        eyebrow: "Marketplace Role",
+        title: "A practical and versatile category",
+        body:
+          "Writing and translation services are useful for individuals, brands, teams, and local businesses alike.",
+      },
+    ],
+  },
+  "video-and-animation": {
+    intro:
+      "The Video & Animation category is for visual storytelling, motion work, edits, and media services that help buyers communicate ideas in a more engaging format.",
+    guideLabel: "Category Overview",
+    topCards: [
+      {
+        title: "What fits in this space",
+        body:
+          "Video editing, short-form content, explainers, motion graphics, basic animation, and presentation-focused media services all fit well here.",
+      },
+      {
+        title: "Why buyers use it",
+        body:
+          "Buyers often need content that is more visual, more memorable, and better suited for online platforms or audience-facing communication.",
+      },
+    ],
+    highlightTitle: "What makes media services easier to buy",
+    highlightBody:
+      "Buyers feel more confident when a listing explains style, format, turnaround, and the type of final media they will receive.",
+    sections: [
+      {
+        title: "Clarify content format",
+        body:
+          "Listings should explain whether the service is for short-form video, animated visuals, edits, reels, or another specific media outcome.",
+      },
+      {
+        title: "Examples strengthen trust",
+        body:
+          "Visual services are easier to evaluate when buyers can understand the seller's style and quality level through clear presentation.",
+      },
+      {
+        title: "Delivery details matter",
+        body:
+          "Buyers should know what file type, resolution, duration, or usage format they can expect from the service.",
+      },
+      {
+        title: "Strong fit for content-driven markets",
+        body:
+          "This category is especially useful in a marketplace where brands, creators, and businesses all need visual communication support.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Creative Output",
+        title: "Visual work benefits from clear structure",
+        body:
+          "Because media services can vary a lot in format and scope, the listing needs to guide the buyer carefully.",
+      },
+      {
+        eyebrow: "Category Strength",
+        title: "High demand, strong showcase value",
+        body:
+          "Video and animation services often make a marketplace feel more dynamic and professionally rounded.",
+      },
+    ],
+  },
+  business: {
+    intro:
+      "The Business category supports practical services that help buyers run, organize, improve, or support their work more effectively.",
+    guideLabel: "Category Overview",
+    topCards: [
+      {
+        title: "What this category can cover",
+        body:
+          "It can include planning, research, operations support, documentation, coordination, consulting-style help, and other business-related services.",
+      },
+      {
+        title: "Why this category is important",
+        body:
+          "Many buyers need support that is not purely creative or technical but still plays a major role in how their business functions.",
+      },
+    ],
+    highlightTitle: "How business services create value",
+    highlightBody:
+      "A strong business service usually helps a buyer become more organized, more informed, or more efficient in a practical way.",
+    sections: [
+      {
+        title: "Clarity of function",
+        body:
+          "Buyers should quickly understand what business problem the service helps solve and what output they will actually receive.",
+      },
+      {
+        title: "Useful for teams and individuals",
+        body:
+          "This category can support freelancers, startups, local businesses, and organizations that need practical operational help.",
+      },
+      {
+        title: "Trust depends on structure",
+        body:
+          "Clear scope, strong communication, and well-defined outcomes matter especially in business-oriented work.",
+      },
+      {
+        title: "Broad room for future expansion",
+        body:
+          "This category gives the marketplace flexibility to support many practical services that do not fit neatly into narrow creative or technical buckets.",
+      },
+    ],
+    bottomCards: [
+      {
+        eyebrow: "Marketplace Utility",
+        title: "Business support is often essential",
+        body:
+          "This category helps make Taskara more useful to buyers who need real operational support, not just creative execution.",
+      },
+      {
+        eyebrow: "Category Flexibility",
+        title: "Wide enough for many practical services",
+        body:
+          "Business services give the marketplace room to serve a broader set of real-world buyer needs.",
+      },
+    ],
+  },
+};
+
 const findItemBySlug = (slug?: string) => {
   if (!slug) {
     return defaultItem;
@@ -1120,7 +1470,8 @@ const FooterContentPage = () => {
   const activePage =
     clientContent[activeItem.slug] ??
     sellerContent[activeItem.slug] ??
-    companyContent[activeItem.slug];
+    companyContent[activeItem.slug] ??
+    categoryContent[activeItem.slug];
 
   return (
     <div className="footer-page-shell">
@@ -1134,10 +1485,6 @@ const FooterContentPage = () => {
         <aside className="footer-page-sidebar">
           <p className="footer-page-kicker">TASKARA GUIDE</p>
           <h1>Information Center</h1>
-          <p className="footer-page-intro">
-            This page will hold the content linked from the footer across client, seller, and
-            company sections.
-          </p>
 
           <nav className="footer-page-nav" aria-label="Footer navigation">
             {footerNavGroups.map((group) => (

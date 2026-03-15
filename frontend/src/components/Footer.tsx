@@ -5,12 +5,12 @@ const footerColumns = [
   {
     title: "Categories",
     items: [
-      "Programming & Tech",
-      "Graphics & Design",
-      "Digital Marketing",
-      "Writing & Translation",
-      "Video & Animation",
-      "Business",
+      { label: "Programming & Tech", to: "/abouts/programming-and-tech" },
+      { label: "Graphics & Design", to: "/abouts/graphics-and-design" },
+      { label: "Digital Marketing", to: "/abouts/digital-marketing" },
+      { label: "Writing & Translation", to: "/abouts/writing-and-translation" },
+      { label: "Video & Animation", to: "/abouts/video-and-animation" },
+      { label: "Business", to: "/abouts/business" },
     ],
   },
   {
