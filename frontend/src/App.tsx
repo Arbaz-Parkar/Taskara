@@ -18,6 +18,7 @@ import DisputesPage from "./pages/DisputesPage";
 import SettingsPage from "./pages/SettingsPage";
 import PublicProfile from "./pages/PublicProfile";
 import AdminDashboard from "./pages/AdminDashboard";
+import FooterContentPage from "./pages/FooterContentPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -33,6 +34,8 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/service/:id" element={<ServiceDetails />} />
           <Route path="/profile/:userId" element={<PublicProfile />} />
+          <Route path="/abouts" element={<FooterContentPage />} />
+          <Route path="/abouts/:slug" element={<FooterContentPage />} />
 
           {/* Protected dashboard route tree */}
           <Route

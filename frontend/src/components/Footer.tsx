@@ -16,34 +16,34 @@ const footerColumns = [
   {
     title: "For Clients",
     items: [
-      "How Taskara Works",
-      "Quality Guide",
-      "Project Briefs",
-      "Hiring Support",
-      "Enterprise Solutions",
-      "Trust & Safety",
+      { label: "How Taskara Works", to: "/abouts/how-taskara-works" },
+      { label: "Quality Guide", to: "/abouts/quality-guide" },
+      { label: "Project Briefs", to: "/abouts/project-briefs" },
+      { label: "Hiring Support", to: "/abouts/hiring-support" },
+      { label: "Enterprise Solutions", to: "/abouts/enterprise-solutions" },
+      { label: "Trust & Safety", to: "/abouts/trust-and-safety" },
     ],
   },
   {
     title: "For Sellers",
     items: [
-      "Become a Seller",
-      "Seller Handbook",
-      "Community Hub",
-      "Seller Success Stories",
-      "Service Catalog Tips",
-      "Affiliate Program",
+      { label: "Become a Seller", to: "/abouts/become-a-seller" },
+      { label: "Seller Handbook", to: "/abouts/seller-handbook" },
+      { label: "Community Hub", to: "/abouts/community-hub" },
+      { label: "Seller Success Stories", to: "/abouts/seller-success-stories" },
+      { label: "Service Catalog Tips", to: "/abouts/service-catalog-tips" },
+      { label: "Affiliate Program", to: "/abouts/affiliate-program" },
     ],
   },
   {
     title: "Company",
     items: [
-      "About",
-      "Careers",
-      "Terms of Service",
-      "Privacy Policy",
-      "Press & News",
-      "Contact",
+      { label: "About", to: "/abouts/about" },
+      { label: "Careers", to: "/abouts/careers" },
+      { label: "Terms of Service", to: "/abouts/terms-of-service" },
+      { label: "Privacy Policy", to: "/abouts/privacy-policy" },
+      { label: "Press & News", to: "/abouts/press-and-news" },
+      { label: "Contact", to: "/abouts/contact" },
     ],
   },
 ];
@@ -57,10 +57,14 @@ const Footer = () => {
             <h4>{column.title}</h4>
             <ul>
               {column.items.map((item) => (
-                <li key={item}>
-                  <a href="#" onClick={(event) => event.preventDefault()}>
-                    {item}
-                  </a>
+                <li key={typeof item === "string" ? item : item.label}>
+                  {typeof item === "string" ? (
+                    <a href="#" onClick={(event) => event.preventDefault()}>
+                      {item}
+                    </a>
+                  ) : (
+                    <Link to={item.to}>{item.label}</Link>
+                  )}
                 </li>
               ))}
             </ul>
