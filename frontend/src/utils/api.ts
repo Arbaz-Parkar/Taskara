@@ -1,4 +1,6 @@
-const BACKEND_ORIGIN = "http://localhost:4000";
+const BACKEND_ORIGIN = (
+  import.meta.env.VITE_API_ORIGIN || "http://localhost:4000"
+).replace(/\/$/, "");
 const API_BASE = `${BACKEND_ORIGIN}/api`;
 
 export const registerUser = async (data: {

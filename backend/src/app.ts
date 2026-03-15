@@ -11,7 +11,23 @@ import notificationRoutes from "./modules/notifications/notification.routes";
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
+  })
+);
 app.use(express.json({ limit: "25mb" }));
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
