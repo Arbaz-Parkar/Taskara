@@ -685,9 +685,6 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
             </p>
           </div>
 
-          <div className="manage-actions-row">
-            <button type="button" className="btn-outline" onClick={() => navigate("/dashboard")}>Back</button>
-          </div>
         </div>
 
         <div className="orders-role-switcher">
@@ -717,9 +714,6 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
                 <h3>Orders you placed</h3>
                 <p>Track purchases, message sellers, and complete deliveries from a cleaner buyer-only area.</p>
               </div>
-              <button type="button" className="btn-primary" onClick={() => navigate("/dashboard/orders/buyer")}>
-                Open Buyer Orders
-              </button>
             </div>
 
             <div className="orders-overview-stats">
@@ -737,9 +731,6 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
                 <h3>Orders on your services</h3>
                 <p>Handle inbound work, move orders through each stage, and keep seller operations easier to scan.</p>
               </div>
-              <button type="button" className="btn-primary" onClick={() => navigate("/dashboard/orders/seller")}>
-                Open Seller Orders
-              </button>
             </div>
 
             <div className="orders-overview-stats">
