@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { createService } from "../utils/api";
 import {
-  getPriceFieldHelpText,
   getPriceFieldLabel,
   getPriceFieldPlaceholder,
   type ServicePricingModel,
@@ -399,7 +398,6 @@ const CreateService = () => {
               <option value="PACKAGE">Package Based</option>
               <option value="HOURLY">Hourly</option>
             </select>
-            <small>{getPriceFieldHelpText(form.pricingModel)}</small>
           </label>
 
           <label className="create-field">
@@ -488,7 +486,6 @@ const CreateService = () => {
             onChange={handleChange}
             required
           />
-          <small>{getPriceFieldHelpText(form.pricingModel)}</small>
         </label>
 
         {error && <p className="form-status form-status-error">{error}</p>}
