@@ -68,7 +68,12 @@ const countByStatus = (orders: OrderRecord[], status: OrderStatus) =>
   orders.filter((order) => order.status === status).length;
 const statusLabel = (status: string) => status.replaceAll("_", " ");
 const statusClass = (status: OrderStatus) => status.toLowerCase();
-const renderStars = (rating: number) => "★".repeat(rating) + "☆".repeat(5 - rating);
+const renderStars = (rating: number) => "?".repeat(rating) + "?".repeat(5 - rating);
+const isActionableOrder = (status: OrderStatus) =>
+  status === "PENDING" ||
+  status === "ACCEPTED" ||
+  status === "IN_PROGRESS" ||
+  status === "DELIVERED";
 
 const getSellerActions = (status: OrderStatus) => {
   if (status === "PENDING") {
@@ -183,7 +188,7 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
       }
     };
 
-    load();
+    void load();
   }, []);
 
   const handleStatusAction = async (orderId: number, nextStatus: OrderStatus) => {
@@ -209,7 +214,7 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
     }
   };
 
-  const handleToggleMessages = async (orderId: number) => {
+  const handleToggleDetails = async (orderId: number) => {
     if (expandedOrderId === orderId) {
       setExpandedOrderId(null);
       return;
@@ -311,6 +316,8 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
 
   const renderOrderCard = (order: OrderRecord, role: "buyer" | "seller") => {
     const actions = role === "seller" ? getSellerActions(order.status) : getBuyerActions(order.status);
+    const primaryAction = actions[0];
+    const secondaryAction = actions[1];
     const messages = messagesByOrder[order.id] ?? [];
     const isExpanded = expandedOrderId === order.id;
     const canReview = role === "buyer" && order.status === "COMPLETED" && !order.review;
@@ -341,43 +348,59 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
           </Link>
         </p>
 
-        {order.requirements && (
-          <p className="order-requirements">Requirements: {order.requirements}</p>
-        )}
-
-        <div className="service-footer">
-          <span>Order Amount</span>
-          <strong>{formatPrice(order.amount)}</strong>
+        <div className="order-meta-strip">
+          <div>
+            <span>Order Amount</span>
+            <strong>{formatPrice(order.amount)}</strong>
+          </div>
+          <div>
+            <span>Current Stage</span>
+            <strong>{statusLabel(order.status)}</strong>
+          </div>
         </div>
 
-        <div className="manage-actions-row">
-          {actions.map((action) => (
+        <div className="order-primary-actions">
+          {primaryAction ? (
             <button
-              key={action.label}
+              type="button"
+              className="btn-primary"
+              disabled={busyOrderId === order.id}
+              onClick={() => handleStatusAction(order.id, primaryAction.nextStatus)}
+            >
+              {busyOrderId === order.id ? "Updating..." : primaryAction.label}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => navigate(`/dashboard/messages/${order.id}`)}
+            >
+              Open Chat
+            </button>
+          )}
+
+          {primaryAction && (
+            <button
               type="button"
               className="btn-outline"
-              disabled={busyOrderId === order.id}
-              onClick={() => handleStatusAction(order.id, action.nextStatus)}
+              onClick={() => navigate(`/dashboard/messages/${order.id}`)}
             >
-              {busyOrderId === order.id ? "Updating..." : action.label}
+              Open Chat
             </button>
-          ))}
+          )}
+        </div>
 
-          <button
-            type="button"
-            className="btn-outline"
-            onClick={() => handleToggleMessages(order.id)}
-          >
-            {isExpanded ? "Hide Messages" : "Messages"}
-          </button>
-
-          <button
-            type="button"
-            className="btn-outline"
-            onClick={() => navigate(`/dashboard/messages/${order.id}`)}
-          >
-            Open Chat Page
-          </button>
+        <div className="order-secondary-actions">
+          {secondaryAction && (
+            <button
+              type="button"
+              className="btn-outline danger-button"
+              disabled={busyOrderId === order.id}
+              onClick={() => handleStatusAction(order.id, secondaryAction.nextStatus)}
+            >
+              {busyOrderId === order.id ? "Updating..." : secondaryAction.label}
+            </button>
+          )}
 
           {canReview && (
             <button
@@ -389,11 +412,22 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
                   ...current,
                   [order.id]: current[order.id] ?? 5,
                 }));
+                if (!isExpanded) {
+                  void handleToggleDetails(order.id);
+                }
               }}
             >
-              {isReviewing ? "Cancel Review" : "Leave Review"}
+              {isReviewing ? "Close Review" : "Leave Review"}
             </button>
           )}
+
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => handleToggleDetails(order.id)}
+          >
+            {isExpanded ? "Hide Details" : "View Details"}
+          </button>
         </div>
 
         {order.review && (
@@ -404,97 +438,121 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
           </div>
         )}
 
-        {isReviewing && canReview && (
-          <div className="order-review-form">
-            <label className="create-field">
-              <span>Rating</span>
-              <select
-                value={reviewRatingByOrder[order.id] ?? 5}
-                onChange={(event) =>
-                  setReviewRatingByOrder((current) => ({
-                    ...current,
-                    [order.id]: Number(event.target.value),
-                  }))
-                }
-              >
-                <option value={5}>5 - Excellent</option>
-                <option value={4}>4 - Very Good</option>
-                <option value={3}>3 - Good</option>
-                <option value={2}>2 - Fair</option>
-                <option value={1}>1 - Poor</option>
-              </select>
-            </label>
-
-            <label className="create-field">
-              <span>Comment (Optional)</span>
-              <textarea
-                rows={3}
-                placeholder="Share your experience with this seller..."
-                value={reviewCommentByOrder[order.id] ?? ""}
-                onChange={(event) =>
-                  setReviewCommentByOrder((current) => ({
-                    ...current,
-                    [order.id]: event.target.value,
-                  }))
-                }
-              />
-            </label>
-
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => handleSubmitReview(order)}
-              disabled={submittingReviewOrderId === order.id}
-            >
-              {submittingReviewOrderId === order.id ? "Submitting..." : "Submit Review"}
-            </button>
-          </div>
-        )}
-
         {isExpanded && (
-          <div className="order-chat-box">
-            {loadingMessagesOrderId === order.id ? (
-              <p className="service-seller">Loading messages...</p>
-            ) : (
-              <div className="order-chat-list">
-                {messages.length === 0 ? (
-                  <p className="service-seller">No messages yet for this order.</p>
-                ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`order-chat-item ${
-                        message.senderId === currentUserId ? "outgoing" : "incoming"
-                      }`}
-                    >
-                      <strong>{message.sender.name}</strong>
-                      <p>{message.content}</p>
-                    </div>
-                  ))
-                )}
+          <div className="order-details-panel">
+            {order.requirements && (
+              <div className="order-details-block">
+                <strong>Requirements</strong>
+                <p className="order-requirements">{order.requirements}</p>
               </div>
             )}
 
-            <div className="order-chat-compose">
-              <input
-                placeholder={`Message ${role === "seller" ? "buyer" : "seller"}...`}
-                value={draftByOrder[order.id] ?? ""}
-                onChange={(event) =>
-                  setDraftByOrder((current) => ({
-                    ...current,
-                    [order.id]: event.target.value,
-                  }))
-                }
-              />
-              <button
-                type="button"
-                className="btn-primary"
-                disabled={sendingMessageOrderId === order.id}
-                onClick={() => handleSendMessage(order.id)}
-              >
-                {sendingMessageOrderId === order.id ? "Sending..." : "Send"}
-              </button>
+            {isActionableOrder(order.status) && (
+              <div className="order-details-block">
+                <strong>{role === "seller" ? "Seller Workflow" : "Buyer Workflow"}</strong>
+                <p className="service-seller">
+                  {role === "seller"
+                    ? "Use this order thread to accept, deliver, or update progress while keeping communication tied to the order."
+                    : "Track the order stage here, message the seller, and complete the order once delivery meets your requirements."}
+                </p>
+              </div>
+            )}
+
+            <div className="order-chat-box">
+              <div className="order-details-block order-details-heading">
+                <strong>Quick Messages</strong>
+              </div>
+
+              {loadingMessagesOrderId === order.id ? (
+                <p className="service-seller">Loading messages...</p>
+              ) : (
+                <div className="order-chat-list">
+                  {messages.length === 0 ? (
+                    <p className="service-seller">No messages yet for this order.</p>
+                  ) : (
+                    messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`order-chat-item ${
+                          message.senderId === currentUserId ? "outgoing" : "incoming"
+                        }`}
+                      >
+                        <strong>{message.sender.name}</strong>
+                        <p>{message.content}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              <div className="order-chat-compose">
+                <input
+                  placeholder={`Message ${role === "seller" ? "buyer" : "seller"}...`}
+                  value={draftByOrder[order.id] ?? ""}
+                  onChange={(event) =>
+                    setDraftByOrder((current) => ({
+                      ...current,
+                      [order.id]: event.target.value,
+                    }))
+                  }
+                />
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={sendingMessageOrderId === order.id}
+                  onClick={() => handleSendMessage(order.id)}
+                >
+                  {sendingMessageOrderId === order.id ? "Sending..." : "Send"}
+                </button>
+              </div>
             </div>
+
+            {isReviewing && canReview && (
+              <div className="order-review-form">
+                <label className="create-field">
+                  <span>Rating</span>
+                  <select
+                    value={reviewRatingByOrder[order.id] ?? 5}
+                    onChange={(event) =>
+                      setReviewRatingByOrder((current) => ({
+                        ...current,
+                        [order.id]: Number(event.target.value),
+                      }))
+                    }
+                  >
+                    <option value={5}>5 - Excellent</option>
+                    <option value={4}>4 - Very Good</option>
+                    <option value={3}>3 - Good</option>
+                    <option value={2}>2 - Fair</option>
+                    <option value={1}>1 - Poor</option>
+                  </select>
+                </label>
+
+                <label className="create-field">
+                  <span>Comment (Optional)</span>
+                  <textarea
+                    rows={3}
+                    placeholder="Share your experience with this seller..."
+                    value={reviewCommentByOrder[order.id] ?? ""}
+                    onChange={(event) =>
+                      setReviewCommentByOrder((current) => ({
+                        ...current,
+                        [order.id]: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => handleSubmitReview(order)}
+                  disabled={submittingReviewOrderId === order.id}
+                >
+                  {submittingReviewOrderId === order.id ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </article>
@@ -584,6 +642,20 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
     </section>
   );
 
+  const buyerSummary = {
+    total: buyerOrders.length,
+    active: buyerOrders.filter((order) => isActionableOrder(order.status)).length,
+    pending: countByStatus(buyerOrders, "PENDING"),
+    completed: countByStatus(buyerOrders, "COMPLETED"),
+  };
+
+  const sellerSummary = {
+    total: sellerOrders.length,
+    active: sellerOrders.filter((order) => isActionableOrder(order.status)).length,
+    pending: countByStatus(sellerOrders, "PENDING"),
+    completed: countByStatus(sellerOrders, "COMPLETED"),
+  };
+
   if (loading) {
     return <div className="dashboard-placeholder">Loading orders...</div>;
   }
@@ -599,35 +671,91 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
 
   return (
     <div className="orders-shell">
-      <div className="orders-header-row">
-        <div>
-          <h2>Orders Workspace</h2>
-          <p>Manage buyer and seller pipelines with order-linked messaging.</p>
+      <section className="orders-hero-card">
+        <div className="orders-header-row">
+          <div>
+            <p className="overview-kicker">Order Center</p>
+            <h2>{mode === "buyer" ? "Buyer Orders" : mode === "seller" ? "Seller Orders" : "Orders Hub"}</h2>
+            <p>
+              {mode === "buyer"
+                ? "Manage the orders you placed with a focused buyer view that feels clearer and easier to follow."
+                : mode === "seller"
+                  ? "Handle incoming work with a dedicated seller pipeline built around fulfillment and order actions."
+                  : "Pick the side of the marketplace you want to manage. Buyer and seller activity now live in separate workspaces to keep the flow cleaner."}
+            </p>
+          </div>
+
+          <div className="manage-actions-row">
+            <button type="button" className="btn-outline" onClick={() => navigate("/dashboard")}>Back</button>
+          </div>
         </div>
 
-        <div className="manage-actions-row">
-          <button type="button" className="btn-outline" onClick={() => navigate("/dashboard")}>Back to Dashboard Home</button>
+        <div className="orders-role-switcher">
+          <NavLink to="/dashboard/orders" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Overview</span>
+            <strong>Orders Hub</strong>
+          </NavLink>
+          <NavLink to="/dashboard/orders/buyer" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Buying</span>
+            <strong>Buyer Orders</strong>
+          </NavLink>
+          <NavLink to="/dashboard/orders/seller" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Selling</span>
+            <strong>Seller Orders</strong>
+          </NavLink>
         </div>
-      </div>
-
-      <div className="manage-filter-group orders-route-tabs">
-        <NavLink to="/dashboard/orders" end className={({ isActive }) => `manage-filter-btn ${isActive ? "active" : ""}`}>
-          All Orders
-        </NavLink>
-        <NavLink to="/dashboard/orders/buyer" className={({ isActive }) => `manage-filter-btn ${isActive ? "active" : ""}`}>
-          Buyer Orders
-        </NavLink>
-        <NavLink to="/dashboard/orders/seller" className={({ isActive }) => `manage-filter-btn ${isActive ? "active" : ""}`}>
-          Seller Orders
-        </NavLink>
-      </div>
+      </section>
 
       {actionError && <p className="form-status form-status-error">{actionError}</p>}
 
-      {(mode === "all" || mode === "buyer") &&
+      {mode === "all" && (
+        <section className="orders-overview-grid">
+          <article className="orders-overview-card orders-overview-card-buyer">
+            <div className="orders-overview-head">
+              <div>
+                <p className="overview-kicker">Buyer Workspace</p>
+                <h3>Orders you placed</h3>
+                <p>Track purchases, message sellers, and complete deliveries from a cleaner buyer-only area.</p>
+              </div>
+              <button type="button" className="btn-primary" onClick={() => navigate("/dashboard/orders/buyer")}>
+                Open Buyer Orders
+              </button>
+            </div>
+
+            <div className="orders-overview-stats">
+              <article><strong>{buyerSummary.total}</strong><span>Total Orders</span></article>
+              <article><strong>{buyerSummary.active}</strong><span>Active Pipeline</span></article>
+              <article><strong>{buyerSummary.pending}</strong><span>Pending</span></article>
+              <article><strong>{buyerSummary.completed}</strong><span>Completed</span></article>
+            </div>
+          </article>
+
+          <article className="orders-overview-card orders-overview-card-seller">
+            <div className="orders-overview-head">
+              <div>
+                <p className="overview-kicker">Seller Workspace</p>
+                <h3>Orders on your services</h3>
+                <p>Handle inbound work, move orders through each stage, and keep seller operations easier to scan.</p>
+              </div>
+              <button type="button" className="btn-primary" onClick={() => navigate("/dashboard/orders/seller")}>
+                Open Seller Orders
+              </button>
+            </div>
+
+            <div className="orders-overview-stats">
+              <article><strong>{sellerSummary.total}</strong><span>Total Orders</span></article>
+              <article><strong>{sellerSummary.active}</strong><span>Active Pipeline</span></article>
+              <article><strong>{sellerSummary.pending}</strong><span>Awaiting Response</span></article>
+              <article><strong>{sellerSummary.completed}</strong><span>Completed</span></article>
+            </div>
+          </article>
+        </section>
+      )}
+
+      {mode === "buyer" &&
         renderSection({
-          title: "Buyer Dashboard",
-          subtitle: "Orders you placed in the marketplace.",
+          title: "Buyer Orders",
+          subtitle: "Orders you placed in the marketplace, with buyer-focused actions and cleaner tracking.",
           orders: buyerOrders,
           filtered: filteredBuyerOrders,
           role: "buyer",
@@ -637,10 +765,10 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
           setQuery: setBuyerQuery,
         })}
 
-      {(mode === "all" || mode === "seller") &&
+      {mode === "seller" &&
         renderSection({
-          title: "Seller Dashboard",
-          subtitle: "Incoming orders on your own services.",
+          title: "Seller Orders",
+          subtitle: "Incoming orders on your own services, organized around delivery and fulfillment.",
           orders: sellerOrders,
           filtered: filteredSellerOrders,
           role: "seller",

@@ -63,8 +63,8 @@ const ServiceDetails = () => {
         requirements: requirements.trim() || undefined,
       });
 
-      setOrderMessage("Order placed successfully. Redirecting to Orders...");
-      navigate("/dashboard/orders", { replace: true });
+      setOrderMessage("Order placed successfully. Redirecting to Buyer Orders...");
+      navigate("/dashboard/orders/buyer", { replace: true });
     } catch (err) {
       if (err instanceof Error) {
         setOrderError(err.message);
