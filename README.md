@@ -151,7 +151,6 @@ Some things that can still be added later:
 - Saved services or wishlist
 - Stronger analytics and reporting
 - Email notifications
-- Deployment to production
 
 ## Final note
 
