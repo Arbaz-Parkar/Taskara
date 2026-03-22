@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { NavLink } from "react-router-dom";
 import {
   createDispute,
   fetchDisputeById,
@@ -11,6 +12,8 @@ import {
   type DisputeRecord,
   type EligibleDisputeOrder,
 } from "../utils/api";
+
+type DisputesMode = "all" | "new" | "cases";
 
 type SaveState = {
   loading: boolean;
@@ -36,6 +39,8 @@ const formatBytes = (value: number) => {
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 };
+
+const formatDisputeStatus = (status: string) => status.replace(/_/g, " ");
 
 const AvatarCircle = ({ avatarUrl, name }: { avatarUrl?: string | null; name: string }) => {
   const [broken, setBroken] = useState(false);
@@ -71,7 +76,7 @@ const fileToBase64 = (file: File) =>
     reader.readAsDataURL(file);
   });
 
-const DisputesPage = () => {
+const DisputesPage = ({ mode = "all" }: { mode?: DisputesMode }) => {
   const [disputeState, setDisputeState] = useState(initialSaveState);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
@@ -134,25 +139,37 @@ const DisputesPage = () => {
     void boot();
   }, []);
 
+  const filteredDisputes = useMemo(() => {
+    const q = disputeQuery.trim().toLowerCase();
+    if (!q) {
+      return disputes;
+    }
+
+    return disputes.filter((dispute) =>
+      String(dispute.id).includes(q) ||
+      String(dispute.orderId).includes(q) ||
+      dispute.order.service.title.toLowerCase().includes(q)
+    );
+  }, [disputeQuery, disputes]);
+
   const handleDisputeFileSelection = (
     event: React.ChangeEvent<HTMLInputElement>,
-    mode: "new" | "reply"
+    type: "new" | "reply"
   ) => {
     const selected = Array.from(event.target.files ?? []);
     if (!selected.length) {
       return;
     }
 
-    const imageOrDocument = selected.filter((file) => file.size <= MAX_ATTACHMENT_BYTES);
-    const capped = imageOrDocument.slice(0, 5);
+    const valid = selected.filter((file) => file.size <= MAX_ATTACHMENT_BYTES).slice(0, 5);
 
-    if (mode === "new") {
-      setNewDisputeFiles(capped);
+    if (type === "new") {
+      setNewDisputeFiles(valid);
     } else {
       setReplyDisputeFiles((current) => {
         const existing = new Set(current.map((item) => item.id));
         const merged = [...current];
-        capped.forEach((file) => {
+        valid.forEach((file) => {
           const id = `${file.name}-${file.size}-${file.lastModified}`;
           if (!existing.has(id)) {
             merged.push({ id, file });
@@ -171,20 +188,12 @@ const DisputesPage = () => {
 
   const handleCreateDispute = async () => {
     if (!selectedOrderIdForDispute) {
-      setDisputeState({
-        loading: false,
-        message: "",
-        error: "Select a completed or delivered order to raise a dispute.",
-      });
+      setDisputeState({ loading: false, message: "", error: "Select a completed or delivered order to raise a dispute." });
       return;
     }
 
     if (!disputeReason.trim()) {
-      setDisputeState({
-        loading: false,
-        message: "",
-        error: "Dispute reason is required.",
-      });
+      setDisputeState({ loading: false, message: "", error: "Dispute reason is required." });
       return;
     }
 
@@ -209,7 +218,6 @@ const DisputesPage = () => {
       setDisputeInitialMessage("");
       setNewDisputeFiles([]);
       setSelectedOrderIdForDispute(null);
-
       await loadDisputeWorkspace(created.id);
 
       setDisputeState({
@@ -252,11 +260,7 @@ const DisputesPage = () => {
     const hasFiles = replyDisputeFiles.length > 0;
 
     if (!hasText && !hasFiles) {
-      setDisputeState({
-        loading: false,
-        message: "",
-        error: "Enter a message or attach at least one file.",
-      });
+      setDisputeState({ loading: false, message: "", error: "Enter a message or attach at least one file." });
       return;
     }
 
@@ -278,11 +282,7 @@ const DisputesPage = () => {
       setDisputeMessages((previous) => [...previous, created]);
       setDisputeReplyText("");
       setReplyDisputeFiles([]);
-      setDisputeState({
-        loading: false,
-        message: "Message sent to dispute thread.",
-        error: "",
-      });
+      setDisputeState({ loading: false, message: "Message sent to dispute thread.", error: "" });
     } catch (err) {
       setDisputeState({
         loading: false,
@@ -292,97 +292,113 @@ const DisputesPage = () => {
     }
   };
 
+  const summary = {
+    eligible: eligibleOrders.length,
+    disputes: disputes.length,
+    open: disputes.filter((dispute) => dispute.status === "OPEN").length,
+    resolved: disputes.filter((dispute) => dispute.status === "RESOLVED").length,
+  };
+
   return (
-    <div className="settings-shell">
-      <section className="settings-hero-card">
+    <div className="reviews-shell">
+      <section className="reviews-hero-card reviews-center-hero">
         <div>
           <p className="overview-kicker">Dispute Center</p>
-          <h2>Raise, track, and resolve delivery disputes with admin assistance.</h2>
-          <p>All dispute communication is tied directly to order records and evidence files.</p>
+          <h2>{mode === "new" ? "Raise New Dispute" : mode === "cases" ? "My Cases" : "Dispute Hub"}</h2>
+          <p>
+            {mode === "new"
+              ? "Raise a dispute from eligible completed work and attach evidence in a cleaner, dedicated intake form."
+              : mode === "cases"
+                ? "Track case updates, message admin, and monitor timeline events from a dedicated case workspace."
+                : "Separate dispute intake from case management so support flows feel cleaner and easier to understand."}
+          </p>
+        </div>
+        <div className="reviews-summary-grid">
+          <article>
+            <strong>{summary.eligible}</strong>
+            <span>Eligible Orders</span>
+          </article>
+          <article>
+            <strong>{summary.disputes}</strong>
+            <span>Total Cases</span>
+          </article>
+        </div>
+        <div className="orders-role-switcher reviews-route-switcher">
+          <NavLink to="/dashboard/disputes" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Overview</span>
+            <strong>Dispute Hub</strong>
+          </NavLink>
+          <NavLink to="/dashboard/disputes/new" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Intake</span>
+            <strong>Raise Dispute</strong>
+          </NavLink>
+          <NavLink to="/dashboard/disputes/cases" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Tracking</span>
+            <strong>My Cases</strong>
+          </NavLink>
         </div>
       </section>
 
-      <section className="settings-card">
-        <div className="settings-card-head">
-          <h3>Assistance Workspace</h3>
-          <p>Use this page for order disputes and admin communication.</p>
-        </div>
+      {disputeState.error && <p className="form-status form-status-error">{disputeState.error}</p>}
+      {disputeState.message && <p className="form-status form-status-success">{disputeState.message}</p>}
 
-        <div className="orders-count-grid">
-          <article>
-            <strong>{eligibleOrders.length}</strong>
-            <span>Delivered/Completed Orders</span>
-          </article>
-          <article>
-            <strong>{disputes.length}</strong>
-            <span>My Disputes</span>
-          </article>
-          <article>
-            <strong>{disputes.filter((dispute) => dispute.status === "OPEN").length}</strong>
-            <span>Open Cases</span>
-          </article>
-        </div>
-
-        <div className="settings-grid">
-          <div className="settings-full-width">
-            <h4>Eligible Orders</h4>
-            <div className="order-chat-box">
-              {eligibleOrders.length ? (
-                <div className="order-chat-list">
-                  {eligibleOrders.map((order) => (
-                    <article key={order.id} className="order-card">
-                      <div className="order-card-head">
-                        <h4>{order.service.title}</h4>
-                        <span className={`order-status-chip ${order.status.toLowerCase()}`}>
-                          {order.status.replace(/_/g, " ")}
-                        </span>
-                      </div>
-                      <p className="service-seller">Order #{order.id}</p>
-                      {order.dispute ? (
-                        <button
-                          type="button"
-                          className="btn-outline"
-                          onClick={() => handleSelectDispute(order.dispute!.id)}
-                        >
-                          Open Dispute #{order.dispute.id}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-outline"
-                          onClick={() => setSelectedOrderIdForDispute(order.id)}
-                        >
-                          Raise Dispute
-                        </button>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <p className="service-seller">No eligible orders for disputes yet.</p>
-              )}
+      {mode === "all" && (
+        <section className="orders-overview-grid">
+          <article className="orders-overview-card orders-overview-card-buyer">
+            <div className="orders-overview-head">
+              <div>
+                <p className="overview-kicker">Raise Dispute</p>
+                <h3>Start a new case</h3>
+                <p>Choose an eligible order, explain the issue, and upload evidence without mixing the intake form into the case thread view.</p>
+              </div>
             </div>
+            <div className="orders-overview-stats">
+              <article><strong>{summary.eligible}</strong><span>Eligible Orders</span></article>
+              <article><strong>{eligibleOrders.filter((order) => !order.dispute).length}</strong><span>Available to Raise</span></article>
+              <article><strong>{eligibleOrders.filter((order) => !!order.dispute).length}</strong><span>Already Raised</span></article>
+              <article><strong>{summary.open}</strong><span>Open Cases</span></article>
+            </div>
+          </article>
+
+          <article className="orders-overview-card orders-overview-card-seller">
+            <div className="orders-overview-head">
+              <div>
+                <p className="overview-kicker">My Cases</p>
+                <h3>Track dispute threads</h3>
+                <p>Keep admin messages, evidence follow-up, and timeline activity in a separate workspace that is easier to scan.</p>
+              </div>
+            </div>
+            <div className="orders-overview-stats">
+              <article><strong>{summary.disputes}</strong><span>Total Cases</span></article>
+              <article><strong>{summary.open}</strong><span>Open</span></article>
+              <article><strong>{summary.resolved}</strong><span>Resolved</span></article>
+              <article><strong>{disputes.filter((dispute) => dispute.status === "UNDER_REVIEW").length}</strong><span>Under Review</span></article>
+            </div>
+          </article>
+        </section>
+      )}
+
+      {mode === "new" && (
+        <section className="overview-market-section">
+          <div className="overview-market-head">
+            <h3>Raise New Dispute</h3>
+            <p>Select an eligible order, explain the issue clearly, and attach evidence for admin review.</p>
           </div>
 
-          <div className="settings-full-width">
-            <h4>Raise New Dispute</h4>
+          <div className="orders-overview-card orders-overview-card-buyer">
             <div className="settings-grid">
               <label className="create-field">
                 <span>Select Order</span>
                 <select
                   value={selectedOrderIdForDispute ?? ""}
-                  onChange={(event) =>
-                    setSelectedOrderIdForDispute(event.target.value ? Number(event.target.value) : null)
-                  }
+                  onChange={(event) => setSelectedOrderIdForDispute(event.target.value ? Number(event.target.value) : null)}
                 >
                   <option value="">Choose delivered/completed order</option>
-                  {eligibleOrders
-                    .filter((order) => !order.dispute)
-                    .map((order) => (
-                      <option key={order.id} value={order.id}>
-                        #{order.id} - {order.service.title}
-                      </option>
-                    ))}
+                  {eligibleOrders.filter((order) => !order.dispute).map((order) => (
+                    <option key={order.id} value={order.id}>
+                      #{order.id} - {order.service.title}
+                    </option>
+                  ))}
                 </select>
               </label>
 
@@ -408,11 +424,7 @@ const DisputesPage = () => {
 
               <label className="create-field settings-full-width">
                 <span>Attach Evidence (Up to 5 files, 10 MB each)</span>
-                <input
-                  type="file"
-                  multiple
-                  onChange={(event) => handleDisputeFileSelection(event, "new")}
-                />
+                <input type="file" multiple onChange={(event) => handleDisputeFileSelection(event, "new")} />
               </label>
             </div>
 
@@ -425,192 +437,161 @@ const DisputesPage = () => {
               {disputeState.loading ? "Submitting..." : "Submit Dispute"}
             </button>
           </div>
+        </section>
+      )}
 
-          <div className="settings-full-width">
-            <h4>Dispute Threads</h4>
-            <div className="messages-shell">
-              <section className="messages-list-panel">
-                <h3>My Cases</h3>
-                <input
-                  className="manage-search"
-                  placeholder="Search disputes by id or service"
-                  value={disputeQuery}
-                  onChange={(event) => setDisputeQuery(event.target.value)}
-                />
-                <div className="messages-list">
-                  {disputes.length ? (
-                    disputes
-                      .filter((dispute) => {
-                        const q = disputeQuery.trim().toLowerCase();
-                        if (!q) return true;
-                        return (
-                          String(dispute.id).includes(q) ||
-                          String(dispute.orderId).includes(q) ||
-                          dispute.order.service.title.toLowerCase().includes(q)
-                        );
-                      })
-                      .map((dispute) => (
-                      <button
-                        key={dispute.id}
-                        type="button"
-                        className={`message-thread-btn ${selectedDisputeId === dispute.id ? "active" : ""}`}
-                        onClick={() => handleSelectDispute(dispute.id)}
-                      >
-                        <div className="message-thread-inner">
-                          <AvatarCircle
-                            name={
-                              dispute.buyer.id === currentUserId
-                                ? dispute.seller.name
-                                : dispute.buyer.name
-                            }
-                            avatarUrl={
-                              dispute.buyer.id === currentUserId
-                                ? dispute.seller.avatarUrl
-                                : dispute.buyer.avatarUrl
-                            }
-                          />
-                          <div className="message-thread-content">
-                            <strong>Dispute #{dispute.id}</strong>
-                            <span>{dispute.order.service.title}</span>
-                            <small>{dispute.status.replace(/_/g, " ")}</small>
-                          </div>
-                        </div>
-                      </button>
-                    ))
+      {mode === "cases" && (
+        <section className="messages-shell">
+          <section className="messages-list-panel">
+            <div className="overview-market-head">
+              <h3>My Cases</h3>
+              <p>Open a case to view messages, attachments, and status history.</p>
+            </div>
+            <input
+              className="manage-search"
+              placeholder="Search disputes by id or service"
+              value={disputeQuery}
+              onChange={(event) => setDisputeQuery(event.target.value)}
+            />
+            <div className="messages-list">
+              {filteredDisputes.length ? (
+                filteredDisputes.map((dispute) => (
+                  <button
+                    key={dispute.id}
+                    type="button"
+                    className={`message-thread-btn ${selectedDisputeId === dispute.id ? "active" : ""}`}
+                    onClick={() => handleSelectDispute(dispute.id)}
+                  >
+                    <div className="message-thread-inner">
+                      <AvatarCircle
+                        name={dispute.buyer.id === currentUserId ? dispute.seller.name : dispute.buyer.name}
+                        avatarUrl={dispute.buyer.id === currentUserId ? dispute.seller.avatarUrl : dispute.buyer.avatarUrl}
+                      />
+                      <div className="message-thread-content">
+                        <strong>Dispute #{dispute.id}</strong>
+                        <span>{dispute.order.service.title}</span>
+                        <small>{formatDisputeStatus(dispute.status)}</small>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="dashboard-placeholder compact-placeholder">
+                  <h2>No disputes yet</h2>
+                  <p>Your dispute cases will appear here after they are submitted.</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="messages-chat-panel">
+            {selectedDispute ? (
+              <>
+                <div className="messages-chat-head">
+                  <h3>Dispute #{selectedDispute.id}</h3>
+                  <p>Order #{selectedDispute.orderId} | Status: {formatDisputeStatus(selectedDispute.status)}</p>
+                  <p className="service-seller">{selectedDispute.reason}</p>
+                </div>
+
+                <div className="messages-chat-list">
+                  {disputeMessages.length === 0 ? (
+                    <p className="service-seller">No dispute messages yet.</p>
                   ) : (
-                    <p className="service-seller">No disputes created yet.</p>
+                    disputeMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`message-chat-row ${message.senderId === currentUserId ? "outgoing" : "incoming"}`}
+                      >
+                        <AvatarCircle name={message.sender.name} avatarUrl={message.sender.avatarUrl} />
+                        <div className={`order-chat-item ${message.senderId === currentUserId ? "outgoing" : "incoming"}`}>
+                          <strong>
+                            {message.sender.name} {message.sender.role?.name?.toLowerCase() === "admin" ? "(Admin)" : ""}
+                          </strong>
+                          <p>{message.content}</p>
+                          {(message.attachments ?? []).length > 0 && (
+                            <div className="sent-attachment-grid">
+                              {(message.attachments ?? []).map((attachment) => (
+                                <a
+                                  key={attachment.id}
+                                  href={resolveMediaUrl(attachment.fileUrl) ?? attachment.fileUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="sent-attachment-card"
+                                >
+                                  <strong>{attachment.fileName}</strong>
+                                  <span>{formatBytes(attachment.size)}</span>
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
-              </section>
 
-              <section className="messages-chat-panel">
-                {selectedDispute ? (
-                  <>
-                    <div className="messages-chat-head">
-                      <h3>Dispute #{selectedDispute.id}</h3>
-                      <p>
-                        Order #{selectedDispute.orderId} | Status: {selectedDispute.status.replace(/_/g, " ")}
-                      </p>
-                    </div>
-                    <p className="service-seller">{selectedDispute.reason}</p>
+                <div className="order-chat-compose">
+                  <input
+                    value={disputeReplyText}
+                    onChange={(event) => setDisputeReplyText(event.target.value)}
+                    placeholder="Reply to admin in this dispute..."
+                  />
+                  <label className="message-attach-btn" aria-label="Attach files">
+                    Attach
+                    <input type="file" multiple onChange={(event) => handleDisputeFileSelection(event, "reply")} />
+                  </label>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={handleSendDisputeReply}
+                    disabled={disputeState.loading}
+                  >
+                    Send
+                  </button>
+                </div>
 
-                    <div className="messages-chat-list">
-                      {disputeMessages.length === 0 ? (
-                        <p className="service-seller">No dispute messages yet.</p>
-                      ) : (
-                        disputeMessages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`message-chat-row ${
-                              message.senderId === currentUserId ? "outgoing" : "incoming"
-                            }`}
-                          >
-                            <AvatarCircle name={message.sender.name} avatarUrl={message.sender.avatarUrl} />
-                            <div
-                              className={`order-chat-item ${
-                                message.senderId === currentUserId ? "outgoing" : "incoming"
-                              }`}
-                            >
-                              <strong>
-                                {message.sender.name}{" "}
-                                {message.sender.role?.name?.toLowerCase() === "admin" ? "(Admin)" : ""}
-                              </strong>
-                              <p>{message.content}</p>
-                              {(message.attachments ?? []).length > 0 && (
-                                <div className="sent-attachment-grid">
-                                  {(message.attachments ?? []).map((attachment) => (
-                                    <a
-                                      key={attachment.id}
-                                      href={attachment.fileUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="sent-attachment-card"
-                                    >
-                                      <strong>{attachment.fileName}</strong>
-                                      <span>{formatBytes(attachment.size)}</span>
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-
-                    <div className="order-chat-compose">
-                      <input
-                        value={disputeReplyText}
-                        onChange={(event) => setDisputeReplyText(event.target.value)}
-                        placeholder="Reply to admin in this dispute..."
-                      />
-                      <label className="message-attach-btn" aria-label="Attach files">
-                        Attach
-                        <input
-                          type="file"
-                          multiple
-                          onChange={(event) => handleDisputeFileSelection(event, "reply")}
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="btn-primary"
-                        onClick={handleSendDisputeReply}
-                        disabled={disputeState.loading}
-                      >
-                        Send
-                      </button>
-                    </div>
-
-                    {replyDisputeFiles.length > 0 ? (
-                      <div className="message-attachment-list">
-                        {replyDisputeFiles.map(({ id, file }) => (
-                          <div key={id} className="message-attachment-chip">
-                            <span>{`${file.name} (${formatBytes(file.size)})`}</span>
-                            <button type="button" onClick={() => handleRemoveReplyAttachment(id)}>
-                              Remove
-                            </button>
-                          </div>
-                        ))}
+                {replyDisputeFiles.length > 0 && (
+                  <div className="message-attachment-list">
+                    {replyDisputeFiles.map(({ id, file }) => (
+                      <div key={id} className="message-attachment-chip">
+                        <span>{`${file.name} (${formatBytes(file.size)})`}</span>
+                        <button type="button" onClick={() => handleRemoveReplyAttachment(id)}>
+                          Remove
+                        </button>
                       </div>
-                    ) : null}
-
-                    <p className="messages-upnext-note">
-                      Uploaded files are attached to this dispute message and visible to both parties.
-                    </p>
-
-                    {selectedDispute.timeline?.length ? (
-                      <div className="orders-section-card">
-                        <div className="orders-section-head">
-                          <h3>Status Timeline</h3>
-                        </div>
-                        <div className="order-chat-list">
-                          {selectedDispute.timeline.map((event) => (
-                            <article key={event.key} className="order-chat-item incoming">
-                              <strong>{event.label}</strong>
-                              <p>
-                                {new Date(event.at).toLocaleString()} by {event.actor.name}
-                              </p>
-                            </article>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <div className="dashboard-placeholder">
-                    <h2>Select a dispute</h2>
-                    <p>Open a case from the left list to view messages and timeline.</p>
+                    ))}
                   </div>
                 )}
-              </section>
-            </div>
-          </div>
-        </div>
 
-        {disputeState.error && <p className="form-status form-status-error">{disputeState.error}</p>}
-        {disputeState.message && <p className="form-status form-status-success">{disputeState.message}</p>}
-      </section>
+                <p className="messages-upnext-note">
+                  Uploaded files are attached to this dispute message and visible to both parties.
+                </p>
+
+                {selectedDispute.timeline?.length ? (
+                  <div className="orders-section-card">
+                    <div className="orders-section-head">
+                      <h3>Status Timeline</h3>
+                    </div>
+                    <div className="order-chat-list">
+                      {selectedDispute.timeline.map((event) => (
+                        <article key={event.key} className="order-chat-item incoming">
+                          <strong>{event.label}</strong>
+                          <p>{new Date(event.at).toLocaleString()} by {event.actor.name}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div className="dashboard-placeholder compact-placeholder">
+                <h2>Select a dispute</h2>
+                <p>Open a case from the left list to view messages and timeline.</p>
+              </div>
+            )}
+          </section>
+        </section>
+      )}
     </div>
   );
 };
