@@ -244,6 +244,7 @@ export type PublicUserService = {
   title: string;
   description: string;
   category: string;
+  pricingModel: string;
   price: number;
   isActive: boolean;
   createdAt: string;
@@ -364,6 +365,7 @@ export type AdminServiceRecord = {
   title: string;
   description: string;
   category: string;
+  pricingModel: string;
   price: number;
   isActive: boolean;
   createdAt: string;
@@ -593,6 +595,7 @@ export const updateMyService = async (
     title?: string;
     description?: string;
     category?: string;
+    pricingModel?: string;
     price?: number;
     images?: ServiceImagePayload[];
   }
@@ -1716,6 +1719,7 @@ export const createService = async (data: {
   title: string;
   description: string;
   category: string;
+  pricingModel: string;
   price: number;
   images?: ServiceImagePayload[];
 }) => {

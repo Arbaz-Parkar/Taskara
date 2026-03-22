@@ -5,12 +5,14 @@ import {
   fetchMyServices,
   updateMyServiceStatus,
 } from "../utils/api";
+import { formatServicePrice, getServicePriceCaption } from "../utils/servicePricing";
 
 type Service = {
   id: number;
   title: string;
   description: string;
   category: string;
+  pricingModel: string;
   price: number;
   isActive: boolean;
   createdAt: string;
@@ -224,8 +226,8 @@ const ServicesManagementPage = () => {
                     <p className="service-seller">{service.description}</p>
 
                     <div className="service-footer">
-                      <span>Starting at</span>
-                      <strong>{`\u20B9${service.price}`}</strong>
+                      <span>{getServicePriceCaption(service.pricingModel)}</span>
+                      <strong>{formatServicePrice(service.price, service.pricingModel)}</strong>
                     </div>
 
                     <div className="manage-actions-row">

@@ -1,0 +1,2 @@
+ALTER TABLE "Service"
+ADD COLUMN "pricingModel" TEXT NOT NULL DEFAULT 'FIXED';

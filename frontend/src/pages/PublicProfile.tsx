@@ -8,6 +8,7 @@ import {
   type PublicUserService,
   type UserReview,
 } from "../utils/api";
+import { formatServicePrice, getServicePriceCaption } from "../utils/servicePricing";
 
 const formatDate = (isoDate: string) => {
   const date = new Date(isoDate);
@@ -221,8 +222,8 @@ const PublicProfile = () => {
                 <h3>{service.title}</h3>
                 <p className="service-seller">{service.description}</p>
                 <div className="service-footer">
-                  <span>Starting at</span>
-                  <strong>{`\u20B9${service.price}`}</strong>
+                  <span>{getServicePriceCaption(service.pricingModel)}</span>
+                  <strong>{formatServicePrice(service.price, service.pricingModel)}</strong>
                 </div>
                 <Link to={`/service/${service.id}`} className="btn-outline">
                   View Service

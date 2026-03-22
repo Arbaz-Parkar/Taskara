@@ -1,12 +1,18 @@
 import { useMemo, useState } from "react";
 import { createService } from "../utils/api";
+import {
+  getPriceFieldHelpText,
+  getPriceFieldLabel,
+  getPriceFieldPlaceholder,
+  type ServicePricingModel,
+} from "../utils/servicePricing";
 
 type FormState = {
   title: string;
   description: string;
   category: string;
   subcategory: string;
-  listingType: string;
+  pricingModel: ServicePricingModel;
   tags: string;
   deliveryDays: string;
   revisions: string;
@@ -158,7 +164,7 @@ const initialForm: FormState = {
   description: "",
   category: "",
   subcategory: "",
-  listingType: "Fixed Price",
+  pricingModel: "FIXED",
   tags: "",
   deliveryDays: "3",
   revisions: "2",
@@ -240,6 +246,7 @@ const CreateService = () => {
         title: form.title,
         description: form.description,
         category: categoryLabel,
+        pricingModel: form.pricingModel,
         price: Number(form.price),
         images: imagePayload,
       });
@@ -384,14 +391,15 @@ const CreateService = () => {
           <label className="create-field">
             <span>Pricing Model</span>
             <select
-              name="listingType"
-              value={form.listingType}
+              name="pricingModel"
+              value={form.pricingModel}
               onChange={handleChange}
             >
-              <option value="Fixed Price">Fixed Price</option>
-              <option value="Package Based">Package Based</option>
-              <option value="Hourly">Hourly</option>
+              <option value="FIXED">Fixed Price</option>
+              <option value="PACKAGE">Package Based</option>
+              <option value="HOURLY">Hourly</option>
             </select>
+            <small>{getPriceFieldHelpText(form.pricingModel)}</small>
           </label>
 
           <label className="create-field">
@@ -469,17 +477,18 @@ const CreateService = () => {
         )}
 
         <label className="create-field create-price-field">
-          <span>Starting Price (INR)</span>
+          <span>{getPriceFieldLabel(form.pricingModel)}</span>
           <input
             name="price"
             type="number"
             min="1"
             step="1"
-            placeholder="1500"
+            placeholder={getPriceFieldPlaceholder(form.pricingModel)}
             value={form.price}
             onChange={handleChange}
             required
           />
+          <small>{getPriceFieldHelpText(form.pricingModel)}</small>
         </label>
 
         {error && <p className="form-status form-status-error">{error}</p>}

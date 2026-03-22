@@ -26,6 +26,7 @@ import {
   type DisputeStatus,
   type OrderStatus,
 } from "../utils/api";
+import { formatServicePrice, getPricingModelLabel } from "../utils/servicePricing";
 
 type AdminSection = "overview" | "users" | "services" | "orders" | "disputes" | "reports";
 type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
@@ -824,7 +825,12 @@ const AdminDashboard = () => {
                           <td><div className="admin-user-cell"><strong>{service.title}</strong><span>{service.description.slice(0, 80)}</span></div></td>
                           <td><div className="admin-user-cell"><strong>{service.seller.name}</strong><span>{service.seller.email}</span></div></td>
                           <td>{service.category}</td>
-                          <td>{`\u20B9${service.price}`}</td>
+                          <td>
+                            <div className="admin-user-cell">
+                              <strong>{formatServicePrice(service.price, service.pricingModel)}</strong>
+                              <span>{getPricingModelLabel(service.pricingModel)}</span>
+                            </div>
+                          </td>
                           <td><span className={`order-status-chip ${service.isActive ? "completed" : "cancelled"}`}>{service.isActive ? "ACTIVE" : "INACTIVE"}</span></td>
                           <td>{service._count.orders}</td>
                           <td>{formatDate(service.createdAt)}</td>

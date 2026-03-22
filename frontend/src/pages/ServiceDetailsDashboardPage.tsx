@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchMyServices, updateMyServiceStatus } from "../utils/api";
+import {
+  formatServicePrice,
+  getPricingModelLabel,
+  getServicePriceCaption,
+} from "../utils/servicePricing";
 
 type Service = {
   id: number;
   title: string;
   description: string;
   category: string;
+  pricingModel: string;
   price: number;
   isActive: boolean;
   createdAt: string;
@@ -116,7 +122,8 @@ const ServiceDetailsDashboardPage = () => {
             ) : null}
             <p><strong>Status:</strong> {service.isActive ? "Active" : "Paused"}</p>
             <p><strong>Created:</strong> {formatDate(service.createdAt)}</p>
-            <p><strong>Price:</strong> {`\u20B9${service.price}`}</p>
+            <p><strong>Pricing Model:</strong> {getPricingModelLabel(service.pricingModel)}</p>
+            <p><strong>{getServicePriceCaption(service.pricingModel)}:</strong> {formatServicePrice(service.price, service.pricingModel)}</p>
             <p><strong>Description:</strong> {service.description}</p>
           </div>
         </section>

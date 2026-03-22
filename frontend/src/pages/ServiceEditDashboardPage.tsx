@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchMyServices, updateMyService } from "../utils/api";
+import {
+  getPriceFieldHelpText,
+  getPriceFieldLabel,
+  normalizePricingModel,
+  type ServicePricingModel,
+} from "../utils/servicePricing";
 
 type Service = {
   id: number;
   title: string;
   description: string;
   category: string;
+  pricingModel: string;
   price: number;
   images?: {
     id: number;
@@ -44,6 +51,7 @@ const ServiceEditDashboardPage = () => {
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
+  const [pricingModel, setPricingModel] = useState<ServicePricingModel>("FIXED");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
@@ -67,6 +75,7 @@ const ServiceEditDashboardPage = () => {
         setService(found);
         setTitle(found.title);
         setCategory(found.category);
+        setPricingModel(normalizePricingModel(found.pricingModel));
         setPrice(String(found.price));
         setDescription(found.description);
         setExistingImageUrls(
@@ -101,6 +110,7 @@ const ServiceEditDashboardPage = () => {
         title,
         category,
         description,
+        pricingModel,
         price: Number(price),
         images: [
           ...existingImageUrls.map((fileUrl) => ({ fileUrl })),
@@ -201,8 +211,21 @@ const ServiceEditDashboardPage = () => {
               <input value={category} onChange={(event) => setCategory(event.target.value)} required />
             </label>
 
+            <label className="create-field">
+              <span>Pricing Model</span>
+              <select
+                value={pricingModel}
+                onChange={(event) => setPricingModel(normalizePricingModel(event.target.value))}
+              >
+                <option value="FIXED">Fixed Price</option>
+                <option value="PACKAGE">Package Based</option>
+                <option value="HOURLY">Hourly</option>
+              </select>
+              <small>{getPriceFieldHelpText(pricingModel)}</small>
+            </label>
+
             <label className="create-field create-price-field">
-              <span>Price</span>
+              <span>{getPriceFieldLabel(pricingModel)}</span>
               <input
                 type="number"
                 min="1"
@@ -210,6 +233,7 @@ const ServiceEditDashboardPage = () => {
                 onChange={(event) => setPrice(event.target.value)}
                 required
               />
+              <small>{getPriceFieldHelpText(pricingModel)}</small>
             </label>
 
             <label className="create-field">

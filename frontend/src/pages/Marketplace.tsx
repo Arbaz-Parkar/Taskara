@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { fetchServices, resolveMediaUrl, type ServiceSearchParams } from "../utils/api";
 import { useSearchParams } from "react-router-dom";
+import { formatServicePrice, getServicePriceCaption } from "../utils/servicePricing";
 
 type Service = {
   id: number;
   title: string;
   category: string;
+  pricingModel: string;
   price: number;
   averageRating?: number;
   totalReviews?: number;
@@ -144,8 +146,8 @@ const Marketplace = () => {
               ) : null}
 
               <div className="service-footer">
-                <span>Starting at</span>
-                <strong>{`\u20B9${service.price}`}</strong>
+                <span>{getServicePriceCaption(service.pricingModel)}</span>
+                <strong>{formatServicePrice(service.price, service.pricingModel)}</strong>
               </div>
             </div>
           </div>

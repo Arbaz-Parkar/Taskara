@@ -2,6 +2,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { createOrder, fetchServiceById } from "../utils/api";
 import { isAuthenticated } from "../utils/auth";
+import { formatServicePrice, getPricingModelLabel } from "../utils/servicePricing";
 import "../index.css";
 
 type Service = {
@@ -9,6 +10,7 @@ type Service = {
   title: string;
   description: string;
   category: string;
+  pricingModel: string;
   price: number;
   seller: {
     id: number;
@@ -104,9 +106,9 @@ const ServiceDetails = () => {
         </div>
 
         <aside className="service-sidebar">
-          <h3>Standard Package</h3>
+          <h3>{getPricingModelLabel(service.pricingModel)}</h3>
 
-          <div className="price">{"\u20B9"}{service.price}</div>
+          <div className="price">{formatServicePrice(service.price, service.pricingModel)}</div>
 
           <p className="delivery">3 Days Delivery</p>
 

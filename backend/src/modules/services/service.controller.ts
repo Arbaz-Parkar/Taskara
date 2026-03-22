@@ -2,6 +2,14 @@ import { Response } from "express";
 import { AuthRequest } from "../../middlewares/auth.middleware";
 import * as service from "./service.service";
 
+const parsePricingModel = (value: unknown) => {
+  if (value === "FIXED" || value === "PACKAGE" || value === "HOURLY") {
+    return value;
+  }
+
+  return undefined;
+};
+
 export const createService = async (
   req: AuthRequest,
   res: Response
@@ -9,7 +17,10 @@ export const createService = async (
   try {
     const newService = await service.createService(
       req.user!.userId,
-      req.body
+      {
+        ...req.body,
+        pricingModel: parsePricingModel(req.body?.pricingModel) ?? "FIXED",
+      }
     );
     return res.json(newService);
   } catch (error) {
@@ -72,7 +83,10 @@ export const getMyServices = async (req: AuthRequest, res: Response) => {
 export const updateMyService = async (req: AuthRequest, res: Response) => {
   try {
     const id = Number(req.params.id);
-    const data = await service.updateServiceBySeller(req.user!.userId, id, req.body);
+    const data = await service.updateServiceBySeller(req.user!.userId, id, {
+      ...req.body,
+      pricingModel: parsePricingModel(req.body?.pricingModel),
+    });
 
     if (!data) {
       return res.status(404).json({ message: "Service not found" });

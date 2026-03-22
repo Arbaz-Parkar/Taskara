@@ -164,18 +164,22 @@ export const createService = async (
     title: string;
     description: string;
     category: string;
+    pricingModel?: string;
     price: number;
     images?: ServiceImageInput[];
   }
 ) => {
+  const createData: any = {
+    title: data.title,
+    description: data.description,
+    category: data.category,
+    pricingModel: data.pricingModel ?? "FIXED",
+    price: data.price,
+    sellerId: userId,
+  };
+
   const service = await prisma.service.create({
-    data: {
-      title: data.title,
-      description: data.description,
-      category: data.category,
-      price: data.price,
-      sellerId: userId,
-    },
+    data: createData,
   });
 
   await persistServiceImages(service.id, data.images);
@@ -383,6 +387,7 @@ export const updateServiceBySeller = async (
     title?: string;
     description?: string;
     category?: string;
+    pricingModel?: string;
     price?: number;
     images?: ServiceImageInput[];
   }
@@ -401,16 +406,19 @@ export const updateServiceBySeller = async (
     return null;
   }
 
+  const updateData: any = {
+    title: data.title,
+    description: data.description,
+    category: data.category,
+    pricingModel: data.pricingModel,
+    price: data.price,
+  };
+
   await prisma.service.update({
     where: {
       id: serviceId,
     },
-    data: {
-      title: data.title,
-      description: data.description,
-      category: data.category,
-      price: data.price,
-    },
+    data: updateData,
   });
 
   await persistServiceImages(serviceId, data.images);
