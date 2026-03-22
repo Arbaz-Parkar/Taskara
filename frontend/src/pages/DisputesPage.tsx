@@ -304,13 +304,13 @@ const DisputesPage = ({ mode = "all" }: { mode?: DisputesMode }) => {
       <section className="reviews-hero-card reviews-center-hero">
         <div>
           <p className="overview-kicker">Dispute Center</p>
-          <h2>{mode === "new" ? "Raise New Dispute" : mode === "cases" ? "My Cases" : "Dispute Hub"}</h2>
+          <h2>{mode === "new" ? "Raise New Dispute" : mode === "cases" ? "My Cases" : "Disputes Overview"}</h2>
           <p>
             {mode === "new"
-              ? "Raise a dispute from eligible completed work and attach evidence in a cleaner, dedicated intake form."
+              ? "Raise a dispute from eligible completed work and attach evidence from one dedicated intake page."
               : mode === "cases"
-                ? "Track case updates, message admin, and monitor timeline events from a dedicated case workspace."
-                : "Separate dispute intake from case management so support flows feel cleaner and easier to understand."}
+                ? "Track case updates, message admin, and monitor timeline events from a dedicated case view."
+                : "Keep dispute intake separate from case tracking so support flows stay clearer and easier to understand."}
           </p>
         </div>
         <div className="reviews-summary-grid">
@@ -326,7 +326,7 @@ const DisputesPage = ({ mode = "all" }: { mode?: DisputesMode }) => {
         <div className="orders-role-switcher reviews-route-switcher">
           <NavLink to="/dashboard/disputes" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Overview</span>
-            <strong>Dispute Hub</strong>
+            <strong>Overview</strong>
           </NavLink>
           <NavLink to="/dashboard/disputes/new" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Intake</span>
@@ -365,7 +365,7 @@ const DisputesPage = ({ mode = "all" }: { mode?: DisputesMode }) => {
               <div>
                 <p className="overview-kicker">My Cases</p>
                 <h3>Track dispute threads</h3>
-                <p>Keep admin messages, evidence follow-up, and timeline activity in a separate workspace that is easier to scan.</p>
+                <p>Keep admin messages, evidence follow-up, and timeline activity in one separate view that is easier to scan.</p>
               </div>
             </div>
             <div className="orders-overview-stats">

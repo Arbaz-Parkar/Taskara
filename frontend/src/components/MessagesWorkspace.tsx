@@ -368,13 +368,13 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
       <section className="reviews-hero-card reviews-center-hero">
         <div>
           <p className="overview-kicker">Inbox</p>
-          <h2>{mode === "buyer" ? "Buyer Inbox" : mode === "seller" ? "Seller Inbox" : "Inbox Hub"}</h2>
+          <h2>{mode === "buyer" ? "Buyer Inbox" : mode === "seller" ? "Seller Inbox" : "Inbox Overview"}</h2>
           <p>
             {mode === "buyer"
-              ? "Keep buyer-side order conversations separate so purchases and seller communication stay easier to follow."
+              ? "Keep buyer-side order conversations together so purchases and seller communication stay easy to follow."
               : mode === "seller"
-                ? "Manage seller-side order conversations in one cleaner inbox built around incoming work."
-                : "Split buyer chats and seller chats into separate inbox areas so communication stays cleaner as order volume grows."}
+                ? "Manage seller-side order conversations in one focused inbox built around incoming work."
+                : "Split buyer chats and seller chats into separate inbox views so communication stays clearer as order volume grows."}
           </p>
         </div>
         <div className="reviews-summary-grid">
@@ -390,7 +390,7 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
         <div className="orders-role-switcher reviews-route-switcher">
           <NavLink to="/dashboard/messages" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Overview</span>
-            <strong>Inbox Hub</strong>
+            <strong>Overview</strong>
           </NavLink>
           <NavLink to="/dashboard/messages/buyer" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Buying</span>
@@ -410,7 +410,7 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
               <div>
                 <p className="overview-kicker">Buyer Inbox</p>
                 <h3>Chats from orders you placed</h3>
-                <p>Buyer-side conversations stay separate from seller work so your purchase communication is easier to scan.</p>
+                <p>Buyer conversations stay separate from seller work so your purchase communication is easier to scan.</p>
               </div>
             </div>
             <div className="orders-overview-stats">
@@ -426,7 +426,7 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
               <div>
                 <p className="overview-kicker">Seller Inbox</p>
                 <h3>Chats from incoming work</h3>
-                <p>Seller-side conversations stay focused on service delivery, updates, and buyer communication for your listings.</p>
+                <p>Seller conversations stay focused on service delivery, updates, and buyer communication for your listings.</p>
               </div>
             </div>
             <div className="orders-overview-stats">

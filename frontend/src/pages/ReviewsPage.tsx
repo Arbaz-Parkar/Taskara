@@ -321,13 +321,13 @@ const ReviewsPage = ({ mode = "all" }: { mode?: ReviewsMode }) => {
       <section className="reviews-hero-card reviews-center-hero">
         <div>
           <p className="overview-kicker">Review Center</p>
-          <h2>{mode === "written" ? "Written Reviews" : mode === "received" ? "Received Reviews" : "Reviews Hub"}</h2>
+          <h2>{mode === "written" ? "Written Reviews" : mode === "received" ? "Received Reviews" : "Reviews Overview"}</h2>
           <p>
             {mode === "written"
-              ? "Manage the reviews you wrote from one focused buyer-facing workspace."
+              ? "Manage the reviews you wrote from one focused buyer view."
               : mode === "received"
-                ? "Handle seller replies and reputation management from a dedicated received-reviews workspace."
-                : "Separate the feedback you wrote from the feedback you received so the review system stays clearer as activity grows."}
+                ? "Handle seller replies and reputation management from a dedicated received-reviews view."
+                : "Keep the feedback you wrote separate from the feedback you received so the review system stays easier to follow as activity grows."}
           </p>
         </div>
         <div className="reviews-summary-grid">
@@ -343,7 +343,7 @@ const ReviewsPage = ({ mode = "all" }: { mode?: ReviewsMode }) => {
         <div className="orders-role-switcher reviews-route-switcher">
           <NavLink to="/dashboard/reviews" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Overview</span>
-            <strong>Reviews Hub</strong>
+            <strong>Overview</strong>
           </NavLink>
           <NavLink to="/dashboard/reviews/written" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Writing</span>
@@ -371,7 +371,7 @@ const ReviewsPage = ({ mode = "all" }: { mode?: ReviewsMode }) => {
             </div>
             <div className="orders-overview-stats">
               <article><strong>{writtenReviews.length}</strong><span>Total Written</span></article>
-              <article><strong>{writtenReviews.filter((review) => review.rating >= 4).length}</strong><span>4? and Above</span></article>
+              <article><strong>{writtenReviews.filter((review) => review.rating >= 4).length}</strong><span>4+ and Above</span></article>
               <article><strong>{writtenReviews.filter((review) => !!review.comment?.trim()).length}</strong><span>With Comments</span></article>
               <article><strong>{writtenReviews.filter((review) => !review.comment?.trim()).length}</strong><span>Ratings Only</span></article>
             </div>

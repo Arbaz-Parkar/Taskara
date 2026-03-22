@@ -218,7 +218,7 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
           <img src={logo} alt="Taskara" />
         </div>
 
-        <p className="sidebar-section-title">Workspace</p>
+        <p className="sidebar-section-title">Navigation</p>
         <nav className="sidebar-nav">
           <NavLink to="/dashboard" end className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
             Marketplace

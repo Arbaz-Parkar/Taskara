@@ -68,7 +68,7 @@ const countByStatus = (orders: OrderRecord[], status: OrderStatus) =>
   orders.filter((order) => order.status === status).length;
 const statusLabel = (status: string) => status.replaceAll("_", " ");
 const statusClass = (status: OrderStatus) => status.toLowerCase();
-const renderStars = (rating: number) => "?".repeat(rating) + "?".repeat(5 - rating);
+const renderStars = (rating: number) => "\u2605".repeat(rating) + "\u2606".repeat(5 - rating);
 const isActionableOrder = (status: OrderStatus) =>
   status === "PENDING" ||
   status === "ACCEPTED" ||
@@ -680,13 +680,13 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
         <div className="orders-header-row">
           <div>
             <p className="overview-kicker">Order Center</p>
-            <h2>{mode === "buyer" ? "Buyer Orders" : mode === "seller" ? "Seller Orders" : "Orders Hub"}</h2>
+            <h2>{mode === "buyer" ? "Buyer Orders" : mode === "seller" ? "Seller Orders" : "Orders Overview"}</h2>
             <p>
               {mode === "buyer"
-                ? "Manage the orders you placed with a focused buyer view that feels clearer and easier to follow."
+                ? "Track the orders you placed with a focused buyer view that stays clear and easy to follow."
                 : mode === "seller"
-                  ? "Handle incoming work with a dedicated seller pipeline built around fulfillment and order actions."
-                  : "Pick the side of the marketplace you want to manage. Buyer and seller activity now live in separate workspaces to keep the flow cleaner."}
+                  ? "Handle incoming work with a dedicated seller view built around delivery, updates, and order actions."
+                  : "Buyer orders and seller orders now live in separate views, so each side of the workflow is easier to understand at a glance."}
             </p>
           </div>
 
@@ -695,7 +695,7 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
         <div className="orders-role-switcher">
           <NavLink to="/dashboard/orders" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Overview</span>
-            <strong>Orders Hub</strong>
+            <strong>Overview</strong>
           </NavLink>
           <NavLink to="/dashboard/orders/buyer" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Buying</span>
@@ -715,9 +715,9 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
           <article className="orders-overview-card orders-overview-card-buyer">
             <div className="orders-overview-head">
               <div>
-                <p className="overview-kicker">Buyer Workspace</p>
+                <p className="overview-kicker">Buyer Side</p>
                 <h3>Orders you placed</h3>
-                <p>Track purchases, message sellers, and complete deliveries from a cleaner buyer-only area.</p>
+                <p>Track purchases, message sellers, and complete deliveries in one focused buyer view.</p>
               </div>
             </div>
 
@@ -732,9 +732,9 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
           <article className="orders-overview-card orders-overview-card-seller">
             <div className="orders-overview-head">
               <div>
-                <p className="overview-kicker">Seller Workspace</p>
+                <p className="overview-kicker">Seller Side</p>
                 <h3>Orders on your services</h3>
-                <p>Handle inbound work, move orders through each stage, and keep seller operations easier to scan.</p>
+                <p>Handle incoming work, move orders through each stage, and keep seller activity easy to scan.</p>
               </div>
             </div>
 
