@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchMyServices, updateMyService } from "../utils/api";
 import {
-  getPriceFieldHelpText,
   getPriceFieldLabel,
   normalizePricingModel,
   type ServicePricingModel,
@@ -221,7 +220,6 @@ const ServiceEditDashboardPage = () => {
                 <option value="PACKAGE">Package Based</option>
                 <option value="HOURLY">Hourly</option>
               </select>
-              <small>{getPriceFieldHelpText(pricingModel)}</small>
             </label>
 
             <label className="create-field create-price-field">
@@ -233,7 +231,6 @@ const ServiceEditDashboardPage = () => {
                 onChange={(event) => setPrice(event.target.value)}
                 required
               />
-              <small>{getPriceFieldHelpText(pricingModel)}</small>
             </label>
 
             <label className="create-field">
