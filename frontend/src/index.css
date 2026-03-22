@@ -2947,6 +2947,14 @@ select {
   color: var(--text-muted);
 }
 
+.reviews-center-hero {
+  gap: 18px;
+}
+
+.reviews-route-switcher {
+  margin-top: 4px;
+}
+
 .reviews-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

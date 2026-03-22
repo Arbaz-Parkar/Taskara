@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import {
   deleteMyWrittenReview,
   fetchMyReceivedReviews,
@@ -8,6 +8,8 @@ import {
   updateMyWrittenReview,
   type UserReview,
 } from "../utils/api";
+
+type ReviewsMode = "all" | "written" | "received";
 
 const formatDate = (isoDate: string) => {
   const date = new Date(isoDate);
@@ -20,14 +22,13 @@ const formatDate = (isoDate: string) => {
 
 const renderStars = (rating: number) => "\u2605".repeat(rating) + "\u2606".repeat(5 - rating);
 
-const ReviewsPage = () => {
+const ReviewsPage = ({ mode = "all" }: { mode?: ReviewsMode }) => {
   const [writtenReviews, setWrittenReviews] = useState<UserReview[]>([]);
   const [receivedReviews, setReceivedReviews] = useState<UserReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const [activeSection, setActiveSection] = useState<"written" | "received">("written");
   const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
   const [editingRating, setEditingRating] = useState(5);
   const [editingComment, setEditingComment] = useState("");
@@ -52,7 +53,7 @@ const ReviewsPage = () => {
       }
     };
 
-    load();
+    void load();
   }, []);
 
   const handleStartEdit = (review: UserReview) => {
@@ -131,17 +132,203 @@ const ReviewsPage = () => {
     }
   };
 
+  const renderWrittenSection = () => (
+    <section className="overview-market-section">
+      <div className="overview-market-head">
+        <h3>Reviews You Wrote</h3>
+        <p>Update stars, comment text, or remove reviews from completed orders.</p>
+      </div>
+
+      {writtenReviews.length === 0 ? (
+        <div className="dashboard-placeholder compact-placeholder">
+          <h2>No written reviews yet</h2>
+          <p>You can leave reviews from completed buyer orders.</p>
+        </div>
+      ) : (
+        <div className="profile-reviews-grid">
+          {writtenReviews.map((review) => (
+            <article key={review.id} className="profile-review-card">
+              <div className="profile-review-head">
+                <div>
+                  <strong>
+                    For seller{" "}
+                    {review.reviewee ? (
+                      <Link to={`/profile/${review.reviewee.id}`} className="profile-inline-link">
+                        {review.reviewee.name}
+                      </Link>
+                    ) : (
+                      "Unknown"
+                    )}
+                  </strong>
+                  <p className="service-seller">
+                    Service{" "}
+                    <Link to={`/service/${review.order.service.id}`} className="profile-inline-link">
+                      {review.order.service.title}
+                    </Link>
+                  </p>
+                </div>
+                <span>{formatDate(review.createdAt)}</span>
+              </div>
+
+              {editingReviewId === review.id ? (
+                <div className="order-review-form">
+                  <label className="create-field">
+                    <span>Rating</span>
+                    <select
+                      value={editingRating}
+                      onChange={(event) => setEditingRating(Number(event.target.value))}
+                    >
+                      <option value={5}>5 - Excellent</option>
+                      <option value={4}>4 - Very Good</option>
+                      <option value={3}>3 - Good</option>
+                      <option value={2}>2 - Fair</option>
+                      <option value={1}>1 - Poor</option>
+                    </select>
+                  </label>
+                  <label className="create-field">
+                    <span>Comment</span>
+                    <textarea
+                      rows={3}
+                      value={editingComment}
+                      onChange={(event) => setEditingComment(event.target.value)}
+                    />
+                  </label>
+                  <div className="manage-actions-row">
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      disabled={busyReviewId === review.id}
+                      onClick={() => handleSaveEdit(review.id)}
+                    >
+                      {busyReviewId === review.id ? "Saving..." : "Save Review"}
+                    </button>
+                    <button type="button" className="btn-outline" onClick={() => setEditingReviewId(null)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="profile-review-stars">{renderStars(review.rating)}</p>
+                  <p className="service-seller">{review.comment || "No written comment provided."}</p>
+                  <div className="manage-actions-row">
+                    <button type="button" className="btn-outline" onClick={() => handleStartEdit(review)}>
+                      Edit Review
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-outline danger-button"
+                      disabled={busyReviewId === review.id}
+                      onClick={() => handleDelete(review.id)}
+                    >
+                      {busyReviewId === review.id ? "Deleting..." : "Delete Review"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
+  const renderReceivedSection = () => (
+    <section className="overview-market-section">
+      <div className="overview-market-head">
+        <h3>Reviews You Received</h3>
+        <p>Post seller replies that appear publicly on your profile review cards.</p>
+      </div>
+
+      {receivedReviews.length === 0 ? (
+        <div className="dashboard-placeholder compact-placeholder">
+          <h2>No received reviews yet</h2>
+          <p>Reviews from buyers will appear here after completed orders.</p>
+        </div>
+      ) : (
+        <div className="profile-reviews-grid">
+          {receivedReviews.map((review) => (
+            <article key={review.id} className="profile-review-card">
+              <div className="profile-review-head">
+                <div>
+                  <strong>
+                    By{" "}
+                    <Link to={`/profile/${review.reviewer.id}`} className="profile-inline-link">
+                      {review.reviewer.name}
+                    </Link>
+                  </strong>
+                  <p className="service-seller">
+                    Service{" "}
+                    <Link to={`/service/${review.order.service.id}`} className="profile-inline-link">
+                      {review.order.service.title}
+                    </Link>
+                  </p>
+                </div>
+                <span>{formatDate(review.createdAt)}</span>
+              </div>
+
+              <p className="profile-review-stars">{renderStars(review.rating)}</p>
+              <p className="service-seller">{review.comment || "No written comment provided."}</p>
+
+              {review.sellerReply && (
+                <div className="review-seller-reply">
+                  <p className="review-seller-reply-head">
+                    <span className="review-seller-tag">Seller</span>
+                    <strong>You replied</strong>
+                    {review.sellerReplyAt && <span>{formatDate(review.sellerReplyAt)}</span>}
+                  </p>
+                  <p>{review.sellerReply}</p>
+                </div>
+              )}
+
+              <div className="order-review-form">
+                <label className="create-field">
+                  <span>{review.sellerReply ? "Update your reply" : "Reply as seller"}</span>
+                  <textarea
+                    rows={3}
+                    value={replyDraftByReviewId[review.id] ?? ""}
+                    placeholder="Thank the buyer and add a short professional response..."
+                    onChange={(event) =>
+                      setReplyDraftByReviewId((current) => ({
+                        ...current,
+                        [review.id]: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={busyReviewId === review.id}
+                  onClick={() => handleReply(review.id)}
+                >
+                  {busyReviewId === review.id ? "Posting..." : review.sellerReply ? "Update Reply" : "Post Reply"}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
   if (loading) {
     return <div className="dashboard-placeholder">Loading reviews...</div>;
   }
 
   return (
     <div className="reviews-shell">
-      <section className="reviews-hero-card">
+      <section className="reviews-hero-card reviews-center-hero">
         <div>
-          <p className="overview-kicker">Reviews and Ratings</p>
-          <h2>Manage feedback quality and keep seller reputation transparent.</h2>
-          <p>Edit your written reviews and reply to reviews received on your services.</p>
+          <p className="overview-kicker">Review Center</p>
+          <h2>{mode === "written" ? "Written Reviews" : mode === "received" ? "Received Reviews" : "Reviews Hub"}</h2>
+          <p>
+            {mode === "written"
+              ? "Manage the reviews you wrote from one focused buyer-facing workspace."
+              : mode === "received"
+                ? "Handle seller replies and reputation management from a dedicated received-reviews workspace."
+                : "Separate the feedback you wrote from the feedback you received so the review system stays clearer as activity grows."}
+          </p>
         </div>
         <div className="reviews-summary-grid">
           <article>
@@ -153,228 +340,63 @@ const ReviewsPage = () => {
             <span>Received as Seller</span>
           </article>
         </div>
+        <div className="orders-role-switcher reviews-route-switcher">
+          <NavLink to="/dashboard/reviews" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Overview</span>
+            <strong>Reviews Hub</strong>
+          </NavLink>
+          <NavLink to="/dashboard/reviews/written" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Writing</span>
+            <strong>Written Reviews</strong>
+          </NavLink>
+          <NavLink to="/dashboard/reviews/received" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Seller Side</span>
+            <strong>Received Reviews</strong>
+          </NavLink>
+        </div>
       </section>
-
-      <div className="manage-filter-group">
-        <button
-          type="button"
-          className={`manage-filter-btn ${activeSection === "written" ? "active" : ""}`}
-          onClick={() => setActiveSection("written")}
-        >
-          Reviews You Wrote
-        </button>
-        <button
-          type="button"
-          className={`manage-filter-btn ${activeSection === "received" ? "active" : ""}`}
-          onClick={() => setActiveSection("received")}
-        >
-          Reviews You Received
-        </button>
-      </div>
 
       {error && <p className="form-status form-status-error">{error}</p>}
       {notice && <p className="form-status form-status-success">{notice}</p>}
 
-      {activeSection === "written" ? (
-        <section className="overview-market-section">
-          <div className="overview-market-head">
-            <h3>Reviews You Wrote</h3>
-            <p>Update stars, comment text, or remove reviews from completed orders.</p>
-          </div>
-
-          {writtenReviews.length === 0 ? (
-            <div className="dashboard-placeholder compact-placeholder">
-              <h2>No written reviews yet</h2>
-              <p>You can leave reviews from completed buyer orders.</p>
+      {mode === "all" && (
+        <section className="orders-overview-grid">
+          <article className="orders-overview-card orders-overview-card-buyer">
+            <div className="orders-overview-head">
+              <div>
+                <p className="overview-kicker">Written Reviews</p>
+                <h3>Feedback you gave</h3>
+                <p>Edit ratings and comments you left on completed buyer orders without mixing them with seller-side review management.</p>
+              </div>
             </div>
-          ) : (
-            <div className="profile-reviews-grid">
-              {writtenReviews.map((review) => (
-                <article key={review.id} className="profile-review-card">
-                  <div className="profile-review-head">
-                    <div>
-                      <strong>
-                        For seller{" "}
-                        {review.reviewee ? (
-                          <Link
-                            to={`/profile/${review.reviewee.id}`}
-                            className="profile-inline-link"
-                          >
-                            {review.reviewee.name}
-                          </Link>
-                        ) : (
-                          "Unknown"
-                        )}
-                      </strong>
-                      <p className="service-seller">
-                        Service:{" "}
-                        <Link
-                          to={`/service/${review.order.service.id}`}
-                          className="profile-inline-link"
-                        >
-                          {review.order.service.title}
-                        </Link>
-                      </p>
-                    </div>
-                    <span>{formatDate(review.createdAt)}</span>
-                  </div>
-
-                  {editingReviewId === review.id ? (
-                    <div className="order-review-form">
-                      <label className="create-field">
-                        <span>Rating</span>
-                        <select
-                          value={editingRating}
-                          onChange={(event) => setEditingRating(Number(event.target.value))}
-                        >
-                          <option value={5}>5 - Excellent</option>
-                          <option value={4}>4 - Very Good</option>
-                          <option value={3}>3 - Good</option>
-                          <option value={2}>2 - Fair</option>
-                          <option value={1}>1 - Poor</option>
-                        </select>
-                      </label>
-                      <label className="create-field">
-                        <span>Comment</span>
-                        <textarea
-                          rows={3}
-                          value={editingComment}
-                          onChange={(event) => setEditingComment(event.target.value)}
-                        />
-                      </label>
-                      <div className="manage-actions-row">
-                        <button
-                          type="button"
-                          className="btn-primary"
-                          disabled={busyReviewId === review.id}
-                          onClick={() => handleSaveEdit(review.id)}
-                        >
-                          {busyReviewId === review.id ? "Saving..." : "Save Review"}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-outline"
-                          onClick={() => setEditingReviewId(null)}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="profile-review-stars">{renderStars(review.rating)}</p>
-                      <p className="service-seller">
-                        {review.comment || "No written comment provided."}
-                      </p>
-                      <div className="manage-actions-row">
-                        <button
-                          type="button"
-                          className="btn-outline"
-                          onClick={() => handleStartEdit(review)}
-                        >
-                          Edit Review
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-outline danger-button"
-                          disabled={busyReviewId === review.id}
-                          onClick={() => handleDelete(review.id)}
-                        >
-                          {busyReviewId === review.id ? "Deleting..." : "Delete Review"}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </article>
-              ))}
+            <div className="orders-overview-stats">
+              <article><strong>{writtenReviews.length}</strong><span>Total Written</span></article>
+              <article><strong>{writtenReviews.filter((review) => review.rating >= 4).length}</strong><span>4? and Above</span></article>
+              <article><strong>{writtenReviews.filter((review) => !!review.comment?.trim()).length}</strong><span>With Comments</span></article>
+              <article><strong>{writtenReviews.filter((review) => !review.comment?.trim()).length}</strong><span>Ratings Only</span></article>
             </div>
-          )}
-        </section>
-      ) : (
-        <section className="overview-market-section">
-          <div className="overview-market-head">
-            <h3>Reviews You Received</h3>
-            <p>Post seller replies that appear publicly on your profile review cards.</p>
-          </div>
+          </article>
 
-          {receivedReviews.length === 0 ? (
-            <div className="dashboard-placeholder compact-placeholder">
-              <h2>No received reviews yet</h2>
-              <p>Reviews from buyers will appear here after completed orders.</p>
+          <article className="orders-overview-card orders-overview-card-seller">
+            <div className="orders-overview-head">
+              <div>
+                <p className="overview-kicker">Received Reviews</p>
+                <h3>Feedback on your services</h3>
+                <p>Reply as a seller and keep public reputation management separate from the reviews you personally wrote for others.</p>
+              </div>
             </div>
-          ) : (
-            <div className="profile-reviews-grid">
-              {receivedReviews.map((review) => (
-                <article key={review.id} className="profile-review-card">
-                  <div className="profile-review-head">
-                    <div>
-                      <strong>
-                        By{" "}
-                        <Link to={`/profile/${review.reviewer.id}`} className="profile-inline-link">
-                          {review.reviewer.name}
-                        </Link>
-                      </strong>
-                      <p className="service-seller">
-                        Service:{" "}
-                        <Link
-                          to={`/service/${review.order.service.id}`}
-                          className="profile-inline-link"
-                        >
-                          {review.order.service.title}
-                        </Link>
-                      </p>
-                    </div>
-                    <span>{formatDate(review.createdAt)}</span>
-                  </div>
-
-                  <p className="profile-review-stars">{renderStars(review.rating)}</p>
-                  <p className="service-seller">{review.comment || "No written comment provided."}</p>
-
-                  {review.sellerReply && (
-                    <div className="review-seller-reply">
-                      <p className="review-seller-reply-head">
-                        <span className="review-seller-tag">Seller</span>
-                        <strong>You replied</strong>
-                        {review.sellerReplyAt && <span>{formatDate(review.sellerReplyAt)}</span>}
-                      </p>
-                      <p>{review.sellerReply}</p>
-                    </div>
-                  )}
-
-                  <div className="order-review-form">
-                    <label className="create-field">
-                      <span>{review.sellerReply ? "Update your reply" : "Reply as seller"}</span>
-                      <textarea
-                        rows={3}
-                        value={replyDraftByReviewId[review.id] ?? ""}
-                        placeholder="Thank the buyer and add a short professional response..."
-                        onChange={(event) =>
-                          setReplyDraftByReviewId((current) => ({
-                            ...current,
-                            [review.id]: event.target.value,
-                          }))
-                        }
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      disabled={busyReviewId === review.id}
-                      onClick={() => handleReply(review.id)}
-                    >
-                      {busyReviewId === review.id
-                        ? "Posting..."
-                        : review.sellerReply
-                          ? "Update Reply"
-                          : "Post Reply"}
-                    </button>
-                  </div>
-                </article>
-              ))}
+            <div className="orders-overview-stats">
+              <article><strong>{receivedReviews.length}</strong><span>Total Received</span></article>
+              <article><strong>{receivedReviews.filter((review) => review.rating >= 4).length}</strong><span>Positive Reviews</span></article>
+              <article><strong>{receivedReviews.filter((review) => !!review.sellerReply?.trim()).length}</strong><span>Replied</span></article>
+              <article><strong>{receivedReviews.filter((review) => !review.sellerReply?.trim()).length}</strong><span>Awaiting Reply</span></article>
             </div>
-          )}
+          </article>
         </section>
       )}
+
+      {mode === "written" && renderWrittenSection()}
+      {mode === "received" && renderReceivedSection()}
     </div>
   );
 };

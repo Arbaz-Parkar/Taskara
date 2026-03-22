@@ -230,7 +230,7 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
             My Listings
           </NavLink>
           <NavLink to="/dashboard/orders" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
-            Orders
+            Order Center
           </NavLink>
           <NavLink to="/dashboard/messages" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
             Inbox
@@ -239,7 +239,7 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
             Disputes
           </NavLink>
           <NavLink to="/dashboard/reviews" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
-            Reviews/Ratings
+            Review Center
           </NavLink>
           <NavLink to="/dashboard/settings" className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
             Settings
