@@ -390,7 +390,7 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
         <div className="orders-role-switcher reviews-route-switcher">
           <NavLink to="/dashboard/messages" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Overview</span>
-            <strong>Overview</strong>
+            <strong>Summary</strong>
           </NavLink>
           <NavLink to="/dashboard/messages/buyer" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Buying</span>
@@ -471,7 +471,7 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
                   {loadingMessagesOrderId === selectedOrder.id ? (
                     <p className="service-seller">Loading messages...</p>
                   ) : (messagesByOrder[selectedOrder.id] ?? []).length === 0 ? (
-                    <p className="service-seller">No messages yet. Start the discussion.</p>
+                    <p className="service-seller">No messages yet. Start the conversation here.</p>
                   ) : (
                     (messagesByOrder[selectedOrder.id] ?? []).map((message) => (
                       <div

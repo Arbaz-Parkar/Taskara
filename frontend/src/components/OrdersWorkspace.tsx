@@ -695,7 +695,7 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
         <div className="orders-role-switcher">
           <NavLink to="/dashboard/orders" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Overview</span>
-            <strong>Overview</strong>
+            <strong>Summary</strong>
           </NavLink>
           <NavLink to="/dashboard/orders/buyer" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Buying</span>

@@ -326,7 +326,7 @@ const DisputesPage = ({ mode = "all" }: { mode?: DisputesMode }) => {
         <div className="orders-role-switcher reviews-route-switcher">
           <NavLink to="/dashboard/disputes" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Overview</span>
-            <strong>Overview</strong>
+            <strong>Summary</strong>
           </NavLink>
           <NavLink to="/dashboard/disputes/new" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Intake</span>

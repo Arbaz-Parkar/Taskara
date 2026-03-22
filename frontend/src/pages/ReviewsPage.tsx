@@ -343,7 +343,7 @@ const ReviewsPage = ({ mode = "all" }: { mode?: ReviewsMode }) => {
         <div className="orders-role-switcher reviews-route-switcher">
           <NavLink to="/dashboard/reviews" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Overview</span>
-            <strong>Overview</strong>
+            <strong>Summary</strong>
           </NavLink>
           <NavLink to="/dashboard/reviews/written" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
             <span>Writing</span>
@@ -371,9 +371,9 @@ const ReviewsPage = ({ mode = "all" }: { mode?: ReviewsMode }) => {
             </div>
             <div className="orders-overview-stats">
               <article><strong>{writtenReviews.length}</strong><span>Total Written</span></article>
-              <article><strong>{writtenReviews.filter((review) => review.rating >= 4).length}</strong><span>4+ and Above</span></article>
+              <article><strong>{writtenReviews.filter((review) => review.rating >= 4).length}</strong><span>4+ Ratings</span></article>
               <article><strong>{writtenReviews.filter((review) => !!review.comment?.trim()).length}</strong><span>With Comments</span></article>
-              <article><strong>{writtenReviews.filter((review) => !review.comment?.trim()).length}</strong><span>Ratings Only</span></article>
+              <article><strong>{writtenReviews.filter((review) => !review.comment?.trim()).length}</strong><span>No Comment</span></article>
             </div>
           </article>
 
@@ -389,7 +389,7 @@ const ReviewsPage = ({ mode = "all" }: { mode?: ReviewsMode }) => {
               <article><strong>{receivedReviews.length}</strong><span>Total Received</span></article>
               <article><strong>{receivedReviews.filter((review) => review.rating >= 4).length}</strong><span>Positive Reviews</span></article>
               <article><strong>{receivedReviews.filter((review) => !!review.sellerReply?.trim()).length}</strong><span>Replied</span></article>
-              <article><strong>{receivedReviews.filter((review) => !review.sellerReply?.trim()).length}</strong><span>Awaiting Reply</span></article>
+              <article><strong>{receivedReviews.filter((review) => !review.sellerReply?.trim()).length}</strong><span>No Reply Yet</span></article>
             </div>
           </article>
         </section>
