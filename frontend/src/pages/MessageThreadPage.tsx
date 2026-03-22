@@ -1,10 +1,7 @@
-import { useParams } from "react-router-dom";
-import MessagesWorkspace from "../components/MessagesWorkspace";
+import { Navigate } from "react-router-dom";
 
 const MessageThreadPage = () => {
-  const { orderId } = useParams();
-
-  return <MessagesWorkspace selectedOrderId={orderId} />;
+  return <Navigate to="/dashboard/messages" replace />;
 };
 
 export default MessageThreadPage;

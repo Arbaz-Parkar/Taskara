@@ -323,6 +323,11 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
     const canReview = role === "buyer" && order.status === "COMPLETED" && !order.review;
     const isReviewing = reviewFormOrderId === order.id;
 
+    const messageRoute =
+      role === "buyer"
+        ? `/dashboard/messages/buyer/${order.id}`
+        : `/dashboard/messages/seller/${order.id}`;
+
     return (
       <article key={`${role}-${order.id}`} className="order-card refined-order-card">
         <div className="order-card-head">
@@ -373,7 +378,7 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
             <button
               type="button"
               className="btn-primary"
-              onClick={() => navigate(`/dashboard/messages/${order.id}`)}
+              onClick={() => navigate(messageRoute)}
             >
               Open Chat
             </button>
@@ -383,7 +388,7 @@ const OrdersWorkspace = ({ mode }: { mode: OrdersMode }) => {
             <button
               type="button"
               className="btn-outline"
-              onClick={() => navigate(`/dashboard/messages/${order.id}`)}
+              onClick={() => navigate(messageRoute)}
             >
               Open Chat
             </button>

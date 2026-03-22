@@ -10,6 +10,8 @@ import {
 } from "../utils/api";
 import type { OrderMessage, OrderStatus } from "../utils/api";
 
+type MessagesMode = "all" | "buyer" | "seller";
+
 type OrderRecord = {
   id: number;
   status: OrderStatus;
@@ -34,12 +36,12 @@ type OrderRecord = {
 };
 
 type MessagesWorkspaceProps = {
+  mode?: MessagesMode;
   selectedOrderId?: string;
 };
 
 const statusLabel = (status: string) => status.replaceAll("_", " ");
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
-const API_BASE = "http://localhost:4000";
 
 type PendingAttachment = {
   id: string;
@@ -74,14 +76,6 @@ const fileToBase64 = (file: File) =>
     reader.readAsDataURL(file);
   });
 
-const resolveAttachmentUrl = (fileUrl: string) => {
-  if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
-    return fileUrl;
-  }
-
-  return `${API_BASE}${fileUrl}`;
-};
-
 const AvatarCircle = ({ avatarUrl, name }: { avatarUrl?: string | null; name: string }) => {
   const [broken, setBroken] = useState(false);
   const src = resolveMediaUrl(avatarUrl);
@@ -100,10 +94,11 @@ const AvatarCircle = ({ avatarUrl, name }: { avatarUrl?: string | null; name: st
   );
 };
 
-const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
+const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceProps) => {
   const navigate = useNavigate();
   const [currentUserId, setCurrentUserId] = useState(0);
-  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [buyerOrders, setBuyerOrders] = useState<OrderRecord[]>([]);
+  const [sellerOrders, setSellerOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -111,7 +106,8 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
   const [loadingMessagesOrderId, setLoadingMessagesOrderId] = useState<number | null>(null);
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
-  const [query, setQuery] = useState("");
+  const [buyerQuery, setBuyerQuery] = useState("");
+  const [sellerQuery, setSellerQuery] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
 
   useEffect(() => {
@@ -127,41 +123,27 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
         ]);
 
         setCurrentUserId(user.user.userId ?? 0);
-
-        const map = new Map<number, OrderRecord>();
-        [...buyerData, ...sellerData].forEach((order) => {
-          map.set(order.id, order);
-        });
-
-        const merged = Array.from(map.values()).sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-
-        setOrders(merged);
+        setBuyerOrders(buyerData);
+        setSellerOrders(sellerData);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Failed to load conversations");
-        }
+        setError(err instanceof Error ? err.message : "Failed to load conversations");
       } finally {
         setLoading(false);
       }
     };
 
-    load();
+    void load();
   }, []);
 
-  const filteredOrders = useMemo(() => {
+  const filterOrders = (orders: OrderRecord[], query: string, side: "buyer" | "seller") => {
     const normalized = query.trim().toLowerCase();
 
-    if (normalized.length === 0) {
+    if (!normalized) {
       return orders;
     }
 
     return orders.filter((order) => {
-      const counterpartyName =
-        order.buyer.id === currentUserId ? order.seller.name : order.buyer.name;
+      const counterpartyName = side === "buyer" ? order.seller.name : order.buyer.name;
 
       return (
         String(order.id).includes(normalized) ||
@@ -169,15 +151,45 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
         counterpartyName.toLowerCase().includes(normalized)
       );
     });
-  }, [orders, query, currentUserId]);
+  };
 
-  const selectedOrder = filteredOrders.find((order) => String(order.id) === selectedOrderId) ?? null;
+  const filteredBuyerOrders = useMemo(
+    () => filterOrders(buyerOrders, buyerQuery, "buyer"),
+    [buyerOrders, buyerQuery]
+  );
+  const filteredSellerOrders = useMemo(
+    () => filterOrders(sellerOrders, sellerQuery, "seller"),
+    [sellerOrders, sellerQuery]
+  );
+
+  const activeOrders =
+    mode === "buyer" ? filteredBuyerOrders : mode === "seller" ? filteredSellerOrders : [];
+
+  const getThreadRoute = (side: "buyer" | "seller", orderId: number) =>
+    `/dashboard/messages/${side}/${orderId}`;
+
+  const selectedOrder = useMemo(() => {
+    if (!selectedOrderId) {
+      return null;
+    }
+
+    const source =
+      mode === "buyer"
+        ? filteredBuyerOrders
+        : mode === "seller"
+          ? filteredSellerOrders
+          : [...filteredBuyerOrders, ...filteredSellerOrders];
+
+    return source.find((order) => String(order.id) === selectedOrderId) ?? null;
+  }, [filteredBuyerOrders, filteredSellerOrders, mode, selectedOrderId]);
 
   useEffect(() => {
-    if (!selectedOrderId && filteredOrders.length > 0) {
-      navigate(`/dashboard/messages/${filteredOrders[0].id}`, { replace: true });
+    if (mode === "all" || selectedOrderId || activeOrders.length === 0) {
+      return;
     }
-  }, [selectedOrderId, filteredOrders, navigate]);
+
+    navigate(getThreadRoute(mode, activeOrders[0].id), { replace: true });
+  }, [activeOrders, mode, navigate, selectedOrderId]);
 
   useEffect(() => {
     if (!selectedOrder) {
@@ -194,17 +206,12 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
       try {
         setLoadingMessagesOrderId(selectedOrder.id);
         const data = await fetchOrderMessages(selectedOrder.id);
-
         if (!cancelled) {
           setMessagesByOrder((current) => ({ ...current, [selectedOrder.id]: data }));
         }
       } catch (err) {
         if (!cancelled) {
-          if (err instanceof Error) {
-            setError(err.message);
-          } else {
-            setError("Failed to load messages");
-          }
+          setError(err instanceof Error ? err.message : "Failed to load messages");
         }
       } finally {
         if (!cancelled) {
@@ -213,12 +220,12 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
       }
     };
 
-    loadMessages();
+    void loadMessages();
 
     return () => {
       cancelled = true;
     };
-  }, [selectedOrder, messagesByOrder]);
+  }, [messagesByOrder, selectedOrder]);
 
   const handleSend = async () => {
     if (!selectedOrder) {
@@ -252,11 +259,7 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
       setDraft("");
       setPendingAttachments([]);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to send message");
-      }
+      setError(err instanceof Error ? err.message : "Failed to send message");
     } finally {
       setSending(false);
     }
@@ -294,12 +297,7 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
       return merged;
     });
 
-    if (oversizeFound) {
-      setError("One or more files were skipped because they exceed 10 MB.");
-    } else {
-      setError("");
-    }
-
+    setError(oversizeFound ? "One or more files were skipped because they exceed 10 MB." : "");
     event.target.value = "";
   };
 
@@ -307,11 +305,56 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
     setPendingAttachments((current) => current.filter((item) => item.id !== id));
   };
 
+  const renderConversationList = (orders: OrderRecord[], side: "buyer" | "seller", query: string, setQuery: (value: string) => void) => (
+    <section className="messages-list-panel">
+      <div className="overview-market-head">
+        <h3>{side === "buyer" ? "Buyer Conversations" : "Seller Conversations"}</h3>
+        <p>{side === "buyer" ? "Chats linked to orders you placed." : "Chats linked to orders on your services."}</p>
+      </div>
+
+      <input
+        className="manage-search"
+        placeholder="Search by order, service, or name"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+
+      <div className="messages-list">
+        {orders.length === 0 ? (
+          <div className="dashboard-placeholder compact-placeholder">
+            <h2>No chats yet</h2>
+            <p>{side === "buyer" ? "Buyer conversations will appear once you place orders." : "Seller conversations will appear once buyers order your services."}</p>
+          </div>
+        ) : (
+          orders.map((order) => {
+            const counterparty = side === "buyer" ? order.seller : order.buyer;
+            return (
+              <NavLink
+                key={`${side}-${order.id}`}
+                to={getThreadRoute(side, order.id)}
+                className={({ isActive }) => `message-thread-btn ${isActive ? "active" : ""}`}
+              >
+                <div className="message-thread-inner">
+                  <AvatarCircle name={counterparty.name} avatarUrl={counterparty.avatarUrl} />
+                  <div className="message-thread-content">
+                    <strong>{counterparty.name}</strong>
+                    <span>{order.service.title}</span>
+                    <small>Order #{order.id}</small>
+                  </div>
+                </div>
+              </NavLink>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+
   if (loading) {
     return <div className="dashboard-placeholder">Loading conversations...</div>;
   }
 
-  if (error && orders.length === 0) {
+  if (error && buyerOrders.length === 0 && sellerOrders.length === 0) {
     return (
       <div className="dashboard-placeholder">
         <h2>Could not load conversations</h2>
@@ -320,172 +363,193 @@ const MessagesWorkspace = ({ selectedOrderId }: MessagesWorkspaceProps) => {
     );
   }
 
-  if (orders.length === 0) {
-    return (
-      <div className="dashboard-placeholder">
-        <h2>No conversations yet</h2>
-        <p>Chats unlock automatically once you place or receive an order.</p>
-      </div>
-    );
-  }
-
   return (
-    <section className="messages-shell">
-      <aside className="messages-list-panel">
-        <h3>Order Conversations</h3>
-        <input
-          className="manage-search"
-          placeholder="Search by order, service, or name"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-
-        <div className="messages-list">
-          {filteredOrders.map((order) => {
-            const counterpartyName =
-              order.buyer.id === currentUserId ? order.seller.name : order.buyer.name;
-
-            return (
-              <NavLink
-                key={order.id}
-                to={`/dashboard/messages/${order.id}`}
-                className={({ isActive }) => `message-thread-btn ${isActive ? "active" : ""}`}
-              >
-                <div className="message-thread-inner">
-                  <AvatarCircle
-                    name={counterpartyName}
-                    avatarUrl={
-                      order.buyer.id === currentUserId
-                        ? order.seller.avatarUrl
-                        : order.buyer.avatarUrl
-                    }
-                  />
-                  <div className="message-thread-content">
-                    <strong>{counterpartyName}</strong>
-                    <span>{order.service.title}</span>
-                    <small>Order #{order.id}</small>
-                  </div>
-                </div>
-              </NavLink>
-            );
-          })}
+    <div className="reviews-shell">
+      <section className="reviews-hero-card reviews-center-hero">
+        <div>
+          <p className="overview-kicker">Inbox</p>
+          <h2>{mode === "buyer" ? "Buyer Inbox" : mode === "seller" ? "Seller Inbox" : "Inbox Hub"}</h2>
+          <p>
+            {mode === "buyer"
+              ? "Keep buyer-side order conversations separate so purchases and seller communication stay easier to follow."
+              : mode === "seller"
+                ? "Manage seller-side order conversations in one cleaner inbox built around incoming work."
+                : "Split buyer chats and seller chats into separate inbox areas so communication stays cleaner as order volume grows."}
+          </p>
         </div>
-      </aside>
+        <div className="reviews-summary-grid">
+          <article>
+            <strong>{buyerOrders.length}</strong>
+            <span>Buyer Chats</span>
+          </article>
+          <article>
+            <strong>{sellerOrders.length}</strong>
+            <span>Seller Chats</span>
+          </article>
+        </div>
+        <div className="orders-role-switcher reviews-route-switcher">
+          <NavLink to="/dashboard/messages" end className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Overview</span>
+            <strong>Inbox Hub</strong>
+          </NavLink>
+          <NavLink to="/dashboard/messages/buyer" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Buying</span>
+            <strong>Buyer Inbox</strong>
+          </NavLink>
+          <NavLink to="/dashboard/messages/seller" className={({ isActive }) => `orders-role-tab ${isActive ? "active" : ""}`}>
+            <span>Selling</span>
+            <strong>Seller Inbox</strong>
+          </NavLink>
+        </div>
+      </section>
 
-      <div className="messages-chat-panel">
-        {selectedOrder ? (
-          <>
-            <div className="messages-chat-head">
-              <h3>{selectedOrder.service.title}</h3>
-              <p>
-                Order #{selectedOrder.id} | Status: {statusLabel(selectedOrder.status)}
-              </p>
-              <p className="service-seller">
-                Buyer:{" "}
-                <Link to={`/profile/${selectedOrder.buyer.id}`} className="profile-inline-link">
-                  <strong>{selectedOrder.buyer.name}</strong>
-                </Link>{" "}
-                | Seller:{" "}
-                <Link to={`/profile/${selectedOrder.seller.id}`} className="profile-inline-link">
-                  <strong>{selectedOrder.seller.name}</strong>
-                </Link>
-              </p>
+      {mode === "all" && (
+        <section className="orders-overview-grid">
+          <article className="orders-overview-card orders-overview-card-buyer">
+            <div className="orders-overview-head">
+              <div>
+                <p className="overview-kicker">Buyer Inbox</p>
+                <h3>Chats from orders you placed</h3>
+                <p>Buyer-side conversations stay separate from seller work so your purchase communication is easier to scan.</p>
+              </div>
             </div>
+            <div className="orders-overview-stats">
+              <article><strong>{buyerOrders.length}</strong><span>Total Chats</span></article>
+              <article><strong>{buyerOrders.filter((order) => order.status === "PENDING").length}</strong><span>Pending</span></article>
+              <article><strong>{buyerOrders.filter((order) => order.status === "IN_PROGRESS").length}</strong><span>In Progress</span></article>
+              <article><strong>{buyerOrders.filter((order) => order.status === "COMPLETED").length}</strong><span>Completed</span></article>
+            </div>
+          </article>
 
-            {error && <p className="form-status form-status-error">{error}</p>}
+          <article className="orders-overview-card orders-overview-card-seller">
+            <div className="orders-overview-head">
+              <div>
+                <p className="overview-kicker">Seller Inbox</p>
+                <h3>Chats from incoming work</h3>
+                <p>Seller-side conversations stay focused on service delivery, updates, and buyer communication for your listings.</p>
+              </div>
+            </div>
+            <div className="orders-overview-stats">
+              <article><strong>{sellerOrders.length}</strong><span>Total Chats</span></article>
+              <article><strong>{sellerOrders.filter((order) => order.status === "PENDING").length}</strong><span>Pending</span></article>
+              <article><strong>{sellerOrders.filter((order) => order.status === "IN_PROGRESS").length}</strong><span>In Progress</span></article>
+              <article><strong>{sellerOrders.filter((order) => order.status === "COMPLETED").length}</strong><span>Completed</span></article>
+            </div>
+          </article>
+        </section>
+      )}
 
-            <div className="messages-chat-list">
-              {loadingMessagesOrderId === selectedOrder.id ? (
-                <p className="service-seller">Loading messages...</p>
-              ) : (messagesByOrder[selectedOrder.id] ?? []).length === 0 ? (
-                <p className="service-seller">No messages yet. Start the discussion.</p>
-              ) : (
-                (messagesByOrder[selectedOrder.id] ?? []).map((message) => (
-                  <div
-                    key={message.id}
-                    className={`message-chat-row ${
-                      message.senderId === currentUserId ? "outgoing" : "incoming"
-                    }`}
-                  >
-                    <AvatarCircle name={message.sender.name} avatarUrl={message.sender.avatarUrl} />
+      {(mode === "buyer" || mode === "seller") && (
+        <section className="messages-shell">
+          {mode === "buyer"
+            ? renderConversationList(filteredBuyerOrders, "buyer", buyerQuery, setBuyerQuery)
+            : renderConversationList(filteredSellerOrders, "seller", sellerQuery, setSellerQuery)}
 
-                    <div
-                      className={`order-chat-item ${
-                        message.senderId === currentUserId ? "outgoing" : "incoming"
-                      }`}
-                    >
-                      <Link to={`/profile/${message.sender.id}`} className="profile-inline-link">
-                        <strong>{message.sender.name}</strong>
-                      </Link>
-                      {message.content && <p className="message-content-pre">{message.content}</p>}
+          <div className="messages-chat-panel">
+            {selectedOrder ? (
+              <>
+                <div className="messages-chat-head">
+                  <h3>{selectedOrder.service.title}</h3>
+                  <p>
+                    Order #{selectedOrder.id} | Status: {statusLabel(selectedOrder.status)}
+                  </p>
+                  <p className="service-seller">
+                    Buyer:{" "}
+                    <Link to={`/profile/${selectedOrder.buyer.id}`} className="profile-inline-link">
+                      <strong>{selectedOrder.buyer.name}</strong>
+                    </Link>{" "}
+                    | Seller:{" "}
+                    <Link to={`/profile/${selectedOrder.seller.id}`} className="profile-inline-link">
+                      <strong>{selectedOrder.seller.name}</strong>
+                    </Link>
+                  </p>
+                </div>
 
-                      {(message.attachments ?? []).length > 0 && (
-                        <div className="sent-attachment-grid">
-                          {(message.attachments ?? []).map((attachment) => (
-                            <a
-                              key={attachment.id}
-                              href={resolveAttachmentUrl(attachment.fileUrl)}
-                              className="sent-attachment-card"
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <strong>{attachment.fileName}</strong>
-                              <span>{formatBytes(attachment.size)}</span>
-                            </a>
-                          ))}
+                {error && <p className="form-status form-status-error">{error}</p>}
+
+                <div className="messages-chat-list">
+                  {loadingMessagesOrderId === selectedOrder.id ? (
+                    <p className="service-seller">Loading messages...</p>
+                  ) : (messagesByOrder[selectedOrder.id] ?? []).length === 0 ? (
+                    <p className="service-seller">No messages yet. Start the discussion.</p>
+                  ) : (
+                    (messagesByOrder[selectedOrder.id] ?? []).map((message) => (
+                      <div
+                        key={message.id}
+                        className={`message-chat-row ${message.senderId === currentUserId ? "outgoing" : "incoming"}`}
+                      >
+                        <AvatarCircle name={message.sender.name} avatarUrl={message.sender.avatarUrl} />
+
+                        <div className={`order-chat-item ${message.senderId === currentUserId ? "outgoing" : "incoming"}`}>
+                          <Link to={`/profile/${message.sender.id}`} className="profile-inline-link">
+                            <strong>{message.sender.name}</strong>
+                          </Link>
+                          {message.content && <p className="message-content-pre">{message.content}</p>}
+
+                          {(message.attachments ?? []).length > 0 && (
+                            <div className="sent-attachment-grid">
+                              {(message.attachments ?? []).map((attachment) => (
+                                <a
+                                  key={attachment.id}
+                                  href={resolveMediaUrl(attachment.fileUrl) ?? attachment.fileUrl}
+                                  className="sent-attachment-card"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <strong>{attachment.fileName}</strong>
+                                  <span>{formatBytes(attachment.size)}</span>
+                                </a>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                      </div>
+                    ))
+                  )}
+                </div>
 
-            <div className="order-chat-compose">
-              <input
-                placeholder="Type your message..."
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-              />
-              <label className="message-attach-btn" aria-label="Attach files">
-                Attach
-                <input type="file" multiple onChange={handleAttachmentSelect} />
-              </label>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleSend}
-                disabled={sending}
-              >
-                {sending ? "Sending..." : "Send"}
-              </button>
-            </div>
+                <div className="order-chat-compose">
+                  <input
+                    placeholder="Type your message..."
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                  />
+                  <label className="message-attach-btn" aria-label="Attach files">
+                    Attach
+                    <input type="file" multiple onChange={handleAttachmentSelect} />
+                  </label>
+                  <button type="button" className="btn-primary" onClick={handleSend} disabled={sending}>
+                    {sending ? "Sending..." : "Send"}
+                  </button>
+                </div>
 
-            {pendingAttachments.length > 0 && (
-              <div className="message-attachment-list">
-                {pendingAttachments.map(({ id, file }) => (
-                  <div key={id} className="message-attachment-chip">
-                    <span>{`${file.name} (${formatBytes(file.size)})`}</span>
-                    <button type="button" onClick={() => handleRemoveAttachment(id)}>
-                      Remove
-                    </button>
+                {pendingAttachments.length > 0 && (
+                  <div className="message-attachment-list">
+                    {pendingAttachments.map(({ id, file }) => (
+                      <div key={id} className="message-attachment-chip">
+                        <span>{`${file.name} (${formatBytes(file.size)})`}</span>
+                        <button type="button" onClick={() => handleRemoveAttachment(id)}>
+                          Remove
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                <div className="messages-upnext-note">
+                  Uploaded files are attached to this message and can be downloaded by both parties.
+                </div>
+              </>
+            ) : (
+              <div className="dashboard-placeholder compact-placeholder">
+                <h2>Conversation not found</h2>
+                <p>Select another order conversation from the left panel.</p>
               </div>
             )}
-
-            <div className="messages-upnext-note">
-              Uploaded files are attached to this message and can be downloaded by both parties.
-            </div>
-          </>
-        ) : (
-          <div className="dashboard-placeholder compact-placeholder">
-            <h2>Conversation not found</h2>
-            <p>Select another order conversation from the left panel.</p>
           </div>
-        )}
-      </div>
-    </section>
+        </section>
+      )}
+    </div>
   );
 };
 

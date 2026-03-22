@@ -13,6 +13,10 @@ import BuyerOrdersPage from "./pages/BuyerOrdersPage";
 import SellerOrdersPage from "./pages/SellerOrdersPage";
 import MessagesPage from "./pages/MessagesPage";
 import MessageThreadPage from "./pages/MessageThreadPage";
+import BuyerMessagesPage from "./pages/BuyerMessagesPage";
+import SellerMessagesPage from "./pages/SellerMessagesPage";
+import BuyerMessageThreadPage from "./pages/BuyerMessageThreadPage";
+import SellerMessageThreadPage from "./pages/SellerMessageThreadPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import WrittenReviewsPage from "./pages/WrittenReviewsPage";
 import ReceivedReviewsPage from "./pages/ReceivedReviewsPage";
@@ -57,6 +61,10 @@ export default function App() {
             <Route path="orders/buyer" element={<BuyerOrdersPage />} />
             <Route path="orders/seller" element={<SellerOrdersPage />} />
             <Route path="messages" element={<MessagesPage />} />
+            <Route path="messages/buyer" element={<BuyerMessagesPage />} />
+            <Route path="messages/seller" element={<SellerMessagesPage />} />
+            <Route path="messages/buyer/:orderId" element={<BuyerMessageThreadPage />} />
+            <Route path="messages/seller/:orderId" element={<SellerMessageThreadPage />} />
             <Route path="messages/:orderId" element={<MessageThreadPage />} />
             <Route path="disputes" element={<DisputesPage />} />
             <Route path="reviews" element={<ReviewsPage />} />
