@@ -4,7 +4,6 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 
 const prisma = new PrismaClient();
-
 const DEMO_PASSWORD = 'demo123';
 
 const demoAccounts = [
@@ -25,7 +24,7 @@ const demoAccounts = [
   },
   {
     name: 'Diya Kapoor',
-    email: 'diyakapoorr@taskara.com'.replace('rr','r'),
+    email: 'diyakapoor@taskara.com',
     title: 'Web Developer',
     country: 'India',
     pricingModel: 'PACKAGE',
@@ -190,11 +189,152 @@ const demoAccounts = [
   },
 ];
 
+const orderCounts = [2, 3, 4, 2, 3, 5, 2, 4, 3, 2, 4, 3];
+const reviewRatings = [5, 4, 5, 5, 4, 5, 4, 5, 5, 3, 4, 5, 5, 4, 5, 4, 5, 5, 4, 5, 3, 4, 5, 5, 4, 5, 5, 4, 5, 4, 5, 5, 4, 5, 4, 5, 5];
+const buyerReviewComments = [
+  'Very smooth experience. The seller understood the brief and delivered exactly what I needed.',
+  'Professional communication, strong quality, and the delivery was on time.',
+  'The outcome matched the scope well and the workflow felt reliable throughout.',
+  'Clear updates, good attention to detail, and a polished final result.',
+  'Really solid service. I would comfortably hire this seller again.',
+  'The seller handled the work professionally and the final output was useful right away.',
+  'Good collaboration from start to finish and the quality was worth the price.',
+  'Everything was delivered in a structured and dependable way.',
+];
+const sellerReplyComments = [
+  'Thank you for the clear brief and smooth communication throughout the order.',
+  'I appreciate the detailed feedback and would be happy to work together again.',
+  'Thank you for the trust. It was a pleasure delivering this project for you.',
+  'Glad the service met your expectations. Looking forward to future work together.',
+];
+
+const disputePlans = [
+  {
+    orderIndex: 1,
+    raisedBy: 'buyer',
+    status: 'RESOLVED',
+    reason: 'The delivery was completed, but I needed one final clarification on the agreed scope before closing the matter.',
+    firstMessage: 'I am raising this case because I wanted admin to review whether the final scope matched what was discussed.',
+    adminReply: 'We reviewed the order history and asked both parties to clarify the final deliverables before resolving the case.',
+    finalReply: 'Thank you. The explanation helped and I am satisfied with the resolution now.',
+  },
+  {
+    orderIndex: 9,
+    raisedBy: 'seller',
+    status: 'UNDER_REVIEW',
+    reason: 'The buyer requested extra revisions beyond the original scope, so I requested admin assistance.',
+    firstMessage: 'I am requesting admin review because the revision requests now exceed what was included in the order.',
+    adminReply: 'This case is under review. We are checking the original scope and revision limits mentioned in the service.',
+    finalReply: 'I have shared the original delivery notes and revision details for review.',
+  },
+  {
+    orderIndex: 18,
+    raisedBy: 'buyer',
+    status: 'OPEN',
+    reason: 'I needed clarification about one missing handoff item after completion.',
+    firstMessage: 'I am opening this dispute because one promised handoff file was not included in the final delivery.',
+    adminReply: 'We have contacted the seller and asked them to respond with the missing handoff details.',
+    finalReply: 'I have attached the checklist that shows the item I am referring to.',
+  },
+  {
+    orderIndex: 28,
+    raisedBy: 'seller',
+    status: 'RESOLVED',
+    reason: 'I raised this case after a misunderstanding about the final handoff, and admin helped close it cleanly.',
+    firstMessage: 'I wanted an admin note on record because there was confusion around what counted as final delivery.',
+    adminReply: 'We reviewed the conversation and confirmed that the delivered scope matched the accepted order terms.',
+    finalReply: 'Understood. Thank you for reviewing it and documenting the resolution.',
+  },
+];
+
+function daysAgo(days, hour = 10, minute = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  date.setHours(hour, minute, 0, 0);
+  return date;
+}
+
+function addHours(date, hours) {
+  return new Date(date.getTime() + hours * 60 * 60 * 1000);
+}
+
+function getBuyerIndex(sellerIndex, iteration, totalUsers) {
+  let buyerIndex = (sellerIndex + 2 + iteration * 3) % totalUsers;
+  if (buyerIndex === sellerIndex) {
+    buyerIndex = (buyerIndex + 1) % totalUsers;
+  }
+  return buyerIndex;
+}
+
+function shouldCreateChat(globalOrderIndex) {
+  return globalOrderIndex % 10 < 7;
+}
+
+function orderAmount(account, iteration) {
+  if (account.pricingModel === 'HOURLY') {
+    const hours = 2 + (iteration % 4);
+    return account.price * hours;
+  }
+  return account.price;
+}
+
+async function createOrderMessages(order, buyer, seller, createdAt, finalAt, globalOrderIndex) {
+  if (!shouldCreateChat(globalOrderIndex)) {
+    return 0;
+  }
+
+  const script = [
+    { senderId: buyer.id, content: `Hi ${seller.name.split(' ')[0]}, I have just placed this order and shared the initial requirements.` },
+    { senderId: seller.id, content: `Thanks ${buyer.name.split(' ')[0]}. I have reviewed the scope and I will keep you updated as I make progress.` },
+    { senderId: buyer.id, content: 'Perfect. Please focus on quality and keep the delivery aligned with the original brief.' },
+    { senderId: seller.id, content: 'Absolutely. I will share progress clearly and make sure the final delivery is clean and usable.' },
+  ];
+
+  const messagesToCreate = globalOrderIndex % 3 === 0 ? script.slice(0, 4) : script.slice(0, 3);
+
+  for (let i = 0; i < messagesToCreate.length; i += 1) {
+    const messageTime = addHours(createdAt, 3 + i * 8);
+    await prisma.orderMessage.create({
+      data: {
+        orderId: order.id,
+        senderId: messagesToCreate[i].senderId,
+        content: messagesToCreate[i].content,
+        createdAt: messageTime,
+        updatedAt: messageTime,
+      },
+    });
+  }
+
+  return messagesToCreate.length;
+}
+
+async function updateSellerProfiles(users) {
+  for (const user of users) {
+    const reviews = await prisma.review.findMany({
+      where: { revieweeId: user.id },
+      select: { rating: true },
+    });
+
+    const totalReviews = reviews.length;
+    const averageRating = totalReviews
+      ? Number((reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews).toFixed(1))
+      : 0;
+
+    await prisma.providerProfile.update({
+      where: { userId: user.id },
+      data: {
+        totalReviews,
+        averageRating,
+      },
+    });
+  }
+}
+
 async function main() {
   const adminRole = await prisma.role.upsert({ where: { name: 'admin' }, update: {}, create: { name: 'admin' } });
   const userRole = await prisma.role.upsert({ where: { name: 'user' }, update: {}, create: { name: 'user' } });
 
-  await prisma.user.upsert({
+  const admin = await prisma.user.upsert({
     where: { email: 'admin@taskara.com' },
     update: { roleId: adminRole.id, isActive: true },
     create: {
@@ -220,7 +360,7 @@ async function main() {
   await prisma.user.deleteMany({ where: { email: { not: 'admin@taskara.com' } } });
 
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-  const createdAccounts = [];
+  const createdUsers = [];
 
   for (const account of demoAccounts) {
     const user = await prisma.user.create({
@@ -248,7 +388,7 @@ async function main() {
       },
     });
 
-    await prisma.service.create({
+    const service = await prisma.service.create({
       data: {
         sellerId: user.id,
         title: account.serviceTitle,
@@ -260,21 +400,159 @@ async function main() {
       },
     });
 
-    createdAccounts.push({
-      name: account.name,
-      email: account.email,
-      password: DEMO_PASSWORD,
-      serviceTitle: account.serviceTitle,
-      category: account.category,
-      pricingModel: account.pricingModel,
-      price: account.price,
+    createdUsers.push({
+      ...account,
+      userId: user.id,
+      serviceId: service.id,
     });
   }
 
+  const createdOrders = [];
+  let globalOrderIndex = 0;
+  let totalChatThreads = 0;
+  let totalMessages = 0;
+
+  for (let sellerIndex = 0; sellerIndex < createdUsers.length; sellerIndex += 1) {
+    const seller = createdUsers[sellerIndex];
+    const serviceOrderCount = orderCounts[sellerIndex];
+
+    for (let iteration = 0; iteration < serviceOrderCount; iteration += 1) {
+      const buyerIndex = getBuyerIndex(sellerIndex, iteration, createdUsers.length);
+      const buyer = createdUsers[buyerIndex];
+      const createdAt = daysAgo(90 - globalOrderIndex * 2, 9 + (iteration % 3), 15);
+      const completedAt = addHours(createdAt, 36 + iteration * 10);
+      const amount = orderAmount(seller, iteration);
+      const requirements = `Project requested by ${buyer.name}. Focus on a professional result, clean communication, and on-time delivery.`;
+
+      const order = await prisma.order.create({
+        data: {
+          serviceId: seller.serviceId,
+          buyerId: buyer.userId,
+          sellerId: seller.userId,
+          amount,
+          requirements,
+          status: 'COMPLETED',
+          createdAt,
+          updatedAt: completedAt,
+        },
+      });
+
+      const messageCount = await createOrderMessages(order, { id: buyer.userId, name: buyer.name }, { id: seller.userId, name: seller.name }, createdAt, completedAt, globalOrderIndex);
+      if (messageCount > 0) {
+        totalChatThreads += 1;
+        totalMessages += messageCount;
+      }
+
+      const rating = reviewRatings[globalOrderIndex % reviewRatings.length];
+      const reviewAt = addHours(completedAt, 10 + (globalOrderIndex % 5));
+      const reviewComment = buyerReviewComments[globalOrderIndex % buyerReviewComments.length];
+      const addSellerReply = globalOrderIndex % 3 !== 1;
+
+      await prisma.review.create({
+        data: {
+          orderId: order.id,
+          reviewerId: buyer.userId,
+          revieweeId: seller.userId,
+          rating,
+          comment: reviewComment,
+          sellerReply: addSellerReply ? sellerReplyComments[globalOrderIndex % sellerReplyComments.length] : null,
+          sellerReplyAt: addSellerReply ? addHours(reviewAt, 8) : null,
+          createdAt: reviewAt,
+          updatedAt: addSellerReply ? addHours(reviewAt, 8) : reviewAt,
+        },
+      });
+
+      createdOrders.push({
+        id: order.id,
+        seller,
+        buyer,
+        createdAt,
+        completedAt,
+      });
+
+      globalOrderIndex += 1;
+    }
+  }
+
+  let disputesCreated = 0;
+  for (const plan of disputePlans) {
+    const target = createdOrders[plan.orderIndex];
+    if (!target) {
+      continue;
+    }
+
+    const raisedById = plan.raisedBy === 'buyer' ? target.buyer.userId : target.seller.userId;
+    const disputeCreatedAt = addHours(target.completedAt, 18);
+    const disputeUpdatedAt = addHours(disputeCreatedAt, plan.status === 'OPEN' ? 5 : 18);
+
+    const dispute = await prisma.dispute.create({
+      data: {
+        orderId: target.id,
+        buyerId: target.buyer.userId,
+        sellerId: target.seller.userId,
+        raisedById,
+        reason: plan.reason,
+        status: plan.status,
+        createdAt: disputeCreatedAt,
+        updatedAt: disputeUpdatedAt,
+      },
+    });
+
+    await prisma.disputeMessage.create({
+      data: {
+        disputeId: dispute.id,
+        senderId: raisedById,
+        content: plan.firstMessage,
+        createdAt: addHours(disputeCreatedAt, 1),
+        updatedAt: addHours(disputeCreatedAt, 1),
+      },
+    });
+
+    await prisma.disputeMessage.create({
+      data: {
+        disputeId: dispute.id,
+        senderId: admin.id,
+        content: plan.adminReply,
+        createdAt: addHours(disputeCreatedAt, 6),
+        updatedAt: addHours(disputeCreatedAt, 6),
+      },
+    });
+
+    await prisma.disputeMessage.create({
+      data: {
+        disputeId: dispute.id,
+        senderId: plan.raisedBy === 'buyer' ? target.buyer.userId : target.seller.userId,
+        content: plan.finalReply,
+        createdAt: addHours(disputeCreatedAt, 12),
+        updatedAt: addHours(disputeCreatedAt, 12),
+      },
+    });
+
+    disputesCreated += 1;
+  }
+
+  await updateSellerProfiles(createdUsers.map((user) => ({ id: user.userId })));
+
+  const accounts = createdUsers.map((account) => ({
+    name: account.name,
+    email: account.email,
+    password: DEMO_PASSWORD,
+    serviceTitle: account.serviceTitle,
+    category: account.category,
+    pricingModel: account.pricingModel,
+    price: account.price,
+  }));
+
   console.log(JSON.stringify({
     adminKept: 'admin@taskara.com',
-    createdCount: createdAccounts.length,
-    accounts: createdAccounts,
+    createdUsers: createdUsers.length,
+    createdServices: createdUsers.length,
+    completedOrders: createdOrders.length,
+    chatThreads: totalChatThreads,
+    messages: totalMessages,
+    disputes: disputesCreated,
+    reviews: createdOrders.length,
+    accounts,
   }, null, 2));
 }
 
