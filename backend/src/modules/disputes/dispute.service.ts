@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 import prisma from "../../utils/prisma";
+import { publishDisputeMessage } from "./dispute.realtime";
 
 export type DisputeStatusValue = "OPEN" | "UNDER_REVIEW" | "RESOLVED" | "REJECTED";
 
@@ -27,7 +28,7 @@ const buildAttachmentUrl = (filePath: string) => {
   return `/uploads/${relativePath}`;
 };
 
-const getDisputeForActor = async (
+export const getDisputeForActor = async (
   disputeId: number,
   userId: number,
   role: string
@@ -529,6 +530,8 @@ export const createDisputeMessage = async (
   if (!savedMessage) {
     throw new Error("Failed to create message");
   }
+
+  publishDisputeMessage(dispute.id, savedMessage);
 
   return savedMessage;
 };

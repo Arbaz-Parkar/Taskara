@@ -151,6 +151,65 @@ export const sendDisputeMessage = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const streamDisputeMessages = async (req: AuthRequest, res: Response) => {
+  try {
+    const disputeId = Number(req.params.id);
+    if (Number.isNaN(disputeId)) {
+      return res.status(400).json({ message: "Invalid dispute id" });
+    }
+
+    await disputeService.getDisputeForActor(disputeId, req.user!.userId, req.user!.role);
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+
+    const { registerDisputeMessageStream } = await import("./dispute.realtime");
+    registerDisputeMessageStream(disputeId, res);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to open dispute stream";
+    if (message === "Dispute not found") {
+      return res.status(404).json({ message });
+    }
+    if (message === "You are not allowed to access this dispute") {
+      return res.status(403).json({ message });
+    }
+    return res.status(400).json({ message });
+  }
+};
+
+export const updateTypingForDispute = async (req: AuthRequest, res: Response) => {
+  try {
+    const disputeId = Number(req.params.id);
+    if (Number.isNaN(disputeId)) {
+      return res.status(400).json({ message: "Invalid dispute id" });
+    }
+
+    const { isTyping } = req.body as { isTyping?: boolean };
+
+    await disputeService.getDisputeForActor(disputeId, req.user!.userId, req.user!.role);
+
+    const { publishDisputeTyping } = await import("./dispute.realtime");
+    publishDisputeTyping(disputeId, {
+      disputeId,
+      userId: req.user!.userId,
+      isTyping: Boolean(isTyping),
+    });
+
+    return res.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update dispute typing";
+    if (message === "Dispute not found") {
+      return res.status(404).json({ message });
+    }
+    if (message === "You are not allowed to access this dispute") {
+      return res.status(403).json({ message });
+    }
+    return res.status(400).json({ message });
+  }
+};
+
 export const updateDisputeStatusAsAdmin = async (req: AuthRequest, res: Response) => {
   try {
     const disputeId = Number(req.params.id);

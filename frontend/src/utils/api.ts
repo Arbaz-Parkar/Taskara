@@ -937,6 +937,34 @@ export const sendDisputeMessage = async (
   };
 };
 
+export const buildDisputeMessagesStreamUrl = (disputeId: number) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("Missing auth token");
+  }
+
+  const streamUrl = new URL(`${API}/disputes/${disputeId}/messages/stream`);
+  streamUrl.searchParams.set("token", token);
+  return streamUrl.toString();
+};
+
+export const updateDisputeTyping = async (disputeId: number, isTyping: boolean) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/disputes/${disputeId}/messages/typing`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ isTyping }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to update dispute typing state");
+  return result as { ok: true };
+};
+
 export const sendOrderMessage = async (
   orderId: number,
   payload: {

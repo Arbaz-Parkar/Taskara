@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { logout } from "../utils/auth";
 import {
+  buildDisputeMessagesStreamUrl,
   fetchAdminDisputes,
   fetchDisputeById,
   deleteAdminService,
@@ -13,6 +14,7 @@ import {
   getCurrentUser,
   resolveMediaUrl,
   sendDisputeMessage,
+  updateDisputeTyping,
   updateAdminDisputeStatus,
   updateAdminOrderStatus,
   updateAdminServiceStatus,
@@ -158,6 +160,11 @@ const AdminDashboard = () => {
   const [replyFiles, setReplyFiles] = useState<PendingAttachment[]>([]);
   const [busyDisputeId, setBusyDisputeId] = useState<number | null>(null);
   const [disputeStatusDraft, setDisputeStatusDraft] = useState<Record<number, DisputeStatus>>({});
+  const [typingUserIdByDispute, setTypingUserIdByDispute] = useState<Record<number, number | null>>({});
+  const typingStateRef = useRef<{ disputeId: number | null; isTyping: boolean }>({
+    disputeId: null,
+    isTyping: false,
+  });
 
   const [reports, setReports] = useState<AdminReports | null>(null);
   const [reportsLoading, setReportsLoading] = useState(false);
@@ -508,15 +515,27 @@ const AdminDashboard = () => {
         }))
       );
 
-      await sendDisputeMessage(selectedDisputeId, {
+      const created = await sendDisputeMessage(selectedDisputeId, {
         content: disputeReplyText.trim(),
         attachments,
       });
-
-      const detail = (await fetchDisputeById(selectedDisputeId)) as AdminDisputeDetail;
-      setSelectedDisputeThread(detail);
+      setSelectedDisputeThread((current) =>
+        current
+          ? {
+              ...current,
+              messages: current.messages.some((message) => message.id === created.id)
+                ? current.messages
+                : [...current.messages, created],
+            }
+          : current
+      );
       setDisputeReplyText("");
       setReplyFiles([]);
+      setTypingUserIdByDispute((current) => ({ ...current, [selectedDisputeId]: null }));
+      typingStateRef.current = { disputeId: selectedDisputeId, isTyping: false };
+      void updateDisputeTyping(selectedDisputeId, false).catch(() => {
+        // Ignore typing reset failures after send.
+      });
       setDisputesNotice("Reply sent successfully.");
       await loadDisputes(selectedDisputeId);
     } catch (error) {
@@ -525,6 +544,127 @@ const AdminDashboard = () => {
       setBusyDisputeId(null);
     }
   };
+
+  useEffect(() => {
+    if (activeSection !== "disputes" || !selectedDisputeId) {
+      return;
+    }
+
+    let stream: EventSource | null = null;
+
+    try {
+      stream = new EventSource(buildDisputeMessagesStreamUrl(selectedDisputeId));
+      stream.addEventListener("message", (event) => {
+        try {
+          const nextMessage = JSON.parse(event.data) as DisputeMessage;
+          setSelectedDisputeThread((current) => {
+            if (!current || current.id !== selectedDisputeId) {
+              return current;
+            }
+
+            if (current.messages.some((message) => message.id === nextMessage.id)) {
+              return current;
+            }
+
+            return {
+              ...current,
+              messages: [
+                ...current.messages,
+                {
+                  ...nextMessage,
+                  sender: {
+                    ...nextMessage.sender,
+                    avatarUrl: resolveMediaUrl(nextMessage.sender.avatarUrl),
+                  },
+                  attachments: (nextMessage.attachments ?? []).map((attachment) => ({
+                    ...attachment,
+                    fileUrl: resolveMediaUrl(attachment.fileUrl) ?? attachment.fileUrl,
+                  })),
+                },
+              ].sort(
+                (left, right) =>
+                  new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+              ),
+            };
+          });
+        } catch {
+          // Ignore malformed stream messages and keep the dispute thread usable.
+        }
+      });
+
+      stream.addEventListener("typing", (event) => {
+        try {
+          const payload = JSON.parse(event.data) as {
+            disputeId: number;
+            userId: number;
+            isTyping: boolean;
+          };
+
+          if (payload.userId === currentAdminId) {
+            return;
+          }
+
+          setTypingUserIdByDispute((current) => ({
+            ...current,
+            [selectedDisputeId]: payload.isTyping ? payload.userId : null,
+          }));
+        } catch {
+          // Ignore malformed typing events and keep dispute chat usable.
+        }
+      });
+
+      stream.onerror = () => {
+        // Let EventSource retry automatically if the connection drops.
+      };
+    } catch {
+      // If the stream cannot be opened, the thread still works with normal fetch/send.
+    }
+
+    return () => {
+      stream?.close();
+    };
+  }, [activeSection, currentAdminId, selectedDisputeId]);
+
+  useEffect(() => {
+    if (activeSection !== "disputes" || !selectedDisputeId) {
+      return;
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const hasContent = disputeReplyText.trim().length > 0;
+
+    const sendTypingState = async (isTyping: boolean) => {
+      if (
+        typingStateRef.current.disputeId === selectedDisputeId &&
+        typingStateRef.current.isTyping === isTyping
+      ) {
+        return;
+      }
+
+      typingStateRef.current = { disputeId: selectedDisputeId, isTyping };
+
+      try {
+        await updateDisputeTyping(selectedDisputeId, isTyping);
+      } catch {
+        // Ignore typing errors to keep dispute compose smooth.
+      }
+    };
+
+    if (hasContent) {
+      void sendTypingState(true);
+      timeoutId = setTimeout(() => {
+        void sendTypingState(false);
+      }, 1800);
+    } else {
+      void sendTypingState(false);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [activeSection, disputeReplyText, selectedDisputeId]);
 
   const handleUpdateDisputeStatus = async (disputeId: number) => {
     const nextStatus = disputeStatusDraft[disputeId];
@@ -553,6 +693,15 @@ const AdminDashboard = () => {
       setBusyDisputeId(null);
     }
   };
+
+  const disputeTypingUserName =
+    selectedDisputeThread && selectedDisputeId && typingUserIdByDispute[selectedDisputeId]
+      ? selectedDisputeThread.buyer.id === typingUserIdByDispute[selectedDisputeId]
+        ? selectedDisputeThread.buyer.name
+        : selectedDisputeThread.seller.id === typingUserIdByDispute[selectedDisputeId]
+          ? selectedDisputeThread.seller.name
+          : selectedDisputeThread.raisedBy.name
+      : null;
 
   const pageTitle =
     activeSection === "users"
@@ -1058,6 +1207,14 @@ const AdminDashboard = () => {
                         </div>
 
                         <div className="order-chat-compose">
+                          {disputeTypingUserName ? (
+                            <div className="messages-typing-indicator">
+                              <span>{disputeTypingUserName} is typing</span>
+                              <span className="messages-typing-dot" />
+                              <span className="messages-typing-dot" />
+                              <span className="messages-typing-dot" />
+                            </div>
+                          ) : null}
                           <input
                             value={disputeReplyText}
                             onChange={(event) => setDisputeReplyText(event.target.value)}
