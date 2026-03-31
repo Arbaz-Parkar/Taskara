@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
+  buildOrderMessagesStreamUrl,
   fetchBuyerOrders,
   fetchOrderMessages,
   fetchSellerOrders,
@@ -109,6 +110,23 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
   const [buyerQuery, setBuyerQuery] = useState("");
   const [sellerQuery, setSellerQuery] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+
+  const mergeMessageIntoOrder = (orderId: number, message: OrderMessage) => {
+    setMessagesByOrder((current) => {
+      const existing = current[orderId] ?? [];
+      if (existing.some((item) => item.id === message.id)) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [orderId]: [...existing, message].sort(
+          (left, right) =>
+            new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+        ),
+      };
+    });
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -227,6 +245,46 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
     };
   }, [messagesByOrder, selectedOrder]);
 
+  useEffect(() => {
+    if (!selectedOrder) {
+      return;
+    }
+
+    let stream: EventSource | null = null;
+
+    try {
+      stream = new EventSource(buildOrderMessagesStreamUrl(selectedOrder.id));
+      stream.addEventListener("message", (event) => {
+        try {
+          const nextMessage = JSON.parse(event.data) as OrderMessage;
+          mergeMessageIntoOrder(selectedOrder.id, {
+            ...nextMessage,
+            sender: {
+              ...nextMessage.sender,
+              avatarUrl: resolveMediaUrl(nextMessage.sender.avatarUrl),
+            },
+            attachments: (nextMessage.attachments ?? []).map((attachment) => ({
+              ...attachment,
+              fileUrl: resolveMediaUrl(attachment.fileUrl) ?? attachment.fileUrl,
+            })),
+          });
+        } catch {
+          // Ignore malformed stream messages and keep the thread usable.
+        }
+      });
+
+      stream.onerror = () => {
+        // Let EventSource retry automatically if the connection drops.
+      };
+    } catch {
+      // If the stream cannot be opened, the thread still works with normal fetch/send.
+    }
+
+    return () => {
+      stream?.close();
+    };
+  }, [selectedOrder]);
+
   const handleSend = async () => {
     if (!selectedOrder) {
       return;
@@ -252,10 +310,17 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
         content,
         attachments: attachmentPayload,
       });
-      setMessagesByOrder((current) => ({
-        ...current,
-        [selectedOrder.id]: [...(current[selectedOrder.id] ?? []), message],
-      }));
+      mergeMessageIntoOrder(selectedOrder.id, {
+        ...message,
+        sender: {
+          ...message.sender,
+          avatarUrl: resolveMediaUrl(message.sender.avatarUrl),
+        },
+        attachments: (message.attachments ?? []).map((attachment) => ({
+          ...attachment,
+          fileUrl: resolveMediaUrl(attachment.fileUrl) ?? attachment.fileUrl,
+        })),
+      });
       setDraft("");
       setPendingAttachments([]);
     } catch (err) {

@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 import { createNotification } from "../notifications/notification.service";
+import { publishOrderMessage } from "./order.realtime";
 
 export type OrderStatusValue =
   | "PENDING"
@@ -194,7 +195,7 @@ export const updateOrderStatus = async (
   return updated;
 };
 
-const getOrderForUser = async (orderId: number, userId: number) => {
+export const getOrderForUser = async (orderId: number, userId: number) => {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
   });
@@ -313,6 +314,7 @@ export const createOrderMessage = async (
         select: {
           id: true,
           name: true,
+          avatarUrl: true,
         },
       },
       attachments: {
@@ -331,6 +333,7 @@ export const createOrderMessage = async (
     throw new Error("Failed to create message");
   }
 
+  publishOrderMessage(orderId, savedMessage);
   return savedMessage;
 };
 

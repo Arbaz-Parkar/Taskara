@@ -960,6 +960,17 @@ export const sendOrderMessage = async (
   return result as OrderMessage;
 };
 
+export const buildOrderMessagesStreamUrl = (orderId: number) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("Missing auth token");
+  }
+
+  const streamUrl = new URL(`${API}/orders/${orderId}/messages/stream`);
+  streamUrl.searchParams.set("token", token);
+  return streamUrl.toString();
+};
+
 export const fetchServiceById = async (id: string) => {
   const res = await fetch(`${API}/services/${id}`);
   const result = await res.json();

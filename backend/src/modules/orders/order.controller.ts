@@ -97,6 +97,29 @@ export const sendMessageForOrder = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const streamMessagesForOrder = async (req: AuthRequest, res: Response) => {
+  try {
+    const orderId = Number(req.params.id);
+    await orderService.getOrderForUser(orderId, req.user!.userId);
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+
+    const { registerOrderMessageStream } = await import("./order.realtime");
+    registerOrderMessageStream(orderId, res);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to open message stream";
+
+    if (message === "Order not found") {
+      return res.status(404).json({ message });
+    }
+
+    return res.status(403).json({ message });
+  }
+};
+
 export const getAdminOrders = async (_req: AuthRequest, res: Response) => {
   try {
     const orders = await orderService.getAdminOrders();

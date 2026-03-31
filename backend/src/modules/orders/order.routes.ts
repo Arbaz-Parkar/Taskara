@@ -10,6 +10,7 @@ import {
   getMessagesForOrder,
   getMySellerOrders,
   sendMessageForOrder,
+  streamMessagesForOrder,
 } from "./order.controller";
 
 const router = Router();
@@ -26,6 +27,7 @@ router.patch(
   changeOrderStatusAsAdmin
 );
 router.get("/:id/messages", authenticate, getMessagesForOrder);
+router.get("/:id/messages/stream", authenticate, streamMessagesForOrder);
 router.post("/:id/messages", authenticate, sendMessageForOrder);
 
 export default router;

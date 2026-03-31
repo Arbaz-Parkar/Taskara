@@ -19,12 +19,19 @@ export const authenticate = async (
 ) => {
   try {
     const authHeader = req.headers.authorization;
+    const queryToken =
+      typeof req.query.token === "string" && req.query.token.trim()
+        ? req.query.token.trim()
+        : null;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if ((!authHeader || !authHeader.startsWith("Bearer ")) && !queryToken) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const token = authHeader.split(" ")[1];
+    const token =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : queryToken!;
 
     const decoded = jwt.verify(
       token,
