@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   buildOrderMessagesStreamUrl,
@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   resolveMediaUrl,
   sendOrderMessage,
+  updateOrderTyping,
 } from "../utils/api";
 import type { OrderMessage, OrderStatus } from "../utils/api";
 
@@ -110,6 +111,11 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
   const [buyerQuery, setBuyerQuery] = useState("");
   const [sellerQuery, setSellerQuery] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [typingUserIdByOrder, setTypingUserIdByOrder] = useState<Record<number, number | null>>({});
+  const typingStateRef = useRef<{ orderId: number | null; isTyping: boolean }>({
+    orderId: null,
+    isTyping: false,
+  });
 
   const mergeMessageIntoOrder = (orderId: number, message: OrderMessage) => {
     setMessagesByOrder((current) => {
@@ -273,6 +279,27 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
         }
       });
 
+      stream.addEventListener("typing", (event) => {
+        try {
+          const payload = JSON.parse(event.data) as {
+            orderId: number;
+            userId: number;
+            isTyping: boolean;
+          };
+
+          if (payload.userId === currentUserId) {
+            return;
+          }
+
+          setTypingUserIdByOrder((current) => ({
+            ...current,
+            [selectedOrder.id]: payload.isTyping ? payload.userId : null,
+          }));
+        } catch {
+          // Ignore malformed typing events and keep chat usable.
+        }
+      });
+
       stream.onerror = () => {
         // Let EventSource retry automatically if the connection drops.
       };
@@ -283,7 +310,48 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
     return () => {
       stream?.close();
     };
-  }, [selectedOrder]);
+  }, [currentUserId, selectedOrder]);
+
+  useEffect(() => {
+    if (!selectedOrder) {
+      return;
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const hasContent = draft.trim().length > 0;
+
+    const sendTypingState = async (isTyping: boolean) => {
+      if (
+        typingStateRef.current.orderId === selectedOrder.id &&
+        typingStateRef.current.isTyping === isTyping
+      ) {
+        return;
+      }
+
+      typingStateRef.current = { orderId: selectedOrder.id, isTyping };
+
+      try {
+        await updateOrderTyping(selectedOrder.id, isTyping);
+      } catch {
+        // Ignore typing errors to keep message compose smooth.
+      }
+    };
+
+    if (hasContent) {
+      void sendTypingState(true);
+      timeoutId = setTimeout(() => {
+        void sendTypingState(false);
+      }, 1800);
+    } else {
+      void sendTypingState(false);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [draft, selectedOrder]);
 
   const handleSend = async () => {
     if (!selectedOrder) {
@@ -323,6 +391,11 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
       });
       setDraft("");
       setPendingAttachments([]);
+      setTypingUserIdByOrder((current) => ({ ...current, [selectedOrder.id]: null }));
+      typingStateRef.current = { orderId: selectedOrder.id, isTyping: false };
+      void updateOrderTyping(selectedOrder.id, false).catch(() => {
+        // Ignore typing reset failures after send.
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
     } finally {
@@ -369,6 +442,13 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
   const handleRemoveAttachment = (id: string) => {
     setPendingAttachments((current) => current.filter((item) => item.id !== id));
   };
+
+  const typingUserName =
+    selectedOrder && typingUserIdByOrder[selectedOrder.id]
+      ? selectedOrder.buyer.id === typingUserIdByOrder[selectedOrder.id]
+        ? selectedOrder.buyer.name
+        : selectedOrder.seller.name
+      : null;
 
   const renderConversationList = (orders: OrderRecord[], side: "buyer" | "seller", query: string, setQuery: (value: string) => void) => (
     <section className="messages-list-panel">
@@ -574,6 +654,14 @@ const MessagesWorkspace = ({ mode = "all", selectedOrderId }: MessagesWorkspaceP
                 </div>
 
                 <div className="order-chat-compose">
+                  {typingUserName && (
+                    <div className="messages-typing-indicator">
+                      <span className="messages-typing-dot" />
+                      <span className="messages-typing-dot" />
+                      <span className="messages-typing-dot" />
+                      <small>{typingUserName} is typing...</small>
+                    </div>
+                  )}
                   <input
                     placeholder="Type your message..."
                     value={draft}

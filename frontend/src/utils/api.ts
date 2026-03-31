@@ -971,6 +971,23 @@ export const buildOrderMessagesStreamUrl = (orderId: number) => {
   return streamUrl.toString();
 };
 
+export const updateOrderTyping = async (orderId: number, isTyping: boolean) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/orders/${orderId}/messages/typing`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ isTyping }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || "Failed to update typing state");
+  return result as { ok: true };
+};
+
 export const fetchServiceById = async (id: string) => {
   const res = await fetch(`${API}/services/${id}`);
   const result = await res.json();

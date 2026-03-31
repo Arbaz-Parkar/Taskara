@@ -2159,6 +2159,53 @@ select {
   gap: 8px;
 }
 
+.messages-typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 1px solid #f0c5d0;
+  border-radius: 999px;
+  background: #fff6f8;
+  color: #8a5c69;
+}
+
+.messages-typing-indicator small {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.messages-typing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #d94b76;
+  animation: typingPulse 1s infinite ease-in-out;
+}
+
+.messages-typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.messages-typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typingPulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
 .order-chat-compose input {
   flex: 1;
   border: 1px solid #eabecb;

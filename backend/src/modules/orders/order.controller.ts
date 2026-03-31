@@ -120,6 +120,32 @@ export const streamMessagesForOrder = async (req: AuthRequest, res: Response) =>
   }
 };
 
+export const updateTypingForOrder = async (req: AuthRequest, res: Response) => {
+  try {
+    const orderId = Number(req.params.id);
+    const { isTyping } = req.body as { isTyping?: boolean };
+
+    await orderService.getOrderForUser(orderId, req.user!.userId);
+
+    const { publishOrderTyping } = await import("./order.realtime");
+    publishOrderTyping(orderId, {
+      orderId,
+      userId: req.user!.userId,
+      isTyping: Boolean(isTyping),
+    });
+
+    return res.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update typing state";
+
+    if (message === "Order not found") {
+      return res.status(404).json({ message });
+    }
+
+    return res.status(403).json({ message });
+  }
+};
+
 export const getAdminOrders = async (_req: AuthRequest, res: Response) => {
   try {
     const orders = await orderService.getAdminOrders();

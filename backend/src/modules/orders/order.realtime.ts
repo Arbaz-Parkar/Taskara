@@ -67,3 +67,21 @@ export const publishOrderMessage = (
     writeEvent(res, "message", message);
   }
 };
+
+export const publishOrderTyping = (
+  orderId: number,
+  payload: {
+    orderId: number;
+    userId: number;
+    isTyping: boolean;
+  }
+) => {
+  const listeners = orderStreams.get(orderId);
+  if (!listeners || listeners.size === 0) {
+    return;
+  }
+
+  for (const res of listeners) {
+    writeEvent(res, "typing", payload);
+  }
+};

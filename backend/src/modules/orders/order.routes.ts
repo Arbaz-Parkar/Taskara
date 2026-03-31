@@ -11,6 +11,7 @@ import {
   getMySellerOrders,
   sendMessageForOrder,
   streamMessagesForOrder,
+  updateTypingForOrder,
 } from "./order.controller";
 
 const router = Router();
@@ -29,5 +30,6 @@ router.patch(
 router.get("/:id/messages", authenticate, getMessagesForOrder);
 router.get("/:id/messages/stream", authenticate, streamMessagesForOrder);
 router.post("/:id/messages", authenticate, sendMessageForOrder);
+router.post("/:id/messages/typing", authenticate, updateTypingForOrder);
 
 export default router;
