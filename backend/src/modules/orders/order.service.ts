@@ -270,7 +270,9 @@ export const createOrderMessage = async (
   });
 
   if (attachments.length === 0) {
-    return { ...message, attachments: [] };
+    const plainMessage = { ...message, attachments: [] };
+    publishOrderMessage(orderId, plainMessage);
+    return plainMessage;
   }
 
   const messageDir = path.join(uploadsRoot, String(orderId), String(message.id));
