@@ -42,6 +42,7 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [notificationsError, setNotificationsError] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -112,6 +113,23 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
         : "BEST_MATCH"
     );
   }, [isMarketplaceRoute, location.search]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth > 900) {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
 
   const handleTopbarSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -213,7 +231,7 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
 
   return (
     <div className="dashboard-container">
-      <aside className="dashboard-sidebar">
+      <aside className={`dashboard-sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-logo">
           <img src={logo} alt="Taskara" />
         </div>
@@ -246,86 +264,106 @@ const DashboardShell = ({ children }: DashboardShellProps) => {
           </NavLink>
         </nav>
       </aside>
+      <button
+        type="button"
+        className={`dashboard-overlay ${sidebarOpen ? "show" : ""}`}
+        onClick={() => setSidebarOpen(false)}
+        aria-label="Close navigation menu"
+      />
 
       <div className="dashboard-main">
         <header className="dashboard-topbar">
-          <form className="topbar-search-form" onSubmit={handleTopbarSearchSubmit}>
-            <div className="topbar-search">
-              <input
-                placeholder="Search services, skills, or categories..."
-                value={topbarQuery}
-                onChange={(event) => setTopbarQuery(event.target.value)}
-              />
-            </div>
-            {isMarketplaceRoute ? (
-              <div className="topbar-smart-filters">
-                <select value={marketCategory} onChange={(event) => setMarketCategory(event.target.value)}>
-                  <option value="">All categories</option>
-                  <option value="Website">Website</option>
-                  <option value="Design">Design</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Writing">Writing</option>
-                  <option value="Video">Video</option>
-                  <option value="AI">AI</option>
-                  <option value="Business">Business</option>
-                </select>
+          <div className="topbar-left">
+            <button
+              type="button"
+              className="sidebar-toggle"
+              onClick={() => setSidebarOpen((current) => !current)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={sidebarOpen}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+
+            <form className="topbar-search-form" onSubmit={handleTopbarSearchSubmit}>
+              <div className="topbar-search">
                 <input
-                  type="number"
-                  min={0}
-                  value={marketMinPrice}
-                  onChange={(event) => setMarketMinPrice(event.target.value)}
-                  placeholder="Min INR"
+                  placeholder="Search services, skills, or categories..."
+                  value={topbarQuery}
+                  onChange={(event) => setTopbarQuery(event.target.value)}
                 />
-                <input
-                  type="number"
-                  min={0}
-                  value={marketMaxPrice}
-                  onChange={(event) => setMarketMaxPrice(event.target.value)}
-                  placeholder="Max INR"
-                />
-                <select value={marketMinRating} onChange={(event) => setMarketMinRating(event.target.value)}>
-                  <option value="">Any rating</option>
-                  <option value="4.5">4.5+</option>
-                  <option value="4">4.0+</option>
-                  <option value="3.5">3.5+</option>
-                  <option value="3">3.0+</option>
-                </select>
-                <select
-                  value={marketResponseSpeed}
-                  onChange={(event) =>
-                    setMarketResponseSpeed(event.target.value as "" | "FAST" | "DAY" | "SLOW")
-                  }
-                >
-                  <option value="">Any speed</option>
-                  <option value="FAST">Fast</option>
-                  <option value="DAY">Within 24h</option>
-                  <option value="SLOW">Slow</option>
-                </select>
-                <select
-                  value={marketSort}
-                  onChange={(event) =>
-                    setMarketSort(
-                      event.target.value as
-                        | "BEST_MATCH"
-                        | "PRICE_LOW_HIGH"
-                        | "PRICE_HIGH_LOW"
-                        | "RATING_HIGH_LOW"
-                        | "RESPONSE_FAST"
-                    )
-                  }
-                >
-                  <option value="BEST_MATCH">Best Match</option>
-                  <option value="PRICE_LOW_HIGH">Price Low-High</option>
-                  <option value="PRICE_HIGH_LOW">Price High-Low</option>
-                  <option value="RATING_HIGH_LOW">Top Rated</option>
-                  <option value="RESPONSE_FAST">Fast Response</option>
-                </select>
-                <button type="submit" className="btn-outline topbar-apply-btn">
-                  Apply
-                </button>
               </div>
-            ) : null}
-          </form>
+              {isMarketplaceRoute ? (
+                <div className="topbar-smart-filters">
+                  <select value={marketCategory} onChange={(event) => setMarketCategory(event.target.value)}>
+                    <option value="">All categories</option>
+                    <option value="Website">Website</option>
+                    <option value="Design">Design</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Writing">Writing</option>
+                    <option value="Video">Video</option>
+                    <option value="AI">AI</option>
+                    <option value="Business">Business</option>
+                  </select>
+                  <input
+                    type="number"
+                    min={0}
+                    value={marketMinPrice}
+                    onChange={(event) => setMarketMinPrice(event.target.value)}
+                    placeholder="Min INR"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    value={marketMaxPrice}
+                    onChange={(event) => setMarketMaxPrice(event.target.value)}
+                    placeholder="Max INR"
+                  />
+                  <select value={marketMinRating} onChange={(event) => setMarketMinRating(event.target.value)}>
+                    <option value="">Any rating</option>
+                    <option value="4.5">4.5+</option>
+                    <option value="4">4.0+</option>
+                    <option value="3.5">3.5+</option>
+                    <option value="3">3.0+</option>
+                  </select>
+                  <select
+                    value={marketResponseSpeed}
+                    onChange={(event) =>
+                      setMarketResponseSpeed(event.target.value as "" | "FAST" | "DAY" | "SLOW")
+                    }
+                  >
+                    <option value="">Any speed</option>
+                    <option value="FAST">Fast</option>
+                    <option value="DAY">Within 24h</option>
+                    <option value="SLOW">Slow</option>
+                  </select>
+                  <select
+                    value={marketSort}
+                    onChange={(event) =>
+                      setMarketSort(
+                        event.target.value as
+                          | "BEST_MATCH"
+                          | "PRICE_LOW_HIGH"
+                          | "PRICE_HIGH_LOW"
+                          | "RATING_HIGH_LOW"
+                          | "RESPONSE_FAST"
+                      )
+                    }
+                  >
+                    <option value="BEST_MATCH">Best Match</option>
+                    <option value="PRICE_LOW_HIGH">Price Low-High</option>
+                    <option value="PRICE_HIGH_LOW">Price High-Low</option>
+                    <option value="RATING_HIGH_LOW">Top Rated</option>
+                    <option value="RESPONSE_FAST">Fast Response</option>
+                  </select>
+                  <button type="submit" className="btn-outline topbar-apply-btn">
+                    Apply
+                  </button>
+                </div>
+              ) : null}
+            </form>
+          </div>
 
           <div className="topbar-actions">
             <div className="notification-wrap" ref={notificationRef}>
